@@ -11,7 +11,7 @@
  *   4. Worker URL → js/api.js da API_URL ga yozing
  */
 
-const STREAMLIT_URL = 'https://your-app.streamlit.app';  // ← o'zgartiring
+const STREAMLIT_URL = 'https://webapiquizmarkerbot.streamlit.app/';  // ← o'zgartiring
 
 export default {
   async fetch(request) {
