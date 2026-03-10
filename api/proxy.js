@@ -228,6 +228,255 @@ export default async function handler(request) {
   }
 
 
+
+// ── Index ni kanalga saqlash ──
+async function saveIndex(index) {
+  try {
+    const fileContent = JSON.stringify(index, null, 2);
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+    const body = [
+      '--' + boundary,
+      'Content-Disposition: form-data; name="chat_id"',
+      '',
+      CHANNEL_ID,
+      '--' + boundary,
+      'Content-Disposition: form-data; name="document"; filename="index.json"',
+      'Content-Type: application/json',
+      '',
+      fileContent,
+      '--' + boundary,
+      'Content-Disposition: form-data; name="caption"',
+      '',
+      '📋 INDEX | ' + new Date().toISOString().slice(0,16),
+      '--' + boundary,
+      'Content-Disposition: form-data; name="disable_notification"',
+      '',
+      'true',
+      '--' + boundary + '--',
+    ].join('\r\n');
+
+    const res = await fetch(`${TG}/sendDocument`, {
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+      body,
+    });
+    const data = await res.json();
+
+    // Pinlash
+    if (data.ok) {
+      await tgPost('pinChatMessage', {
+        chat_id: CHANNEL_ID,
+        message_id: data.result.message_id,
+        disable_notification: true,
+      });
+    }
+    return data.ok;
+  } catch (e) {
+    console.error('saveIndex error:', e);
+    return false;
+  }
+}
+
+
+  // ── test/create ──
+  if (ep === 'test/create') {
+    let body = {};
+    try { body = await request.json(); } catch {}
+
+    const { authorId, accessCode, title, description, subject, category,
+            visibility, timeLimit, passScore, shuffleQuestions, showResult,
+            questionCount, authorName, questions } = body;
+
+    if (!title) return jsonResp({ error: 'Title kerak' }, 400);
+
+    // Unique test ID
+    const tid = Math.random().toString(36).slice(2,6).toUpperCase() +
+                Math.random().toString(36).slice(2,6).toUpperCase();
+    const code = accessCode || Math.random().toString(36).slice(2,8).toUpperCase();
+    const now  = new Date().toISOString();
+
+    const testDoc = {
+      test_id:           tid,
+      creator_id:        authorId || 0,
+      creator_name:      authorName || '',
+      title:             title || '',
+      description:       description || '',
+      category:          category || subject || 'other',
+      visibility:        visibility || 'public',
+      time_limit:        timeLimit  || 0,
+      poll_time:         timeLimit  || 0,
+      passing_score:     passScore  || 60,
+      max_attempts:      10,
+      question_count:    questionCount || (questions?.length || 0),
+      access_code:       code,
+      shuffle_questions: !!shuffleQuestions,
+      show_result:       showResult !== false,
+      solve_count:       0,
+      avg_score:         0,
+      is_active:         true,
+      is_paused:         false,
+      created_at:        now,
+      questions:         questions || [],
+      source:            'web',
+    };
+
+    // Telegram kanalga JSON fayl yuborish
+    const fileContent = JSON.stringify(testDoc, null, 2);
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+    const body_ = [
+      '--' + boundary,
+      'Content-Disposition: form-data; name="chat_id"',
+      '',
+      CHANNEL_ID,
+      '--' + boundary,
+      \`Content-Disposition: form-data; name="document"; filename="test_\${tid}.json"\`,
+      'Content-Type: application/json',
+      '',
+      fileContent,
+      '--' + boundary,
+      'Content-Disposition: form-data; name="caption"',
+      '',
+      \`📝 TEST | \${title} | \${tid} | web\`,
+      '--' + boundary + '--',
+    ].join('\r\n');
+
+    const tgRes = await fetch(\`\${TG}/sendDocument\`, {
+      method: 'POST',
+      headers: { 'Content-Type': \`multipart/form-data; boundary=\${boundary}\` },
+      body: body_,
+    });
+    const tgData = await tgRes.json();
+
+    if (!tgData.ok) {
+      return jsonResp({ error: 'Kanal ga yuborishda xato: ' + tgData.description }, 500);
+    }
+
+    const msgId = tgData.result.message_id;
+
+    // Index ni yangilash
+    const index = await getIndex();
+    if (index) {
+      // Meta ga qo'shish
+      const meta = { ...testDoc };
+      delete meta.questions;
+      (index.tests_meta = index.tests_meta || []).unshift(meta);
+      index[\`test_\${tid}\`] = msgId;
+
+      // Yangilangan indexni kanalga yuborish
+      await saveIndex(index);
+      _indexCache = index;
+      _indexCacheTs = Date.now();
+    }
+
+    return jsonResp({ id: tid, test_id: tid, accessCode: code, ok: true });
+  }
+
+  // ── test/{id}/questions (GET) ──
+  if (ep.match(/^test\/[^\/]+\/questions$/) && request.method === 'GET') {
+    const tid = ep.split('/')[1];
+    const index = await getIndex();
+    const msgId = index?.[\`test_\${tid}\`];
+    if (!msgId) return jsonResp([]);
+    const full = await getTestFull(msgId);
+    return jsonResp(full?.questions || []);
+  }
+
+  // ── test/{id}/questions (POST) — savollarni saqlash ──
+  if (ep.match(/^test\/[^\/]+\/questions$/) && request.method === 'POST') {
+    const tid = ep.split('/')[1];
+    let body = {};
+    try { body = await request.json(); } catch {}
+    const questions = body.questions || [];
+
+    const index = await getIndex();
+    if (!index) return jsonResp({ error: 'Index topilmadi' });
+    const msgId = index[\`test_\${tid}\`];
+    if (!msgId) return jsonResp({ error: 'Test topilmadi' });
+
+    // Eski test faylini yuklab, questions ni yangilab qayta yuboring
+    const old = await getTestFull(msgId);
+    if (!old) return jsonResp({ error: 'Test yuklanmadi' });
+
+    const updated = { ...old, questions, question_count: questions.length };
+    const meta = (index.tests_meta || []).find(t => t.test_id === tid);
+    if (meta) meta.question_count = questions.length;
+
+    const fileContent = JSON.stringify(updated, null, 2);
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+    const bodyStr = [
+      '--' + boundary,
+      'Content-Disposition: form-data; name="chat_id"',
+      '',
+      CHANNEL_ID,
+      '--' + boundary,
+      \`Content-Disposition: form-data; name="document"; filename="test_\${tid}.json"\`,
+      'Content-Type: application/json',
+      '',
+      fileContent,
+      '--' + boundary,
+      'Content-Disposition: form-data; name="caption"',
+      '',
+      \`📝 TEST_UPDATE | \${tid}\`,
+      '--' + boundary + '--',
+    ].join('\r\n');
+
+    const tgRes = await fetch(\`\${TG}/sendDocument\`, {
+      method: 'POST',
+      headers: { 'Content-Type': \`multipart/form-data; boundary=\${boundary}\` },
+      body: bodyStr,
+    });
+    const tgData = await tgRes.json();
+    if (tgData.ok) {
+      index[\`test_\${tid}\`] = tgData.result.message_id;
+      await saveIndex(index);
+      _indexCache = index;
+    }
+
+    return jsonResp({ ok: true, question_count: questions.length });
+  }
+
+  // ── test/{id}/update ──
+  if (ep.match(/^test\/[^\/]+\/update$/) && request.method === 'POST') {
+    const tid = ep.split('/')[1];
+    let body = {};
+    try { body = await request.json(); } catch {}
+
+    const index = await getIndex();
+    if (!index) return jsonResp({ error: 'Index topilmadi' });
+
+    // Meta ni yangilash
+    const meta = (index.tests_meta || []).find(t => t.test_id === tid);
+    if (meta) {
+      Object.assign(meta, {
+        title:          body.title       || meta.title,
+        description:    body.description || meta.description,
+        category:       body.subject     || body.category || meta.category,
+        visibility:     body.visibility  || meta.visibility,
+        time_limit:     body.timeLimit   || meta.time_limit,
+        passing_score:  body.passScore   || meta.passing_score,
+      });
+      await saveIndex(index);
+      _indexCache = index;
+    }
+
+    return jsonResp({ ok: true });
+  }
+
+  // ── test/{id}/delete ──
+  if (ep.match(/^test\/[^\/]+\/delete$/) && request.method === 'POST') {
+    const tid = ep.split('/')[1];
+    const index = await getIndex();
+    if (!index) return jsonResp({ error: 'Index topilmadi' });
+
+    index.tests_meta = (index.tests_meta || []).filter(t => t.test_id !== tid);
+    delete index[\`test_\${tid}\`];
+    await saveIndex(index);
+    _indexCache = index;
+    _indexCacheTs = Date.now();
+
+    return jsonResp({ ok: true, deleted: true });
+  }
+
   // ── admin/tests — barcha testlar (admin uchun) ──
   if (ep === 'admin/tests') {
     const s = getSession(request);
