@@ -202,7 +202,17 @@ const DB = {
     try { return await GET('/api/tests'); } catch { return []; }
   },
   async getTestByCode(code) {
-    try { return await GET('/api/test/code/' + encodeURIComponent(code.toUpperCase().trim())); }
+    const c = code.toUpperCase().trim();
+    // OTP format: TESTID:TIMESTAMP:HASH
+    if (c.includes(':')) {
+      try {
+        const res = await POST('/api/otp/verify', { code: c, uid: TGAuth.get()?.id || 0 });
+        if (res?.ok) return { id: res.test_id, test_id: res.test_id, ...(res.meta||{}) };
+        throw new Error(res?.error || "Noto'g'ri kod");
+      } catch(e) { throw e; }
+    }
+    // Oddiy test ID
+    try { return await GET('/api/test/' + c + '/meta'); }
     catch { return null; }
   },
   async createTest(data, authorId) {
