@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TestPro — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;
+  background:linear-gradient(135deg,#f5f3ff 0%,#fce7f3 50%,#eff6ff 100%);color:#1a1a2e}
+[data-theme="dark"] body{background:linear-gradient(135deg,#0d0820,#140a20,#080d1a);color:#e8e0ff}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;height:54px;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;padding:0 1rem;
+  background:rgba(245,243,255,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(124,58,237,.1)}
+[data-theme="dark"] .nav{background:rgba(13,8,32,.92)}
+.logo{font-family:'Unbounded',sans-serif;font-size:1.1rem;font-weight:900;cursor:pointer;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-r{display:flex;gap:.4rem;align-items:center}
+.nbtn{padding:.38rem .8rem;border-radius:8px;border:1.5px solid rgba(0,0,0,.1);
+  background:#fff;cursor:pointer;font-size:.78rem;font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;color:#374151;transition:all .2s}
+[data-theme="dark"] .nbtn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12);color:#c4b5fd}
+.nbtn:hover{border-color:#7c3aed;color:#7c3aed}
+.tbtn{width:31px;height:31px;border-radius:8px;border:1.5px solid rgba(0,0,0,.1);
+  background:#fff;cursor:pointer;font-size:.82rem}
+[data-theme="dark"] .tbtn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
+
+/* PAGE */
+.page{padding:70px 1rem 3rem;max-width:820px;margin:0 auto}
+.page-h{font-family:'Unbounded',sans-serif;font-size:1.2rem;font-weight:900;
+  color:#d97706;margin-bottom:1.25rem;display:flex;align-items:center;gap:.45rem}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem;margin-bottom:1.2rem}
+.sbox{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:.9rem;text-align:center}
+[data-theme="dark"] .sbox{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.09)}
+.sv{font-family:'Unbounded',sans-serif;font-size:1.5rem;font-weight:900;color:#7c3aed}
+.sl{font-size:.68rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-top:.1rem}
+
+/* TABS */
+.tabs{display:flex;gap:.45rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.tab{padding:.5rem 1rem;border-radius:10px;border:1.5px solid rgba(0,0,0,.1);
+  background:#fff;cursor:pointer;font-size:.8rem;font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;color:#6b7280;transition:all .2s}
+[data-theme="dark"] .tab{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);color:#9ca3af}
+.tab.on{border-color:#7c3aed;background:rgba(124,58,237,.1);color:#7c3aed}
+
+/* ITEM */
+.item{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:13px;
+  padding:.82rem .9rem;margin-bottom:.5rem;
+  display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap}
+[data-theme="dark"] .item{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.09)}
+.item-l{display:flex;align-items:center;gap:.7rem;flex:1;min-width:0}
+.ava{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:1rem;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden}
+.ava img{width:100%;height:100%;object-fit:cover}
+.item-name{font-size:.88rem;font-weight:700;color:#111827;margin-bottom:.15rem;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-theme="dark"] .item-name{color:#e5e7eb}
+.item-meta{font-size:.7rem;color:#9ca3af}
+.itag{display:inline-block;padding:.14rem .48rem;border-radius:99px;
+  font-size:.63rem;font-weight:700;margin-left:.3rem}
+.t-a{background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.2)}
+.t-u{background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.2)}
+.t-pub{background:rgba(16,185,129,.1);color:#059669}
+.t-priv{background:rgba(245,158,11,.1);color:#d97706}
+.act-wrap{display:flex;gap:.4rem;flex-shrink:0}
+.abtn{padding:.32rem .65rem;border-radius:8px;border:none;cursor:pointer;
+  font-size:.73rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.abtn-p{background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.2)}
+.abtn-p:hover{background:rgba(124,58,237,.2)}
+.abtn-d{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.abtn-d:hover{background:rgba(239,68,68,.2)}
+.abtn-a{background:rgba(245,158,11,.1);color:#d97706;border:1px solid rgba(245,158,11,.2)}
+.abtn-g{background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.2)}
+.abtn-g:hover{background:rgba(16,185,129,.2)}
+
+/* SEARCH */
+.srch{width:100%;padding:.55rem .9rem;border-radius:10px;border:1.5px solid rgba(0,0,0,.1);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;margin-bottom:.85rem;
+  background:#fff;color:#111;outline:none;transition:border .2s}
+[data-theme="dark"] .srch{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);color:#e5e7eb}
+.srch:focus{border-color:#7c3aed}
+
+/* MISC */
+.sp{width:24px;height:24px;border:2.5px solid rgba(124,58,237,.2);
+  border-top-color:#7c3aed;border-radius:50%;animation:spin .7s linear infinite;margin:1.5rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emp{text-align:center;padding:1.5rem;color:#9ca3af;font-size:.82rem}
+.toast{position:fixed;bottom:1.3rem;left:50%;transform:translateX(-50%);
+  background:rgba(10,5,25,.88);color:#fff;padding:.62rem 1.1rem;
+  border-radius:12px;font-size:.8rem;font-weight:600;z-index:9999;backdrop-filter:blur(12px)}
+
+/* AUTH SCREEN */
+.auth-card{background:#fff;border-radius:20px;padding:2rem;max-width:340px;
+  margin:6rem auto;border:1px solid rgba(0,0,0,.07);text-align:center}
+[data-theme="dark"] .auth-card{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
+.auth-card h2{font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:900;
+  color:#7c3aed;margin-bottom:1rem}
+.auth-inp{width:100%;padding:.7rem 1rem;border-radius:10px;border:1.5px solid rgba(0,0,0,.1);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;margin-bottom:.7rem;
+  background:#fff;color:#111;outline:none;text-align:center}
+[data-theme="dark"] .auth-inp{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);color:#e5e7eb}
+.auth-btn{width:100%;padding:.75rem;border-radius:12px;border:none;cursor:pointer;
+  font-family:'Unbounded',sans-serif;font-size:.85rem;font-weight:800;color:#fff;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);transition:opacity .2s}
+.auth-btn:hover{opacity:.88}
+.auth-hint{font-size:.72rem;color:#9ca3af;margin-top:.6rem}
+
+/* PAUSE tag */
+.t-pause{background:rgba(239,68,68,.1);color:#ef4444}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="logo" onclick="goTo('index.html')">TestPro</div>
+  <div class="nav-r">
+    <button class="nbtn" onclick="goTo('dashboard.html')">← Dashboard</button>
+    <button class="tbtn" id="tbtn">🌙</button>
+  </div>
+</nav>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" style="display:none" class="page">
+  <div class="auth-card">
+    <div style="font-size:2rem;margin-bottom:.5rem">👑</div>
+    <h2>Admin kirish</h2>
+    <input class="auth-inp" id="auth-id" type="number" placeholder="Telegram ID" inputmode="numeric"/>
+    <input class="auth-inp" id="auth-pass" type="password" placeholder="Parol"/>
+    <button class="auth-btn" onclick="doLogin()">Kirish</button>
+    <div class="auth-hint">ID ni bilmasangiz botga /id yuboring</div>
+  </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div id="main-screen" style="display:none" class="page">
+  <div class="page-h">👑 Admin Panel</div>
+
+  <div class="stats" id="stats-wrap">
+    <div class="sbox"><div class="sv" id="cnt-tests">…</div><div class="sl">Testlar</div></div>
+    <div class="sbox"><div class="sv" id="cnt-solve">…</div><div class="sl">Jami yechilgan</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" id="tab-tests" onclick="switchTab('tests')">📝 Testlar</button>
+    <button class="tab" id="tab-stats" onclick="switchTab('stats')">📊 Statistika</button>
+  </div>
+
+  <!-- TESTS PANEL -->
+  <div id="panel-tests">
+    <input class="srch" id="srch-tests" placeholder="🔍 Test qidirish..." oninput="filterTests()"/>
+    <div id="tests-list"><div class="sp"></div></div>
+  </div>
+
+  <!-- STATS PANEL -->
+  <div id="panel-stats" style="display:none">
+    <div id="stats-summary" class="stats" style="grid-template-columns:repeat(2,1fr);margin-bottom:1rem"></div>
+    <div id="chart-timeline" style="margin-bottom:1.2rem"></div>
+    <div id="chart-categories" style="margin-bottom:1.2rem"></div>
+    <div id="top-tests-wrap" style="margin-bottom:1.2rem"></div>
+    <div style="margin-top:1rem;text-align:center">
+      <button class="abtn abtn-d" style="padding:.5rem 1.2rem;font-size:.8rem" onclick="doLogout()">🚪 Chiqish</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+/* ── THEME ── */
+const T={
+  get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
+  set(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tp_theme',t);
+    document.getElementById('tbtn').textContent=t==='dark'?'☀️':'🌙'},
+  toggle(){this.set(this.get()==='dark'?'light':'dark')}
+};
+T.set(T.get());
+document.getElementById('tbtn').onclick=()=>T.toggle();
+
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function goTo(p){window.location.href=p;}
+function toast(msg){
+  const el=document.createElement('div');el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
+}
+
+/* ── AVATAR ── */
+function avatarEl(name, photoUrl) {
+  const colors=['#7c3aed','#ec4899','#059669','#d97706','#2563eb','#dc2626'];
+  const col = colors[(name||'?').charCodeAt(0) % colors.length];
+  const letter = (name||'?')[0].toUpperCase();
+  if (photoUrl) {
+    return `<div class="ava"><img src="${photoUrl}" onerror="this.parentElement.innerHTML='${letter}';this.parentElement.style.background='${col}'"/></div>`;
+  }
+  return `<div class="ava" style="background:${col}">${letter}</div>`;
+}
+
+/* ── SESSION ── */
+const SESSION_KEY = 'tp_admin_session';
+function getSession(){try{return JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch{return null;}}
+function setSession(s){localStorage.setItem(SESSION_KEY,JSON.stringify(s));}
+function clearSession(){localStorage.removeItem(SESSION_KEY);}
+
+/* ── AUTH ── */
+async function doLogin(){
+  const uid  = document.getElementById('auth-id').value.trim();
+  const pass = document.getElementById('auth-pass').value.trim();
+  if(!uid||!pass){toast('❌ ID va parolni kiriting');return;}
+
+  try{
+    const res = await fetch(`/api/proxy?endpoint=admin/login`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({uid, password:pass})
+    });
+    const data = await res.json();
+    if(data.ok){
+      // Telegram dan ism olish
+      const userRes = await fetch(`/api/proxy?endpoint=user/${uid}`);
+      const user = await userRes.json();
+      setSession({uid, name: user.name||'Admin', is_admin:true});
+      showMain();
+    } else {
+      toast('❌ '+(data.error||'Xato'));
+    }
+  } catch(e){toast('❌ Ulanish xatosi');}
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.getElementById('auth-screen').style.display!=='none') doLogin();
+});
+
+/* ── INIT ── */
+(async()=>{
+  const s = getSession();
+  if(s?.is_admin){
+    showMain();
+  } else {
+    document.getElementById('auth-screen').style.display='block';
+  }
+})();
+
+async function showMain(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('main-screen').style.display='block';
+  await loadTests();
+}
+
+/* ── TABS ── */
+function switchTab(t){
+  document.getElementById('panel-tests').style.display=t==='tests'?'block':'none';
+  document.getElementById('panel-stats').style.display=t==='stats'?'block':'none';
+  document.getElementById('tab-tests').classList.toggle('on',t==='tests');
+  document.getElementById('tab-stats').classList.toggle('on',t==='stats');
+  if(t==='stats') renderStats();
+}
+
+/* ── TESTS ── */
+let allTests=[], filteredTests=[];
+
+async function loadTests(){
+  try{
+    // index dan barcha testlarni olamiz (admin uchun)
+    const res = await fetch('/api/proxy?endpoint=admin/tests');
+    const data = await res.json();
+
+    if(Array.isArray(data)){
+      allTests = data;
+    } else {
+      // Fallback — public testlar
+      const pub = await fetch('/api/proxy?endpoint=tests/public');
+      allTests = await pub.json();
+    }
+
+    filteredTests = [...allTests];
+    document.getElementById('cnt-tests').textContent = allTests.length;
+    const totalSolve = allTests.reduce((s,t)=>s+(t.solve_count||0),0);
+    document.getElementById('cnt-solve').textContent = totalSolve;
+    renderTests();
+  } catch(e){
+    document.getElementById('tests-list').innerHTML='<div class="emp">❌ Yuklanmadi</div>';
+  }
+}
+
+function filterTests(){
+  const q = document.getElementById('srch-tests').value.toLowerCase();
+  filteredTests = q ? allTests.filter(t=>(t.title||'').toLowerCase().includes(q)) : [...allTests];
+  renderTests();
+}
+
+function renderTests(){
+  const wrap = document.getElementById('tests-list');
+  if(!filteredTests.length){wrap.innerHTML='<div class="emp">Test topilmadi</div>';return;}
+  wrap.innerHTML = filteredTests.map(t=>{
+    const qc    = t.question_count||t.questionCount||0;
+    const sc    = t.solve_count||t.attempts||0;
+    const avg   = t.avg_score||t.averageScore||0;
+    const author= t.creator_name||t.authorName||'Anonim';
+    const visTag= t.visibility==='public'
+      ? '<span class="itag t-pub">🌐 Ommaviy</span>'
+      : '<span class="itag t-priv">🔒 Maxsus</span>';
+    const pauseTag= t.is_paused ? '<span class="itag t-pause">⏸ Pause</span>' : '';
+    const date  = t.created_at ? new Date(t.created_at).toLocaleDateString('uz-UZ',{day:'numeric',month:'short',year:'numeric'}) : '';
+    return `
+    <div class="item">
+      <div class="item-l">
+        ${avatarEl(t.title)}
+        <div style="flex:1;min-width:0">
+          <div class="item-name">${esc(t.title||'?')}${visTag}${pauseTag}</div>
+          <div class="item-meta">
+            👤 ${esc(author)} &nbsp;·&nbsp;
+            📝 ${qc} savol &nbsp;·&nbsp;
+            ▶ ${sc} marta
+            ${avg?` &nbsp;·&nbsp; ⭐ ${Math.round(avg)}%`:''}
+            ${date?` &nbsp;·&nbsp; 📅 ${date}`:''}
+          </div>
+        </div>
+      </div>
+      <div class="act-wrap">
+        <button class="abtn abtn-p" onclick="goTo('test.html?id=${t.id||t.test_id}')">▶️ Ochish</button>
+        ${t.is_paused
+          ? `<button class="abtn abtn-g" onclick="adminPause('${t.id||t.test_id}',false)">▶ Davom</button>`
+          : `<button class="abtn abtn-a" onclick="adminPause('${t.id||t.test_id}',true)">⏸ Pause</button>`}
+        <button class="abtn abtn-d" onclick="adminDel('${t.id||t.test_id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── STATS ── */
+function renderStats(){
+  const wrap = document.getElementById('stats-detail');
+  if(!allTests.length){wrap.innerHTML='<div class="emp">Ma\'lumot yo\'q</div>';return;}
+
+  const totalSolve = allTests.reduce((s,t)=>s+(t.solve_count||0),0);
+  const avgAll     = allTests.filter(t=>t.avg_score).reduce((s,t,_,a)=>s+(t.avg_score/a.length),0);
+  const pubCount   = allTests.filter(t=>t.visibility==='public').length;
+  const topTest    = [...allTests].sort((a,b)=>(b.solve_count||0)-(a.solve_count||0))[0];
+
+  wrap.innerHTML=`
+    <div class="stats" style="grid-template-columns:repeat(2,1fr)">
+      <div class="sbox"><div class="sv">${allTests.length}</div><div class="sl">Jami testlar</div></div>
+      <div class="sbox"><div class="sv">${pubCount}</div><div class="sl">Ommaviy</div></div>
+      <div class="sbox"><div class="sv">${totalSolve}</div><div class="sl">Jami yechilgan</div></div>
+      <div class="sbox"><div class="sv">${avgAll?Math.round(avgAll)+'%':'—'}</div><div class="sl">O'rtacha ball</div></div>
+    </div>
+    ${topTest?`
+    <div style="margin-top:.5rem">
+      <div style="font-size:.75rem;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">🏆 Eng mashhur test</div>
+      <div class="item">
+        <div class="item-l">
+          ${avatarEl(topTest.title)}
+          <div>
+            <div class="item-name">${esc(topTest.title)}</div>
+            <div class="item-meta">▶ ${topTest.solve_count||0} marta · ⭐ ${Math.round(topTest.avg_score||0)}%</div>
+          </div>
+        </div>
+        <button class="abtn abtn-p" onclick="goTo('test.html?id=${topTest.id||topTest.test_id}')">▶️</button>
+      </div>
+    </div>`:''}
+
+    <div style="margin-top:1rem;text-align:center">
+      <button class="abtn abtn-d" style="padding:.5rem 1.2rem;font-size:.8rem" onclick="doLogout()">🚪 Chiqish</button>
+    </div>`;
+}
+
+/* ── ACTIONS ── */
+window.adminPause = async(id, pause)=>{
+  try{
+    const res = await fetch(`/api/proxy?endpoint=admin/test/${id}/pause`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({pause})
+    });
+    const d = await res.json();
+    if(d.ok){
+      const t = allTests.find(x=>(x.id||x.test_id)===id);
+      if(t) t.is_paused = pause;
+      filteredTests = [...allTests];
+      renderTests();
+      toast(pause?'⏸ Pause qilindi':'▶ Davom ettirildi');
+    } else { toast('❌ '+(d.error||'Xato')); }
+  } catch{ toast('❌ Ulanish xatosi'); }
+};
+
+window.adminDel = async(id)=>{
+  if(!confirm('Testni o\'chirishni xohlaysizmi?')) return;
+  try{
+    const res = await fetch(`/api/proxy?endpoint=admin/test/${id}/delete`,{method:'POST'});
+    const d = await res.json();
+    if(d.ok||d.deleted){
+      allTests = allTests.filter(t=>(t.id||t.test_id)!==id);
+      filteredTests = [...allTests];
+      document.getElementById('cnt-tests').textContent = allTests.length;
+      renderTests();
+      toast('✅ O\'chirildi');
+    } else { toast('❌ '+(d.error||'Xato')); }
+  } catch{ toast('❌ Ulanish xatosi'); }
+};
+
+function doLogout(){
+  clearSession();
+  location.reload();
+}
+</script>
+</body>
+</html>
