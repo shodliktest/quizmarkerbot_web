@@ -173,7 +173,7 @@ const ICON={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹�
 
     /* Group by subject */
     const grps={};
-    pub.forEach(t=>{const k=t.subject||'other';if(!grps[k])grps[k]=[];grps[k].push(t);});
+    pub.forEach(t=>{const k=t.category||t.subject||'other';if(!grps[k])grps[k]=[];grps[k].push(t);});
 
     wrap.innerHTML='';
     Object.entries(grps).forEach(([subj,arr])=>{
@@ -187,7 +187,7 @@ const ICON={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹�
           <div class="grp-l">
             <div class="grp-icon">${icon}</div>
             <div>
-              <div class="grp-nm">${esc(sub.label)}</div>
+              <div class="grp-nm">${esc(sub.label||subj)}</div>
               <div class="grp-ct">${arr.length} ta test</div>
             </div>
           </div>
@@ -203,12 +203,12 @@ const ICON={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹�
         c.innerHTML=`
           <div class="card-icon">${icon}</div>
           <div class="card-title">${esc(t.title)}</div>
-          <div class="card-author">${esc(t.authorName||'Anonim')}</div>
+          <div class="card-author">${esc(t.creator_name||t.authorName||'Anonim')}</div>
           <div class="chips">
-            <span class="ch">📝 ${t.questionCount||0}</span>
-            <span class="ch">👁 ${t.attempts||0}</span>
-            ${t.timeLimit?`<span class="ch">⏱ ${t.timeLimit}daq</span>`:''}
-            ${t.averageScore?`<span class="ch">⭐${t.averageScore}%</span>`:''}
+            <span class="ch">📝 ${t.question_count||t.questionCount||0}</span>
+            <span class="ch">👁 ${t.solve_count||t.attempts||0}</span>
+            ${(t.time_limit||t.timeLimit)?`<span class="ch">⏱ ${t.time_limit||t.timeLimit}daq</span>`:''}
+            ${(t.avg_score||t.averageScore)?`<span class="ch">⭐${Math.round(t.avg_score||t.averageScore)}%</span>`:''}
           </div>
           <button class="card-btn">Boshlash →</button>`;
         scroll.appendChild(c);
