@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>TestPro — Kirish</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -162,6 +163,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;
       <div class="prev-sub"  id="prev-sub"></div>
     </div>
 
+    <!-- Admin parol (faqat admin uchun) -->
+    <div class="input-area" id="admin-area" style="display:none">
+      <label class="input-label" for="pass-input">🔐 Admin paroli</label>
+      <input class="id-input" id="pass-input" type="password"
+             placeholder="Parolni kiriting" autocomplete="off"
+             style="letter-spacing:0;font-size:1rem"/>
+    </div>
+
     <div class="err" id="err-msg"></div>
 
     <button class="btn" id="login-btn" disabled>Kirish</button>
@@ -172,6 +181,32 @@ body{font-family:'Plus Jakarta Sans',sans-serif;
 
 <script src="js/api.js"></script>
 <script>
+/* ── Telegram Web App — avtomatik login ── */
+(function(){
+  const tg = window.Telegram?.WebApp;
+  if (!tg || !tg.initDataUnsafe?.user) return;
+
+  const u = tg.initDataUnsafe.user;
+  tg.ready();
+  tg.expand();
+
+  // Mini App ichida — avtomatik login
+  TGAuth.save({
+    id:         u.id,
+    first_name: u.first_name || '',
+    last_name:  u.last_name  || '',
+    username:   u.username   || '',
+    name:       [u.first_name, u.last_name].filter(Boolean).join(' ') || `User${u.id}`,
+    is_admin:   false,
+    _tg_id:     u.id,
+    _via_webapp: true
+  });
+
+  // Admin tekshirish kerak — parol so'ramasdan faqat admin panel uchun
+  const next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
+  window.location.href = next;
+})();
+
 /* ── Theme ── */
 const TH={
   get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
@@ -226,10 +261,14 @@ let   lookupTimer = null;
 
 function showErr(msg){ errEl.textContent=msg; errEl.classList.add('show'); }
 function hideErr()   { errEl.classList.remove('show'); }
-function showPrev(name,sub){
-  document.getElementById('prev-name').textContent='✅ '+name;
-  document.getElementById('prev-sub').textContent=sub||'';
+function showPrev(name, sub, isAdmin) {
+  document.getElementById('prev-name').textContent = (isAdmin ? '👑 ' : '✅ ') + name;
+  document.getElementById('prev-sub').textContent  = sub || '';
   prevEl.classList.add('show');
+
+  // Admin bo'lsa parol maydoni ko'rinsin
+  document.getElementById('admin-area').style.display = isAdmin ? 'block' : 'none';
+  window._isAdmin = isAdmin || false;
 }
 function hidePrev(){ prevEl.classList.remove('show'); }
 
@@ -244,49 +283,74 @@ inp.addEventListener('input', ()=>{
   }
 });
 
-async function lookupUser(uid){
-  try{
-    const res = await fetch(`${API_URL}/?endpoint=user/${uid}`);
+async function lookupUser(uid) {
+  try {
+    const res  = await fetch(`${API_URL}?endpoint=user/${uid}`);
     const data = await res.json();
-    if(data && data.name){
-      const uname = data.username ? '@'+data.username : 'Telegram foydalanuvchi';
-      showPrev(data.name, uname);
+    if (data && data.name) {
+      const uname = data.username ? '@' + data.username : 'Telegram foydalanuvchi';
+      showPrev(data.name, uname, data.is_admin || false);
       hideErr();
     }
-  } catch(e){ /* silent */ }
+  } catch(e) { /* silent */ }
 }
 
 inp.addEventListener('keydown', e=>{ if(e.key==='Enter' && !btn.disabled) doLogin(); });
 btn.onclick = doLogin;
 
-async function doLogin(){
+async function doLogin() {
   const uid = inp.value.trim();
-  if(!uid){ showErr('ID ni kiriting'); return; }
+  if (!uid) { showErr('ID ni kiriting'); return; }
 
   btn.disabled = true;
   btn.innerHTML = '<span class="sp"></span>Tekshirilmoqda...';
   hideErr();
 
-  try{
-    const res  = await fetch(`${API_URL}/?endpoint=user/${uid}`);
+  try {
+    const res  = await fetch(`${API_URL}?endpoint=user/${uid}`);
     const data = await res.json();
 
-    if(data && data.name){
-      // Foydalanuvchini saqlash
+    if (data && data.name) {
+      // Admin bo'lsa parol tekshir
+      if (data.is_admin) {
+        const pass = document.getElementById('pass-input').value.trim();
+        if (!pass) {
+          showErr('👑 Admin hisobi — parolni kiriting');
+          document.getElementById('admin-area').style.display = 'block';
+          document.getElementById('pass-input').focus();
+          btn.disabled = false;
+          btn.textContent = 'Kirish';
+          return;
+        }
+        const authRes  = await fetch(`${API_URL}?endpoint=admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: parseInt(uid), password: pass })
+        });
+        const authData = await authRes.json();
+        if (!authData.ok) {
+          showErr('❌ ' + (authData.error || "Parol noto'g'ri"));
+          btn.disabled = false;
+          btn.textContent = 'Kirish';
+          return;
+        }
+      }
+
       TGAuth.save({
         id:         parseInt(uid),
         first_name: data.name,
         username:   data.username || '',
         name:       data.name,
+        is_admin:   data.is_admin || false,
         _tg_id:     parseInt(uid)
       });
       goToDash();
     } else {
-      showErr('❌ Bu ID topilmadi. Botda /id buyrug\'ini yuboring.');
+      showErr("❌ Bu ID topilmadi. Botda /id buyrug'ini yuboring.");
       btn.disabled = false;
       btn.textContent = 'Kirish';
     }
-  } catch(e){
+  } catch(e) {
     showErr('⚠️ Server bilan bog\'lanishda xato. Keyinroq urinib ko\'ring.');
     btn.disabled = false;
     btn.textContent = 'Kirish';
