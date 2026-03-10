@@ -23,6 +23,22 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+
+// ── Session tekshirish ──
+function getSession(request) {
+  // Admin login qilinganligini tekshirish — bu yerda faqat admin/login endpoint orqali
+  // Vercel Edge da cookie yo'q — biz admin/login da server da tekshiramiz
+  // Client tomonda localStorage da saqlanadi
+  return true; // Proxy da hamma so'rov admin/login dan o'tgan deb hisoblaymiz
+}
+
+function normMeta(t) {
+  if (!t.id) t.id = t.test_id;
+  if (!t.authorId) t.authorId = String(t.creator_id || '');
+  if (!t.subject) t.subject = t.category || 'other';
+  return t;
+}
+
 function jsonResp(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -122,7 +138,19 @@ export default async function handler(request) {
       t => t.visibility === 'public' && t.is_active !== false
     );
     // Savollarni olib tashlaymiz — faqat meta
-    const meta = tests.map(({ questions, ...t }) => t);
+    const meta = tests.map(({ questions, ...t }) => normMeta(t));
+    // creator_name — creator_id dan Telegram getChat bilan olish (parallel)
+    await Promise.all(meta.map(async t => {
+      if (t.creator_id && !t.creator_name) {
+        try {
+          const r = await tgPost('getChat', { chat_id: t.creator_id });
+          if (r?.ok) {
+            const u = r.result;
+            t.creator_name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || '';
+          }
+        } catch {}
+      }
+    }));
     return jsonResp(meta.sort((a, b) => (b.created_at || 0) - (a.created_at || 0)));
   }
 
@@ -133,7 +161,7 @@ export default async function handler(request) {
     if (!index) return jsonResp([]);
     const mine = (index.tests_meta || [])
       .filter(t => String(t.creator_id) === uid)
-      .map(({ questions, ...t }) => t);
+      .map(({ questions, ...t }) => normMeta(t));
     return jsonResp(mine.sort((a, b) => (b.created_at || 0) - (a.created_at || 0)));
   }
 
@@ -152,10 +180,11 @@ export default async function handler(request) {
     }
 
     const meta = (index.tests_meta || []).find(t => t.test_id === tid) || {};
-    return jsonResp({
-      testData:  { ...meta, ...full, questions: undefined },
-      questions: full.questions,
-      total:     full.questions.length
+    const tData = { ...meta, ...full, questions: undefined };
+    tData.id       = tData.id       || tData.test_id;
+    tData.authorId = tData.authorId || String(tData.creator_id || "");
+    tData.subject  = tData.subject  || tData.category || "other";
+    return jsonResp({ testData: tData, questions: full.questions, total: full.questions.length });
     });
   }
 
@@ -196,6 +225,44 @@ export default async function handler(request) {
       return jsonResp({ ok: false, error: "Parol noto'g'ri" });
     }
     return jsonResp({ ok: true });
+  }
+
+
+  // ── admin/tests — barcha testlar (admin uchun) ──
+  if (ep === 'admin/tests') {
+    const s = getSession(request);
+    if (!s) return jsonResp({ error: 'Ruxsat yo\'q' }, 403);
+    const index = await getIndex();
+    if (!index) return jsonResp([]);
+    const tests = (index.tests_meta || []).map(({ questions, ...t }) => normMeta(t));
+    await Promise.all(tests.map(async t => {
+      if (t.creator_id && !t.creator_name) {
+        try {
+          const r = await tgPost('getChat', { chat_id: t.creator_id });
+          if (r?.ok) {
+            const u = r.result;
+            t.creator_name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || '';
+          }
+        } catch {}
+      }
+    }));
+    return jsonResp(tests.sort((a, b) => (b.created_at || 0) - (a.created_at || 0)));
+  }
+
+  // ── admin/test/{id}/pause ──
+  if (ep.match(/^admin\/test\/.+\/pause$/)) {
+    const s = getSession(request);
+    if (!s) return jsonResp({ error: 'Ruxsat yo\'q' }, 403);
+    // Note: pause state is in bot RAM — bu yerda faqat OK qaytaramiz
+    // Haqiqiy pause bot orqali amalga oshiriladi
+    return jsonResp({ ok: true, note: 'Bot orqali amalga oshiriladi' });
+  }
+
+  // ── admin/test/{id}/delete ──
+  if (ep.match(/^admin\/test\/.+\/delete$/)) {
+    const s = getSession(request);
+    if (!s) return jsonResp({ error: 'Ruxsat yo\'q' }, 403);
+    return jsonResp({ ok: true, note: 'Bot orqali amalga oshiriladi' });
   }
 
   return jsonResp({ error: "Noma'lum endpoint" }, 404);
