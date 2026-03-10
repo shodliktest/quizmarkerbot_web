@@ -219,21 +219,30 @@ function showErr(title,msg){
   if(!id){showErr('Test ID yo\'q','URL da ?id= yo\'q');return;}
 
   try{
-    testData=await DB.getTest(id);
-    if(!testData){showErr('Test topilmadi','Bu test mavjud emas yoki o\'chirilgan');return;}
+    // Test va savollarni birga olish (proxy: /api/test/{id}/full)
+    const fullResp = await DB.getTestWithQuestions(id);
+    testData = fullResp?.testData || null;
+    let qs   = fullResp?.questions || [];
+
+    if(!testData||(!testData.test_id&&!testData.id)){
+      showErr('Test topilmadi','Bu test mavjud emas yoki o\'chirilgan');return;
+    }
+    // id normalizatsiya
+    testData.id      = testData.id      || testData.test_id || id;
+    testData.test_id = testData.test_id || testData.id      || id;
 
     /* Access control */
+    const myId = String(CU?.uid||CU?.id||'');
     if(testData.visibility==='private'){
       const unlocked=JSON.parse(localStorage.getItem('tp_unlocked')||'[]');
-      const isOwner=CU&&CU.uid===testData.authorId||String(testData.creator_id||'');
+      const isOwner=myId&&myId===String(testData.creator_id||testData.authorId||'');
       if(!isOwner&&!unlocked.includes(id)){
         let isAdmin=false;
-        if(CU){const p=await DB.getUser(CU.uid).catch(()=>null);isAdmin=p?.role==='admin';}
+        if(CU){const p=await DB.getUser(myId).catch(()=>null);isAdmin=p?.role==='admin'||p?.is_admin;}
         if(!isAdmin){showErr('Ruxsat yo\'q','Bu test shaxsiy. Kod orqali kiring.');return;}
       }
     }
 
-    let qs=await DB.getQuestions(id);
     if(!qs.length){showErr('Savollar yo\'q','Bu testda savol qo\'shilmagan');return;}
     if(testData.shuffle_questions||testData.shuffleQuestions)qs=qs.sort(()=>Math.random()-.5);
     questions=qs;
