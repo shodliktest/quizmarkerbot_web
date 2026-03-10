@@ -32,6 +32,15 @@ function getSession(request) {
   return true; // Proxy da hamma so'rov admin/login dan o'tgan deb hisoblaymiz
 }
 
+
+// SHA256 hash (OTP tekshirish uchun)
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function normMeta(t) {
   if (!t.id) t.id = t.test_id;
   if (!t.authorId) t.authorId = String(t.creator_id || '');
@@ -285,38 +294,40 @@ async function saveIndex(index) {
 
     const { authorId, accessCode, title, description, subject, category,
             visibility, timeLimit, passScore, shuffleQuestions, showResult,
-            questionCount, authorName, questions } = body;
+            questionCount, authorName, questions, difficulty,
+            poll_time, max_attempts } = body;
 
     if (!title) return jsonResp({ error: 'Title kerak' }, 400);
 
-    // Unique test ID
-    const tid = Math.random().toString(36).slice(2,6).toUpperCase() +
-                Math.random().toString(36).slice(2,6).toUpperCase();
-    const code = accessCode || Math.random().toString(36).slice(2,8).toUpperCase();
-    const now  = new Date().toISOString();
+    // UUID kabi 8 belgi (db.py: uuid4()[:8].upper())
+    const tid = Array.from(crypto.getRandomValues(new Uint8Array(4)))
+      .map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+    const now = new Date().toISOString();
 
     const testDoc = {
-      test_id:           tid,
-      creator_id:        authorId || 0,
-      creator_name:      authorName || '',
-      title:             title || '',
+      // db.py create_test bilan TO'LIQ mos
+      test_id:        tid,
+      creator_id:     parseInt(authorId) || 0,
+      creator_name:   authorName || '',
+      title:          title || 'Nomsiz',
+      category:       category || subject || 'Boshqa',
+      difficulty:     difficulty || 'medium',
+      visibility:     visibility || 'public',
+      time_limit:     parseInt(timeLimit)  || 0,
+      poll_time:      parseInt(poll_time)  || 30,
+      passing_score:  parseInt(passScore)  || 60,
+      max_attempts:   parseInt(max_attempts) || 0,
+      questions:      questions || [],
+      question_count: (questions || []).length || parseInt(questionCount) || 0,
+      solve_count:    0,
+      avg_score:      0.0,
+      is_active:      true,
+      is_paused:      false,
+      created_at:     now,
+      // Qo'shimcha sayt maydonlari
       description:       description || '',
-      category:          category || subject || 'other',
-      visibility:        visibility || 'public',
-      time_limit:        timeLimit  || 0,
-      poll_time:         timeLimit  || 0,
-      passing_score:     passScore  || 60,
-      max_attempts:      10,
-      question_count:    questionCount || (questions?.length || 0),
-      access_code:       code,
       shuffle_questions: !!shuffleQuestions,
       show_result:       showResult !== false,
-      solve_count:       0,
-      avg_score:         0,
-      is_active:         true,
-      is_paused:         false,
-      created_at:        now,
-      questions:         questions || [],
       source:            'web',
     };
 
@@ -512,6 +523,178 @@ async function saveIndex(index) {
     const s = getSession(request);
     if (!s) return jsonResp({ error: 'Ruxsat yo\'q' }, 403);
     return jsonResp({ ok: true, note: 'Bot orqali amalga oshiriladi' });
+  }
+
+
+  // ── otp/generate — maxsus test uchun OTP kod (botga yuborish orqali olindi)
+  // Bu endpoint proxy da emas, botda ishlaydi.
+  // Sayt foydalanuvchiga botga /getcode TEST_ID yuboring deydi.
+
+  // ── otp/verify — foydalanuvchi kodni saytga kiritadi
+  if (ep === 'otp/verify') {
+    let body = {};
+    try { body = await request.json(); } catch {}
+    const { code, uid } = body;
+    if (!code) return jsonResp({ ok: false, error: 'Kod kerak' });
+
+    // Kodlar Vercel KV da yo'q — botdan kelgan kodlarni in-memory saqlab bo'lmaydi
+    // Yechim: kod = "TESTID:TIMESTAMP:HASH" formatida — proxy o'zi tekshiradi
+    const parts = (code || '').toUpperCase().split(':');
+    if (parts.length === 3) {
+      const [testId, ts, hash] = parts;
+      const age = Date.now() - parseInt(ts);
+      if (age > 600000) return jsonResp({ ok: false, error: 'Kod muddati tugagan' });
+      // Hash tekshirish
+      const expected = await sha256(`${testId}:${ts}:${BOT_TOKEN.slice(-8)}`);
+      if (expected.slice(0, 8) === hash) {
+        const index = await getIndex();
+        const meta = (index?.tests_meta || []).find(t => t.test_id === testId);
+        return jsonResp({ ok: true, test_id: testId, meta: meta || {} });
+      }
+      return jsonResp({ ok: false, error: "Noto'g'ri kod" });
+    }
+    return jsonResp({ ok: false, error: "Noto'g'ri format" });
+  }
+
+  // ── admin/stats — real-time statistika (admin panel uchun)
+  if (ep === 'admin/stats') {
+    const index = await getIndex();
+    if (!index) return jsonResp({ error: 'Index topilmadi' });
+
+    const tests = index.tests_meta || [];
+    const totalTests  = tests.length;
+    const activeTests = tests.filter(t => t.is_active !== false).length;
+    const pubTests    = tests.filter(t => t.visibility === 'public').length;
+    const totalSolve  = tests.reduce((s, t) => s + (t.solve_count || 0), 0);
+    const avgScore    = tests.filter(t => t.avg_score).length
+      ? Math.round(tests.reduce((s, t) => s + (t.avg_score || 0), 0) / tests.filter(t => t.avg_score).length)
+      : 0;
+
+    // Fan bo'yicha guruhlash
+    const byCategory = {};
+    tests.forEach(t => {
+      const cat = t.category || t.subject || 'other';
+      if (!byCategory[cat]) byCategory[cat] = { count: 0, solves: 0, avg: [] };
+      byCategory[cat].count++;
+      byCategory[cat].solves += t.solve_count || 0;
+      if (t.avg_score) byCategory[cat].avg.push(t.avg_score);
+    });
+    const categories = Object.entries(byCategory).map(([name, d]) => ({
+      name,
+      count:  d.count,
+      solves: d.solves,
+      avg:    d.avg.length ? Math.round(d.avg.reduce((a,b) => a+b) / d.avg.length) : 0,
+    })).sort((a, b) => b.solves - a.solves);
+
+    // Top 5 test
+    const topTests = [...tests]
+      .filter(t => t.is_active !== false)
+      .sort((a, b) => (b.solve_count || 0) - (a.solve_count || 0))
+      .slice(0, 5)
+      .map(({ questions, ...t }) => normMeta(t));
+
+    // Oxirgi 7 kun uchun yaratilgan testlar (created_at bo'yicha)
+    const now = Date.now();
+    const days7 = Array.from({length: 7}, (_, i) => {
+      const d = new Date(now - i * 86400000);
+      return d.toISOString().slice(0, 10);
+    }).reverse();
+
+    const byDay = {};
+    days7.forEach(d => byDay[d] = { created: 0, solves: 0 });
+    tests.forEach(t => {
+      const day = (t.created_at || '').slice(0, 10);
+      if (byDay[day] !== undefined) {
+        byDay[day].created++;
+        byDay[day].solves += t.solve_count || 0;
+      }
+    });
+    const timeline = days7.map(d => ({ date: d, ...byDay[d] }));
+
+    return jsonResp({
+      totalTests, activeTests, pubTests, totalSolve, avgScore,
+      categories, topTests, timeline,
+    });
+  }
+
+
+  // ── result/save — saytda yechilgan natijani kanal ga yuborish ──
+  if (ep === 'result/save') {
+    let body = {};
+    try { body = await request.json(); } catch {}
+
+    const { userId, testId, userName, userUsername,
+            score, total, percentage, passing_score,
+            detailed_results, completedAt } = body;
+
+    if (!userId || !testId) return jsonResp({ error: 'userId va testId kerak' });
+
+    const now = new Date().toISOString();
+    const rid = `${userId}_${testId}`;
+
+    const resultDoc = {
+      result_id:        rid,
+      user_id:          String(userId),
+      user_name:        userName || '',
+      user_username:    userUsername || '',
+      test_id:          testId,
+      score:            score || 0,
+      total:            total || 0,
+      percentage:       parseFloat(percentage) || 0,
+      passing_score:    passing_score || 60,
+      passed:           (parseFloat(percentage) || 0) >= (passing_score || 60),
+      detailed_results: detailed_results || [],
+      completed_at:     completedAt ? new Date(completedAt).toISOString() : now,
+      source:           'web',
+    };
+
+    // Kanal ga yengil natija fayli yuborish (bot midnight da o'qiydi)
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+    const fileContent = JSON.stringify(resultDoc, null, 2);
+    const bodyStr = [
+      '--' + boundary,
+      'Content-Disposition: form-data; name="chat_id"',
+      '', CHANNEL_ID,
+      '--' + boundary,
+      `Content-Disposition: form-data; name="document"; filename="result_${rid}.json"`,
+      'Content-Type: application/json',
+      '', fileContent,
+      '--' + boundary,
+      'Content-Disposition: form-data; name="caption"',
+      '', `📊 RESULT | ${userName||userId} | ${testId} | ${Math.round(percentage||0)}%`,
+      '--' + boundary,
+      'Content-Disposition: form-data; name="disable_notification"',
+      '', 'true',
+      '--' + boundary + '--',
+    ].join('\r\n');
+
+    fetch(`${TG}/sendDocument`, {
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+      body: bodyStr,
+    }).catch(() => {});  // fire-and-forget
+
+    return jsonResp({ ok: true, result_id: rid });
+  }
+
+  // ── results/{uid} — foydalanuvchi natijalari (index dan) ──
+  if (ep.match(/^results\/\d+/)) {
+    const uid = ep.split('/')[1];
+    const index = await getIndex();
+    if (!index) return jsonResp([]);
+
+    // Index da users_results_msg_id bo'lsa o'sha fayldan olamiz
+    // Hozir faqat test meta dan user statistikasini qaytaramiz
+    const userResults = (index.tests_meta || [])
+      .filter(t => t.is_active !== false)
+      .map(t => {
+        // Bu yerda user-specific ma'lumot yo'q — faqat meta
+        return null;
+      })
+      .filter(Boolean);
+
+    // localStorage fallback — client tomonda saqlanadi
+    return jsonResp([]);
   }
 
   return jsonResp({ error: "Noma'lum endpoint" }, 404);
