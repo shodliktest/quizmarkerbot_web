@@ -8,7 +8,7 @@
    2. API_URL       → Streamlit app URL (deploy qilgandan keyin)
    ================================================================ */
 
-const BOT_USERNAME = window.TESTPRO_BOT  || 'Quizmarkerbot';   // ← o'zgartiring
+const BOT_USERNAME = window.TESTPRO_BOT  || 'Quizmarkerbot';
 const API_URL      = '/api/proxy';
 
 /* ── Navigation ── */
@@ -136,10 +136,27 @@ async function _req(method, path, body) {
   const headers = { 'Content-Type': 'application/json' };
   if (u) { headers['X-TG-ID'] = String(u.id); }
 
-  const opts = { method, headers };
-  if (body) opts.body = JSON.stringify(body);
+  // /api/tests/public → /api/proxy?endpoint=tests/public
+  // /api/test/ABC/full → /api/proxy?endpoint=test/ABC/full
+  let url = API_URL;
+  const match = path.match(/^\/api\/(.+)/);
+  if (match) {
+    let ep = match[1];
+    // query string ni ajratish: /api/tests/my?uid=123 → endpoint=tests/my&uid=123
+    const qIdx = ep.indexOf('?');
+    if (qIdx !== -1) {
+      url += '?endpoint=' + ep.slice(0, qIdx) + '&' + ep.slice(qIdx + 1);
+    } else {
+      url += '?endpoint=' + ep;
+    }
+  } else {
+    url += path;
+  }
 
-  const res  = await fetch(API_URL + path, opts);
+  const opts = { method, headers };
+  if (body && method === 'POST') opts.body = JSON.stringify(body);
+
+  const res  = await fetch(url, opts);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
