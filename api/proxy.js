@@ -194,7 +194,6 @@ export default async function handler(request) {
     tData.authorId = tData.authorId || String(tData.creator_id || "");
     tData.subject  = tData.subject  || tData.category || "other";
     return jsonResp({ testData: tData, questions: full.questions, total: full.questions.length });
-    });
   }
 
   // ── test/{id}/meta ──
@@ -287,6 +286,16 @@ async function saveIndex(index) {
 }
 
 
+
+  // ── test/{id} — meta (eski DB.getTest uchun fallback) ──
+  if (ep.match(/^test\/[^\/]+$/) && request.method === 'GET') {
+    const tid   = ep.split('/')[1];
+    const index = await getIndex();
+    const meta  = (index?.tests_meta || []).find(t => t.test_id === tid);
+    if (!meta) return jsonResp({ error: 'Topilmadi' }, 404);
+    return jsonResp(normMeta({ ...meta }));
+  }
+
   // ── test/create ──
   if (ep === 'test/create') {
     let body = {};
@@ -340,20 +349,20 @@ async function saveIndex(index) {
       '',
       CHANNEL_ID,
       '--' + boundary,
-      \`Content-Disposition: form-data; name="document"; filename="test_\${tid}.json"\`,
+      `Content-Disposition: form-data; name="document"; filename="test_\${tid}.json"`,
       'Content-Type: application/json',
       '',
       fileContent,
       '--' + boundary,
       'Content-Disposition: form-data; name="caption"',
       '',
-      \`📝 TEST | \${title} | \${tid} | web\`,
+      `📝 TEST | \${title} | \${tid} | web`,
       '--' + boundary + '--',
     ].join('\r\n');
 
-    const tgRes = await fetch(\`\${TG}/sendDocument\`, {
+    const tgRes = await fetch(`\${TG}/sendDocument`, {
       method: 'POST',
-      headers: { 'Content-Type': \`multipart/form-data; boundary=\${boundary}\` },
+      headers: { 'Content-Type': `multipart/form-data; boundary=\${boundary}` },
       body: body_,
     });
     const tgData = await tgRes.json();
@@ -371,7 +380,7 @@ async function saveIndex(index) {
       const meta = { ...testDoc };
       delete meta.questions;
       (index.tests_meta = index.tests_meta || []).unshift(meta);
-      index[\`test_\${tid}\`] = msgId;
+      index[`test_\${tid}`] = msgId;
 
       // Yangilangan indexni kanalga yuborish
       await saveIndex(index);
@@ -386,7 +395,7 @@ async function saveIndex(index) {
   if (ep.match(/^test\/[^\/]+\/questions$/) && request.method === 'GET') {
     const tid = ep.split('/')[1];
     const index = await getIndex();
-    const msgId = index?.[\`test_\${tid}\`];
+    const msgId = index?.[`test_\${tid}`];
     if (!msgId) return jsonResp([]);
     const full = await getTestFull(msgId);
     return jsonResp(full?.questions || []);
@@ -401,7 +410,7 @@ async function saveIndex(index) {
 
     const index = await getIndex();
     if (!index) return jsonResp({ error: 'Index topilmadi' });
-    const msgId = index[\`test_\${tid}\`];
+    const msgId = index[`test_\${tid}`];
     if (!msgId) return jsonResp({ error: 'Test topilmadi' });
 
     // Eski test faylini yuklab, questions ni yangilab qayta yuboring
@@ -420,25 +429,25 @@ async function saveIndex(index) {
       '',
       CHANNEL_ID,
       '--' + boundary,
-      \`Content-Disposition: form-data; name="document"; filename="test_\${tid}.json"\`,
+      `Content-Disposition: form-data; name="document"; filename="test_\${tid}.json"`,
       'Content-Type: application/json',
       '',
       fileContent,
       '--' + boundary,
       'Content-Disposition: form-data; name="caption"',
       '',
-      \`📝 TEST_UPDATE | \${tid}\`,
+      `📝 TEST_UPDATE | \${tid}`,
       '--' + boundary + '--',
     ].join('\r\n');
 
-    const tgRes = await fetch(\`\${TG}/sendDocument\`, {
+    const tgRes = await fetch(`\${TG}/sendDocument`, {
       method: 'POST',
-      headers: { 'Content-Type': \`multipart/form-data; boundary=\${boundary}\` },
+      headers: { 'Content-Type': `multipart/form-data; boundary=\${boundary}` },
       body: bodyStr,
     });
     const tgData = await tgRes.json();
     if (tgData.ok) {
-      index[\`test_\${tid}\`] = tgData.result.message_id;
+      index[`test_\${tid}`] = tgData.result.message_id;
       await saveIndex(index);
       _indexCache = index;
     }
@@ -480,7 +489,7 @@ async function saveIndex(index) {
     if (!index) return jsonResp({ error: 'Index topilmadi' });
 
     index.tests_meta = (index.tests_meta || []).filter(t => t.test_id !== tid);
-    delete index[\`test_\${tid}\`];
+    delete index[`test_\${tid}`];
     await saveIndex(index);
     _indexCache = index;
     _indexCacheTs = Date.now();
