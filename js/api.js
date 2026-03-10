@@ -9,7 +9,7 @@
    ================================================================ */
 
 const BOT_USERNAME = window.TESTPRO_BOT  || 'Quizmarkerbot';   // ← o'zgartiring
-const API_URL      = (window.TESTPRO_API || 'https://webapiquizmarkerbot.streamlit.app').replace(/\/$/, '');
+const API_URL      = '/api/proxy';
 
 /* ── Navigation ── */
 const BASE_PATH = (() => {
