@@ -96,7 +96,7 @@ let _indexCache   = null;
 let _indexCacheTs = 0;
 
 async function getIndex() {
-  if (_indexCache && Date.now() - _indexCacheTs < 120_000) return _indexCache;
+  if (_indexCache && Date.now() - _indexCacheTs < 300_000) return _indexCache;
   try {
     const chat = await tgPost('getChat', { chat_id: CHANNEL_ID });
     const pin  = chat?.result?.pinned_message;
@@ -137,6 +137,7 @@ async function saveIndex(index) {
 
 async function getTestFull(msgId) {
   try {
+    // Faylni to'g'ridan forward qilib file_id olamiz
     const fwd = await tgPost('forwardMessage', {
       chat_id:      CHANNEL_ID,
       from_chat_id: CHANNEL_ID,
@@ -144,15 +145,21 @@ async function getTestFull(msgId) {
     });
     const doc = fwd?.result?.document;
     if (!doc) return null;
+
+    // Asinxron o'chirish (kutmaymiz)
     tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: fwd.result.message_id });
 
+    // file_id va getFile parallel
     const fileRes  = await tgPost('getFile', { file_id: doc.file_id });
     const filePath = fileRes?.result?.file_path;
     if (!filePath) return null;
 
     const raw = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${filePath}`);
     return raw.json();
-  } catch { return null; }
+  } catch (e) {
+    console.error('getTestFull:', e);
+    return null;
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
