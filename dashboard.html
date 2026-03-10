@@ -764,9 +764,9 @@ function renderMaxsus(){
       </div>
       <div class="mx-code-badge">🔑 ${esc(item.code)}</div>
       <div class="mx-acts">
-        ${!item.hidden?`<button class="mx-act mx-act-play" onclick="goTo('test.html?id=${item.id}')">▶</button>`:''}
-        <button class="mx-act" onclick="mxToggleHide('${item.id}')">${item.hidden?'👁':'🙈'}</button>
-        <button class="mx-act mx-act-del" onclick="confirmMxRemove('${item.id}','${esc(item.title).replace(/'/g,"\\'")}')">🗑</button>
+        ${!item.hidden?`<button class="mx-act mx-act-play" onclick="goTo('test.html?id=${item.id||item.test_id}')">▶</button>`:''}
+        <button class="mx-act" onclick="mxToggleHide('${item.id||item.test_id}')">${item.hidden?'👁':'🙈'}</button>
+        <button class="mx-act mx-act-del" onclick="confirmMxRemove('${item.id||item.test_id}','${esc(item.title).replace(/'/g,"\\'")}')">🗑</button>
       </div>`;
     scroll.appendChild(c);
   });
@@ -811,9 +811,9 @@ function renderMxExp(wrap,arr){
         <div class="fli-r">
           <span class="fli-code" onclick="copyCode('${item.code}');event.stopPropagation()">🔑 ${esc(item.code)}</span>
           <div class="fli-acts">
-            ${!item.hidden?`<button class="fli-btn" onclick="goTo('test.html?id=${item.id}')">▶</button>`:''}
-            <button class="fli-btn" onclick="mxToggleHide('${item.id}')">${item.hidden?'👁':'🙈'}</button>
-            <button class="fli-btn fli-btn-del" onclick="confirmMxRemove('${item.id}','${esc(item.title).replace(/'/g,"\\'")}')">🗑</button>
+            ${!item.hidden?`<button class="fli-btn" onclick="goTo('test.html?id=${item.id||item.test_id}')">▶</button>`:''}
+            <button class="fli-btn" onclick="mxToggleHide('${item.id||item.test_id}')">${item.hidden?'👁':'🙈'}</button>
+            <button class="fli-btn fli-btn-del" onclick="confirmMxRemove('${item.id||item.test_id}','${esc(item.title).replace(/'/g,"\\'")}')">🗑</button>
           </div>
         </div>`;
       body.appendChild(row);
@@ -876,7 +876,7 @@ window.doCode=async()=>{
     const shareDiv=document.getElementById('code-share');
     const shareVal=document.getElementById('code-share-val');
     if(shareDiv&&shareVal&&test.accessCode){
-      const link=location.origin+location.pathname.replace('dashboard.html','')+'test.html?id='+test.id;
+      const link=location.origin+location.pathname.replace('dashboard.html','')+'test.html?id='+(test.id||test.test_id);
       shareVal.textContent=link;
       shareDiv.style.display='block';
       window._lastShareCode=test.accessCode;
@@ -958,13 +958,13 @@ function renderMyExp(wrap, tests, isAdmin, uid){
             ${t.timeLimit?`<span>⏱ ${t.timeLimit}d</span>`:''}
             ${vtag}
           </div>
-          ${(owner&&t.accessCode)?`<span class="fli-code" onclick="copyLink('${t.accessCode}','${t.id}');event.stopPropagation()" style="margin-top:.2rem;display:inline-flex" title="Kod va link nusxalash">🔗 ${t.accessCode}</span>`:''}
+          ${(owner&&t.accessCode)?`<span class="fli-code" onclick="copyLink('${t.accessCode}','${t.id||t.test_id}');event.stopPropagation()" style="margin-top:.2rem;display:inline-flex" title="Kod va link nusxalash">🔗 ${t.accessCode}</span>`:''}
         </div>
         <div class="fli-r">
           <div class="fli-acts">
-            <button class="fli-btn" onclick="goTo('test.html?id=${t.id}')">▶</button>
-            ${(owner||isAdmin)?`<button class="fli-btn" onclick="goTo('create.html?id=${t.id}')">✏️</button>`:''}
-            ${(owner||isAdmin)?`<button class="fli-btn fli-btn-del" onclick="delTest('${t.id}')">🗑</button>`:''}
+            <button class="fli-btn" onclick="goTo('test.html?id='+(t.id||t.test_id))">▶</button>
+            ${(owner||isAdmin)?`<button class="fli-btn" onclick="goTo('create.html?id=${t.id||t.test_id}')">✏️</button>`:''}
+            ${(owner||isAdmin)?`<button class="fli-btn fli-btn-del" onclick="delTest('${t.id||t.test_id}')">🗑</button>`:''}
           </div>
         </div>`;
       body.appendChild(row);
@@ -1031,7 +1031,7 @@ let CU=null;
         const codeRow=(owner&&t.accessCode)
           ?`<div class="mt-code-row">
               <span class="mt-code">${t.accessCode}</span>
-              <button class="mt-copy" onclick="copyLink('${t.accessCode}','${t.id}');event.stopPropagation()" title="Kod va link nusxalash">🔗</button>
+              <button class="mt-copy" onclick="copyLink('${t.accessCode}','${t.id||t.test_id}');event.stopPropagation()" title="Kod va link nusxalash">🔗</button>
             </div>`:'';
         const c=document.createElement('div');
         c.className='mt-card';
@@ -1046,9 +1046,9 @@ let CU=null;
           ${vtag}
           ${codeRow}
           <div class="mt-acts">
-            <button class="mt-btn" onclick="goTo('test.html?id=${t.id}')">▶ Start</button>
-            ${(owner||isAdmin)?`<button class="mt-btn" onclick="goTo('create.html?id=${t.id}')">✏️</button>`:''}
-            ${(owner||isAdmin)?`<button class="mt-btn mt-btn-del" onclick="delTest('${t.id}')">🗑</button>`:''}
+            <button class="mt-btn" onclick="goTo('test.html?id='+(t.id||t.test_id))">▶ Start</button>
+            ${(owner||isAdmin)?`<button class="mt-btn" onclick="goTo('create.html?id=${t.id||t.test_id}')">✏️</button>`:''}
+            ${(owner||isAdmin)?`<button class="mt-btn mt-btn-del" onclick="delTest('${t.id||t.test_id}')">🗑</button>`:''}
           </div>`;
         myScroll.appendChild(c);
       });
@@ -1134,7 +1134,7 @@ let CU=null;
       const isDone=myDoneIds.has(t.id);
       const el=document.createElement('div');
       el.className='eli';
-      el.onclick=()=>goTo('test.html?id='+t.id);
+      el.onclick=()=>goTo('test.html?id='+(t.id||t.test_id));
       el.innerHTML=`
         <div class="eli-ico">${icon}</div>
         <div class="eli-info">
@@ -1149,7 +1149,7 @@ let CU=null;
         <div class="eli-r">
           ${isDone?'<span class="done-tag">✅ Ishlandi</span>':''}
           ${t.averageScore?`<span class="avg-tag">⭐${t.averageScore}%</span>`:''}
-          <button class="go-btn" onclick="event.stopPropagation();goTo('test.html?id=${t.id}')">Boshlash →</button>
+          <button class="go-btn" onclick="event.stopPropagation();goTo('test.html?id='+(t.id||t.test_id))">Boshlash →</button>
         </div>`;
       wrap.appendChild(el);
     });
@@ -1215,7 +1215,7 @@ let CU=null;
       const sc=g.querySelector(`#scroll-${subj}`);
       arr.forEach(t=>{
         const c=document.createElement('div');c.className='card';
-        c.onclick=()=>goTo('test.html?id='+t.id);
+        c.onclick=()=>goTo('test.html?id='+(t.id||t.test_id));
         c.innerHTML=`
           <div class="card-icon">${icon}</div>
           <div class="card-t">${esc(t.title)}</div>

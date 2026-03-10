@@ -199,7 +199,7 @@ const ICON={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹�
       arr.forEach(t=>{
         const c=document.createElement('div');
         c.className='card';
-        c.onclick=()=>goTo('test.html?id='+t.id);
+        c.onclick=()=>goTo('test.html?id='+(t.id||t.test_id));
         c.innerHTML=`
           <div class="card-icon">${icon}</div>
           <div class="card-title">${esc(t.title)}</div>
