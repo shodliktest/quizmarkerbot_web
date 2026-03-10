@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TestPro — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;
+  background:linear-gradient(135deg,#f5f3ff 0%,#fce7f3 50%,#eff6ff 100%);color:#1a1a2e}
+[data-theme="dark"] body{background:linear-gradient(135deg,#0d0820,#140a20,#080d1a);color:#e8e0ff}
+.nav{position:fixed;top:0;left:0;right:0;height:54px;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;padding:0 1rem;
+  background:rgba(245,243,255,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(124,58,237,.1)}
+[data-theme="dark"] .nav{background:rgba(13,8,32,.92)}
+.logo{font-family:'Unbounded',sans-serif;font-size:1.1rem;font-weight:900;cursor:pointer;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-r{display:flex;gap:.4rem;align-items:center}
+.nbtn{padding:.38rem .8rem;border-radius:8px;border:1.5px solid rgba(0,0,0,.1);
+  background:#fff;cursor:pointer;font-size:.78rem;font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;color:#374151;transition:all .2s}
+[data-theme="dark"] .nbtn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12);color:#c4b5fd}
+.nbtn:hover{border-color:#7c3aed;color:#7c3aed}
+.tbtn{width:31px;height:31px;border-radius:8px;border:1.5px solid rgba(0,0,0,.1);
+  background:#fff;cursor:pointer;font-size:.82rem}
+[data-theme="dark"] .tbtn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
+.page{padding:70px 1rem 3rem;max-width:800px;margin:0 auto}
+.page-h{font-family:'Unbounded',sans-serif;font-size:1.2rem;font-weight:900;
+  color:#d97706;margin-bottom:1.25rem;display:flex;align-items:center;gap:.45rem}
+.tabs{display:flex;gap:.45rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.tab{padding:.5rem 1rem;border-radius:10px;border:1.5px solid rgba(0,0,0,.1);
+  background:#fff;cursor:pointer;font-size:.8rem;font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;color:#6b7280;transition:all .2s}
+[data-theme="dark"] .tab{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.12);color:#9ca3af}
+.tab.on{border-color:#7c3aed;background:rgba(124,58,237,.1);color:#7c3aed}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem;margin-bottom:1.1rem}
+.sbox{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:14px;padding:.9rem;text-align:center}
+[data-theme="dark"] .sbox{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.09)}
+.sv{font-family:'Unbounded',sans-serif;font-size:1.5rem;font-weight:900;color:#7c3aed}
+.sl{font-size:.68rem;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-top:.1rem}
+.item{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:13px;
+  padding:.82rem .9rem;margin-bottom:.5rem;
+  display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap}
+[data-theme="dark"] .item{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.09)}
+.item-name{font-size:.88rem;font-weight:700;color:#111827;margin-bottom:.15rem}
+[data-theme="dark"] .item-name{color:#e5e7eb}
+.item-meta{font-size:.7rem;color:#9ca3af}
+.itag{display:inline-block;padding:.14rem .48rem;border-radius:99px;
+  font-size:.63rem;font-weight:700;margin-left:.3rem}
+.t-a{background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.2)}
+.t-u{background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.2)}
+.t-pub{background:rgba(16,185,129,.1);color:#059669}
+.t-priv{background:rgba(245,158,11,.1);color:#d97706}
+.act-wrap{display:flex;gap:.4rem}
+.abtn{padding:.32rem .65rem;border-radius:8px;border:none;cursor:pointer;
+  font-size:.73rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.abtn-p{background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.2)}
+.abtn-p:hover{background:rgba(124,58,237,.2)}
+.abtn-d{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.abtn-d:hover{background:rgba(239,68,68,.2)}
+.abtn-a{background:rgba(245,158,11,.1);color:#d97706;border:1px solid rgba(245,158,11,.2)}
+.abtn-g{background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.2)}
+.sp{width:24px;height:24px;border:2.5px solid rgba(124,58,237,.2);
+  border-top-color:#7c3aed;border-radius:50%;animation:spin .7s linear infinite;margin:1.5rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emp{text-align:center;padding:1.5rem;color:#9ca3af;font-size:.82rem}
+.toast{position:fixed;bottom:1.3rem;left:50%;transform:translateX(-50%);
+  background:rgba(10,5,25,.88);color:#fff;padding:.62rem 1.1rem;
+  border-radius:12px;font-size:.8rem;font-weight:600;z-index:9999;backdrop-filter:blur(12px)}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="logo" onclick="goTo('index.html')">TestPro</div>
+  <div class="nav-r">
+    <button class="nbtn" onclick="goTo('dashboard.html')">← Dashboard</button>
+    <button class="tbtn" id="tbtn">🌙</button>
+  </div>
+</nav>
+<div class="page">
+  <div class="page-h">👑 Admin Panel</div>
+
+  <div id="stats-wrap" class="stats">
+    <div class="sbox"><div class="sv" id="cnt-users">...</div><div class="sl">Foydalanuvchilar</div></div>
+    <div class="sbox"><div class="sv" id="cnt-tests">...</div><div class="sl">Testlar</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" id="tab-users" onclick="switchTab('users')">👤 Foydalanuvchilar</button>
+    <button class="tab" id="tab-tests" onclick="switchTab('tests')">📝 Testlar</button>
+  </div>
+
+  <div id="users-panel"><div class="sp"></div></div>
+  <div id="tests-panel" style="display:none"><div class="sp"></div></div>
+</div>
+<script src="js/api.js"></script>
+<script>
+const T={get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
+  set(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tp_theme',t);
+    document.getElementById('tbtn').textContent=t==='dark'?'☀️':'🌙'},
+  toggle(){this.set(this.get()==='dark'?'light':'dark')}};
+T.set(T.get());
+document.getElementById('tbtn').onclick=()=>T.toggle();
+
+function toast(msg){
+  const el=document.createElement('div');el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
+}
+
+let allUsers=[],allTests=[];
+
+(async()=>{
+  const user=await AuthHelpers.requireAuth('login.html');
+  if(!user)return;
+  const prof=await DB.getUser(user.uid).catch(()=>null);
+  if(prof?.role!=='admin'){toast('❌ Ruxsat yo\'q');goTo('dashboard.html');return;}
+
+  const [users,tests]=await Promise.all([DB.getAllUsers(),DB.getAllTests()]);
+  allUsers=users;allTests=tests;
+
+  document.getElementById('cnt-users').textContent=users.length;
+  document.getElementById('cnt-tests').textContent=tests.length;
+  renderUsers();
+  renderTests();
+})();
+
+function switchTab(t){
+  document.getElementById('users-panel').style.display=t==='users'?'block':'none';
+  document.getElementById('tests-panel').style.display=t==='tests'?'block':'none';
+  document.getElementById('tab-users').classList.toggle('on',t==='users');
+  document.getElementById('tab-tests').classList.toggle('on',t==='tests');
+}
+
+function renderUsers(){
+  const wrap=document.getElementById('users-panel');
+  if(!allUsers.length){wrap.innerHTML='<div class="emp">Foydalanuvchi yo\'q</div>';return;}
+  wrap.innerHTML=allUsers.map(u=>`
+    <div class="item">
+      <div>
+        <div class="item-name">${esc(u.name||u.email||'?')}
+          <span class="itag ${u.role==='admin'?'t-a':'t-u'}">${u.role==='admin'?'👑 Admin':'👤 User'}</span>
+        </div>
+        <div class="item-meta">${esc(u.email||'')} · ${fmtDate(u.createdAt)}</div>
+      </div>
+      <div class="act-wrap">
+        ${u.role!=='admin'
+          ?`<button class="abtn abtn-a" onclick="setAdmin('${u.id}',true)">👑 Admin qilish</button>`
+          :`<button class="abtn abtn-p" onclick="setAdmin('${u.id}',false)">↩️ User qilish</button>`}
+        <button class="abtn abtn-d" onclick="delUser('${u.id}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderTests(){
+  const wrap=document.getElementById('tests-panel');
+  if(!allTests.length){wrap.innerHTML='<div class="emp">Test yo\'q</div>';return;}
+  wrap.innerHTML=allTests.map(t=>`
+    <div class="item">
+      <div style="flex:1;min-width:0">
+        <div class="item-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title||'?')}
+          <span class="itag ${t.visibility==='public'?'t-pub':'t-priv'}">${t.visibility==='public'?'🌐':'🔒'}</span>
+        </div>
+        <div class="item-meta">${t.questionCount||0} savol · ${t.attempts||0} urinish · ${fmtDate(t.createdAt)}</div>
+        ${t.accessCode?`<div style="font-size:.7rem;color:#7c3aed;font-weight:700;margin-top:.18rem">🔑 ${t.accessCode}</div>`:''}
+      </div>
+      <div class="act-wrap">
+        <button class="abtn abtn-p" onclick="goTo('test.html?id=${t.id}')">▶️ Ochish</button>
+        <button class="abtn abtn-d" onclick="adminDelTest('${t.id}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+window.setAdmin=async(uid,makeAdmin)=>{
+  try{
+    await DB.updateUser(uid,{role:makeAdmin?'admin':'user'});
+    const u=allUsers.find(x=>x.id===uid);if(u)u.role=makeAdmin?'admin':'user';
+    renderUsers();
+    toast(makeAdmin?'✅ Admin qilindi':'✅ User qilindi');
+  }catch(e){toast('❌ '+e.message);}
+};
+
+window.delUser=async(uid)=>{
+  if(!confirm('Foydalanuvchini o\'chirishni xohlaysizmi?'))return;
+  try{
+    await db.collection('users').doc(uid).delete();
+    allUsers=allUsers.filter(u=>u.id!==uid);
+    document.getElementById('cnt-users').textContent=allUsers.length;
+    renderUsers();toast('✅ O\'chirildi');
+  }catch(e){toast('❌ '+e.message);}
+};
+
+window.adminDelTest=async(id)=>{
+  if(!confirm('Testni o\'chirishni xohlaysizmi?'))return;
+  try{
+    await DB.deleteTest(id);
+    allTests=allTests.filter(t=>t.id!==id);
+    document.getElementById('cnt-tests').textContent=allTests.length;
+    renderTests();toast('✅ Test o\'chirildi');
+  }catch(e){toast('❌ '+e.message);}
+};
+</script>
+</body>
+</html>

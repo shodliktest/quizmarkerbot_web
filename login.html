@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TestPro — Kirish</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;min-height:100vh}
+body{font-family:'Plus Jakarta Sans',sans-serif;
+  background:linear-gradient(135deg,#f0ebff 0%,#fce7f3 50%,#ebf0ff 100%);
+  display:flex;align-items:center;justify-content:center;padding:1.5rem}
+[data-theme=dark] body{background:linear-gradient(135deg,#0d0820 0%,#160a28 50%,#08101a 100%)}
+
+.card{
+  background:#fff;border-radius:28px;padding:2.75rem 2.25rem 2.25rem;
+  width:100%;max-width:400px;
+  box-shadow:0 24px 72px rgba(108,63,232,.13),0 4px 16px rgba(108,63,232,.06);
+  text-align:center
+}
+[data-theme=dark] .card{background:#13102a;box-shadow:0 24px 72px rgba(0,0,0,.45)}
+
+/* Logo */
+.logo{
+  font-family:'Unbounded',sans-serif;font-size:1.55rem;font-weight:900;
+  background:linear-gradient(135deg,#6C3FE8,#C040C8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:.35rem
+}
+.tagline{font-size:.8rem;color:#9ca3af;margin-bottom:2.25rem;line-height:1.5}
+
+/* TG widget area */
+.tg-area{
+  background:rgba(108,63,232,.04);border:1.5px dashed rgba(108,63,232,.2);
+  border-radius:16px;padding:1.5rem 1rem;margin-bottom:1.5rem;
+  display:flex;flex-direction:column;align-items:center;gap:.85rem;min-height:80px;
+  justify-content:center
+}
+[data-theme=dark] .tg-area{background:rgba(108,63,232,.08);border-color:rgba(108,63,232,.3)}
+.tg-hint{font-size:.78rem;color:#9ca3af;font-weight:600}
+
+/* Spinner */
+.sp{width:28px;height:28px;border:3px solid rgba(108,63,232,.15);
+  border-top-color:#6C3FE8;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Info */
+.info{
+  border-radius:14px;padding:.95rem 1rem;text-align:left;
+  background:rgba(108,63,232,.05);border:1px solid rgba(108,63,232,.1)
+}
+[data-theme=dark] .info{background:rgba(108,63,232,.1);border-color:rgba(108,63,232,.2)}
+.info-row{display:flex;gap:.6rem;font-size:.78rem;color:#6b7280;line-height:1.55;padding:.18rem 0}
+.info-row b{color:#6C3FE8;font-weight:800}
+[data-theme=dark] .info-row{color:#9ca3af}
+
+/* Already logged section */
+.logged{display:none}
+.av{
+  width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(135deg,#6C3FE8,#C040C8);
+  margin:0 auto .95rem;display:flex;align-items:center;justify-content:center;
+  font-size:1.9rem;color:#fff;font-weight:900;font-family:'Unbounded',sans-serif;overflow:hidden
+}
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.uname{font-size:1.08rem;font-weight:800;margin-bottom:.2rem}
+.usub{font-size:.77rem;color:#9ca3af;margin-bottom:1.6rem}
+
+.btn{
+  width:100%;padding:.88rem;border-radius:14px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#6C3FE8,#C040C8);color:#fff;
+  font-weight:800;font-size:.9rem;font-family:inherit;transition:all .22s;
+  margin-bottom:.5rem
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,63,232,.38)}
+.btn-out{background:none;color:#ef4444;border:1.5px solid rgba(239,68,68,.25)}
+.btn-out:hover{background:rgba(239,68,68,.07);transform:none;box-shadow:none}
+
+.back{margin-top:1.3rem;font-size:.77rem;color:#9ca3af}
+.back a{color:#6C3FE8;font-weight:700;text-decoration:none}
+.back a:hover{text-decoration:underline}
+
+/* Theme toggle */
+.tbtn{
+  position:fixed;top:.9rem;right:.9rem;width:36px;height:36px;
+  border-radius:10px;border:1.5px solid rgba(0,0,0,.1);
+  background:rgba(255,255,255,.9);cursor:pointer;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)
+}
+[data-theme=dark] .tbtn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:#fff}
+
+.err{color:#ef4444;font-size:.8rem;padding:.6rem;
+  background:rgba(239,68,68,.07);border-radius:10px;border:1px solid rgba(239,68,68,.18)}
+</style>
+</head>
+<body>
+<button class="tbtn" id="tbtn" aria-label="Tema"></button>
+
+<div class="card">
+  <div class="logo">TestPro</div>
+  <div class="tagline">Bilimingizni sinang va o'stiring 🚀</div>
+
+  <!-- === Allaqachon kirgan === -->
+  <div class="logged" id="logged">
+    <div class="av" id="u-av"></div>
+    <div class="uname" id="u-nm"></div>
+    <div class="usub"  id="u-sb"></div>
+    <button class="btn" id="dash-btn">🚀 Dashboardga o'tish</button>
+    <button class="btn btn-out" id="out-btn">Chiqish</button>
+  </div>
+
+  <!-- === Kirish === -->
+  <div id="login-sec">
+    <div class="tg-area" id="tg-area">
+      <div class="sp" id="sp"></div>
+      <div class="tg-hint">Telegram widget yuklanmoqda...</div>
+    </div>
+
+    <div class="info">
+      <div class="info-row">🔒 <span><b>Parol kerak emas</b> — Telegram hisobingiz bilan kirish</span></div>
+      <div class="info-row">⚡ <span><b>30 kun</b> avtomatik saqlanadi</span></div>
+      <div class="info-row">📵 <span>Telefon raqam va parol <b>so'ralmaydi</b></span></div>
+    </div>
+  </div>
+
+  <div class="back"><a href="index.html">← Bosh sahifaga qaytish</a></div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+/* ── Theme ── */
+const TH={
+  get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
+  set(t){
+    document.documentElement.setAttribute('data-theme',t);
+    localStorage.setItem('tp_theme',t);
+    document.getElementById('tbtn').textContent=t==='dark'?'☀️':'🌙';
+  },
+  toggle(){this.set(this.get()==='dark'?'light':'dark')}
+};
+TH.set(TH.get());
+document.getElementById('tbtn').onclick=()=>TH.toggle();
+
+/* ── Redirect ── */
+function goToDash(){
+  const next=new URLSearchParams(location.search).get('next')||'dashboard.html';
+  goTo(next);
+}
+
+/* ── Allaqachon kirgani bormi? ── */
+const U=TGAuth.get();
+if(U){
+  /* Logged in holat */
+  document.getElementById('login-sec').style.display='none';
+  document.getElementById('logged').style.display='block';
+
+  const nm=[U.first_name,U.last_name].filter(Boolean).join(' ')||'Foydalanuvchi';
+  document.getElementById('u-nm').textContent=nm;
+  document.getElementById('u-sb').textContent=U.username?'@'+U.username:'Telegram foydalanuvchi';
+
+  const av=document.getElementById('u-av');
+  if(U.photo_url) av.innerHTML=`<img src="${U.photo_url}" alt="ava"/>`;
+  else av.textContent=(nm[0]||'?').toUpperCase();
+
+  document.getElementById('dash-btn').onclick=goToDash;
+  document.getElementById('out-btn').onclick=()=>{
+    TGAuth.clear();
+    document.getElementById('logged').style.display='none';
+    document.getElementById('login-sec').style.display='block';
+    loadWidget();
+  };
+} else {
+  loadWidget();
+}
+
+/* ── Telegram Login Widget ── */
+function loadWidget(){
+  const area=document.getElementById('tg-area');
+  const s=document.createElement('script');
+  s.async=true;
+  s.src='https://telegram.org/js/telegram-widget.js?22';
+  s.setAttribute('data-telegram-login', BOT_USERNAME);
+  s.setAttribute('data-size',           'large');
+  s.setAttribute('data-radius',         '14');
+  s.setAttribute('data-onauth',         'TGAuth.onLogin(user)');
+  s.setAttribute('data-request-access', 'write');
+  s.onload=()=>{
+    const sp=document.getElementById('sp');
+    if(sp) sp.style.display='none';
+    const hint=area.querySelector('.tg-hint');
+    if(hint) hint.textContent='Telegram orqali kirish uchun bosing:';
+  };
+  s.onerror=()=>{
+    area.innerHTML='<div class="err">⚠️ Widget yuklanmadi.<br>BOT_USERNAME ni tekshiring yoki internetni tekshiring.</div>';
+  };
+  area.appendChild(s);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TestPro — Test Yaratish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+/* ── Create page extras ── */
+.create-wrap{max-width:680px;margin:0 auto;padding:1.25rem 1rem 3rem}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem}
+.page-hdr h1{font-size:1.1rem;font-family:'Unbounded',sans-serif;font-weight:900;margin:0}
+.hdr-btns{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap}
+
+/* SECTION CARD */
+.sec{background:var(--bg-card);border:1px solid var(--border-2);
+  border-radius:var(--radius-lg);padding:1.1rem 1.1rem 1.25rem;margin-bottom:1rem}
+.sec-title{font-size:.88rem;font-family:'Unbounded',sans-serif;font-weight:800;
+  margin-bottom:1rem;display:flex;align-items:center;gap:.4rem}
+
+/* SUBJECT GRID */
+.subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.45rem;margin-bottom:.65rem}
+.subj-btn{padding:.55rem .45rem;border-radius:10px;border:2px solid var(--border-2);
+  background:var(--bg-2);cursor:pointer;transition:all .18s;
+  text-align:center;font-size:.75rem;font-weight:600;
+  font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-2)}
+.subj-btn:hover{border-color:var(--accent);color:var(--accent)}
+.subj-btn.active{border-color:var(--accent) !important;
+  background:rgba(79,70,229,.1) !important;color:var(--accent) !important;
+  box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.subj-btn .sb-emoji{display:block;font-size:1.2rem;margin-bottom:.18rem}
+
+/* VISIBILITY */
+.vis-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.65rem}
+.vis-btn{padding:.72rem .5rem;border-radius:12px;
+  border:2px solid var(--border-2);background:var(--bg-2);
+  cursor:pointer;transition:all .18s;text-align:center;
+  font-size:.78rem;font-weight:700;color:var(--text-2);
+  font-family:'Plus Jakarta Sans',sans-serif;opacity:.7}
+.vis-btn .vis-icon{display:block;font-size:1.3rem;margin-bottom:.22rem}
+.vis-btn:hover{opacity:1;border-color:rgba(79,70,229,.4)}
+.vis-btn.active{border-color:var(--accent) !important;
+  background:rgba(79,70,229,.1) !important;
+  color:var(--accent) !important;opacity:1;
+  box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+
+/* QUESTION CARD */
+.q-card{background:var(--bg-2);border:1.5px solid var(--border-2);
+  border-radius:var(--radius);padding:1rem;margin-bottom:.85rem;
+  position:relative;transition:border-color .2s}
+.q-card:focus-within{border-color:var(--accent)}
+.q-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.85rem;flex-wrap:wrap}
+.q-num{width:26px;height:26px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  font-size:.72rem;font-weight:800;font-family:'Unbounded',sans-serif;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.q-type-tabs{display:flex;gap:.35rem;flex-wrap:wrap}
+.qtt{padding:.3rem .62rem;border-radius:99px;border:1.5px solid var(--border-2);
+  background:var(--bg-card);font-size:.72rem;font-weight:700;
+  cursor:pointer;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-2)}
+.qtt:hover,.qtt.active{border-color:var(--accent);background:rgba(79,70,229,.08);color:var(--accent)}
+.q-actions{display:flex;gap:.35rem;margin-left:auto}
+.opt-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem}
+.opt-radio{width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.opt-input{flex:1}
+.opt-input.correct{border-color:#059669 !important;background:rgba(5,150,105,.06) !important}
+.add-opt-btn{width:100%;padding:.5rem;border-radius:9px;
+  border:1.5px dashed var(--border-2);background:transparent;
+  font-size:.78rem;color:var(--text-3);cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;
+  margin-top:.3rem;transition:all .18s}
+.add-opt-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ADD QUESTION AREA */
+.add-area{border:2px dashed rgba(79,70,229,.28);border-radius:16px;
+  padding:1.25rem 1rem;text-align:center;
+  background:rgba(79,70,229,.03);margin-top:.85rem}
+.add-area-label{font-size:.82rem;color:#6b7280;font-weight:600;margin-bottom:.85rem}
+.add-q-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem}
+.aqbtn{padding:.72rem .35rem;border-radius:12px;cursor:pointer;
+  font-weight:700;font-size:.76rem;font-family:'Plus Jakarta Sans',sans-serif;
+  transition:all .2s;border:2px solid;display:flex;
+  flex-direction:column;align-items:center;gap:.22rem}
+.aqbtn-m{border-color:rgba(79,70,229,.22);background:rgba(79,70,229,.07);color:#4f46e5}
+.aqbtn-m:hover{background:rgba(79,70,229,.16)}
+.aqbtn-t{border-color:rgba(5,150,105,.22);background:rgba(5,150,105,.07);color:#059669}
+.aqbtn-t:hover{background:rgba(5,150,105,.16)}
+.aqbtn-x{border-color:rgba(245,158,11,.22);background:rgba(245,158,11,.07);color:#d97706}
+.aqbtn-x:hover{background:rgba(245,158,11,.16)}
+
+/* IMPORT MODAL */
+.imp-modal-bg{display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.5);z-index:900;
+  align-items:center;justify-content:center;padding:1rem}
+.imp-modal-bg.show{display:flex}
+.imp-box{background:var(--bg-card);border-radius:20px;
+  width:100%;max-width:440px;max-height:88vh;
+  overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+[data-theme="dark"] .imp-box{background:#1a0d30}
+.imp-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:1.1rem 1.25rem .9rem;border-bottom:1px solid var(--border-2);position:sticky;top:0;
+  background:var(--bg-card);z-index:2}
+[data-theme="dark"] .imp-hdr{background:#1a0d30}
+.imp-body{padding:1.1rem 1.25rem}
+.imp-tabs{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem}
+.impt{padding:.65rem;border-radius:11px;border:2px solid var(--border-2);
+  background:var(--bg-2);font-weight:700;font-size:.82rem;
+  cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-2);
+  transition:all .2s;text-align:center}
+.impt.on{border-color:var(--accent);background:rgba(79,70,229,.1);color:var(--accent)}
+.fmt-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem}
+.fmtt{padding:.32rem .7rem;border-radius:99px;border:1.5px solid var(--border-2);
+  background:var(--bg-2);font-size:.72rem;font-weight:700;
+  cursor:pointer;color:var(--text-3);font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.fmtt.on{border-color:var(--accent);background:rgba(79,70,229,.1);color:var(--accent)}
+.fmt-preview{background:var(--bg-2);border:1px solid var(--border-2);
+  border-radius:10px;padding:.75rem .85rem;font-family:monospace;
+  font-size:.74rem;line-height:1.7;color:var(--text-2);
+  max-height:130px;overflow-y:auto;margin-bottom:.65rem;white-space:pre-wrap}
+.drop-zone{border:2.5px dashed rgba(79,70,229,.32);border-radius:14px;
+  padding:2rem 1.25rem;text-align:center;cursor:pointer;
+  background:rgba(79,70,229,.03);transition:all .22s}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:rgba(79,70,229,.08)}
+.drop-label{display:inline-flex;align-items:center;gap:.45rem;
+  padding:.62rem 1.35rem;border-radius:10px;
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
+  font-weight:700;font-size:.83rem;cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;margin-top:.6rem}
+
+/* EXPLANATION TOGGLE */
+.expl-toggle{background:none;border:none;cursor:pointer;
+  font-size:.78rem;color:var(--text-3);font-weight:600;
+  font-family:'Plus Jakarta Sans',sans-serif;padding:.3rem 0;
+  display:flex;align-items:center;gap:.3rem;margin-top:.55rem}
+.expl-toggle:hover{color:var(--accent)}
+.expl-area{margin-top:.5rem;display:none}
+.expl-area.open{display:block}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" onclick="goTo('index.html')" style="cursor:pointer">TestPro</div>
+  <div style="display:flex;gap:.55rem;align-items:center">
+    <button class="theme-toggle">🌙</button>
+    <button class="hamburger sidebar-toggle"><span></span><span></span><span></span></button>
+  </div>
+</div>
+<div class="sidebar-overlay"></div>
+<aside class="sidebar">
+  <div style="padding:1.2rem 1rem .5rem;border-bottom:1px solid var(--border)">
+    <div style="font-family:'Unbounded',sans-serif;font-size:1.15rem;font-weight:900;
+      background:var(--grad-main);-webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;background-clip:text">TestPro</div>
+  </div>
+  <div class="sidebar-inner">
+    <button class="sidebar-nav-item" onclick="goTo('dashboard.html')">📊 Dashboard</button>
+    <button class="sidebar-nav-item active">✏️ Test yaratish</button>
+    <button class="sidebar-nav-item" onclick="goTo('history.html')">📜 Tarix</button>
+    <button class="sidebar-nav-item" onclick="goTo('profile.html')">👤 Profil</button>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-ava" id="side-ava">?</div>
+      <div style="flex:1;min-width:0"><div class="user-chip-name" id="side-name">...</div></div>
+      <button id="logout-btn" class="btn btn-ghost btn-sm" style="padding:.3rem .5rem">🚪</button>
+    </div>
+  </div>
+</aside>
+
+<main style="padding-top:58px">
+<div class="create-wrap">
+
+  <!-- Header -->
+  <div class="page-hdr">
+    <div>
+      <h1 id="page-title">Yangi test yaratish</h1>
+      <p style="font-size:.78rem;color:var(--text-3);margin-top:.15rem">Savollar qo'shing va sozlang</p>
+    </div>
+    <div class="hdr-btns">
+      <button class="btn btn-ghost btn-sm" onclick="goTo('dashboard.html')">← Orqaga</button>
+      <button class="btn btn-secondary btn-sm" onclick="openImport()">📥 Import</button>
+      <button class="btn btn-primary" id="save-btn">💾 Saqlash</button>
+    </div>
+  </div>
+
+  <div id="save-alert" style="margin-bottom:.85rem"></div>
+
+  <!-- TEST INFO -->
+  <div class="sec">
+    <div class="sec-title">📋 Test haqida</div>
+    <div class="form-group">
+      <label class="form-label">Test nomi *</label>
+      <input id="t-title" type="text" class="form-input" placeholder="Masalan: English Grammar A2"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tavsif (ixtiyoriy)</label>
+      <textarea id="t-desc" class="form-input" rows="2" placeholder="Test haqida qisqacha..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fan / Guruh *</label>
+      <div class="subj-grid" id="subj-grid"></div>
+      <div style="display:flex;gap:.45rem;align-items:center;margin-top:.35rem">
+        <input id="custom-subj" type="text" class="form-input" style="flex:1"
+          placeholder="Boshqa (o'z nomingizni yozing)..."/>
+        <button class="btn btn-secondary btn-sm" onclick="setCustomSubj()">✓ Qo'llash</button>
+      </div>
+    </div>
+    <div id="selected-subj-wrap" style="display:none;margin-top:-.35rem;margin-bottom:.65rem"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="sec">
+    <div class="sec-title">⚙️ Sozlamalar</div>
+
+    <!-- Visibility -->
+    <div class="form-group">
+      <label class="form-label">Ko'rinish</label>
+      <div class="vis-grid">
+        <button class="vis-btn active" id="vis-public" onclick="setVis('public')">
+          <span class="vis-icon">🌐</span>Ommaviy
+        </button>
+        <button class="vis-btn" id="vis-private" onclick="setVis('private')">
+          <span class="vis-icon">🔒</span>Shaxsiy
+        </button>
+      </div>
+      <div style="padding:.55rem .8rem;border-radius:10px;
+        background:rgba(79,70,229,.07);border:1px dashed rgba(79,70,229,.28);
+        font-size:.76rem;color:var(--accent);font-weight:600">
+        🔑 Barcha testlar ulashish kodi bilan birga saqlanadi
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem">
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Vaqt (daqiqa)</label>
+        <input id="t-time" type="number" class="form-input" value="0" min="0" max="180" placeholder="0=cheksiz"/>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">O'tish bali (%)</label>
+        <input id="t-pass" type="number" class="form-input" value="60" min="0" max="100"/>
+      </div>
+    </div>
+
+    <div style="margin-top:.85rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+        <span class="form-label" style="margin:0">Savollarni aralashtirish</span>
+        <label class="toggle"><input type="checkbox" id="t-shuffle"/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="form-label" style="margin:0">Natijani ko'rsatish</span>
+        <label class="toggle"><input type="checkbox" id="t-result" checked/><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <!-- Q count + Save -->
+    <div style="text-align:center;padding:.65rem;
+      background:var(--bg-2);border-radius:12px;margin-top:.85rem;margin-bottom:.85rem">
+      <div style="font-family:'Unbounded',sans-serif;font-size:1.35rem;font-weight:900;color:var(--accent)" id="q-count">0</div>
+      <div style="font-size:.7rem;color:var(--text-3);font-weight:600">ta savol</div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" id="save-btn-2">💾 Saqlash</button>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div id="q-container"></div>
+
+  <!-- ADD QUESTION -->
+  <div class="add-area">
+    <div class="add-area-label">➕ Savol turi tanlang</div>
+    <div class="add-q-grid">
+      <button class="aqbtn aqbtn-m" onclick="addQ('multiple')">
+        <span style="font-size:1.3rem">⭕</span>Ko'p tanlov
+      </button>
+      <button class="aqbtn aqbtn-t" onclick="addQ('truefalse')">
+        <span style="font-size:1.3rem">✅</span>Ha / Yo'q
+      </button>
+      <button class="aqbtn aqbtn-x" onclick="addQ('text')">
+        <span style="font-size:1.3rem">📝</span>Matn
+      </button>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<!-- IMPORT MODAL -->
+<div class="imp-modal-bg" id="imp-modal">
+  <div class="imp-box">
+    <div class="imp-hdr">
+      <span style="font-size:.95rem;font-weight:800">📥 Savollarni import qilish</span>
+      <button onclick="closeImport()"
+        style="background:none;border:1px solid var(--border-2);border-radius:8px;
+          width:28px;height:28px;cursor:pointer;font-size:.82rem;color:var(--text-3)">✕</button>
+    </div>
+    <div class="imp-body">
+      <!-- Tab: Text / File -->
+      <div class="imp-tabs">
+        <button class="impt on" id="impt-txt" onclick="switchTab('txt')">📝 Matn yozish</button>
+        <button class="impt" id="impt-file" onclick="switchTab('file')">📁 Fayl yuklash</button>
+      </div>
+
+      <!-- TEXT TAB -->
+      <div id="imp-txt-body">
+        <div class="fmt-tabs" style="flex-wrap:wrap;gap:.3rem">
+          <button class="fmtt on" onclick="showFmt(0,this)">A) * format</button>
+          <button class="fmtt" onclick="showFmt(1,this)">1) [+] format</button>
+          <button class="fmtt" onclick="showFmt(2,this)">Ha/Yo'q</button>
+          <button class="fmtt" onclick="showFmt(3,this)">📝 Matnli</button>
+          <button class="fmtt" onclick="showFmt(4,this)">✍️ Yozma javob</button>
+          <button class="fmtt" onclick="showFmt(5,this)">↕️ Tartib</button>
+          <button class="fmtt" onclick="showFmt(6,this)">🔢 Ketma-ketlik</button>
+          <button class="fmtt" onclick="showFmt(7,this)">✏️ Bo'sh to'ldirish</button>
+        </div>
+        <div class="fmt-preview" id="fmt-preview"></div>
+        <div style="font-size:.71rem;color:var(--text-3);margin-bottom:.65rem">
+          💡 <b>*</b> yoki <b>[+]</b> = to'g'ri javob &nbsp;·&nbsp; <b>Izoh:</b> = izoh &nbsp;·&nbsp; <b>Javob:</b> = matnli savol to'g'ri javob
+        </div>
+        <div class="form-group">
+          <label class="form-label">Savollarni kiriting:</label>
+          <textarea id="imp-textarea" class="form-input"
+            rows="9" style="font-family:monospace;font-size:.82rem;resize:vertical"
+            placeholder="1. Savol matni?&#10;A) Variant&#10;B) To'g'ri javob *&#10;C) Variant&#10;D) Variant&#10;Izoh: Tushuntirish..."></textarea>
+        </div>
+        <div style="display:flex;gap:.65rem;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="closeImport()">Bekor</button>
+          <button class="btn btn-primary" onclick="doImport()">✅ Importlash</button>
+        </div>
+      </div>
+
+      <!-- FILE TAB -->
+      <div id="imp-file-body" style="display:none">
+        <div class="drop-zone" id="drop-zone">
+          <div style="font-size:2rem;margin-bottom:.55rem;pointer-events:none">📁</div>
+          <div style="font-weight:800;font-size:.92rem;margin-bottom:.3rem;pointer-events:none">
+            Faylni bu yerga tashlang
+          </div>
+          <div style="font-size:.77rem;color:var(--text-3);pointer-events:none">yoki quyidagi tugmani bosing</div>
+          <label class="drop-label" for="file-input">📂 .txt fayl tanlash</label>
+          <input type="file" id="file-input" accept=".txt,.text" style="display:none" onchange="handleFile(this)"/>
+          <div style="font-size:.7rem;color:var(--text-3);margin-top:.65rem;pointer-events:none">Format: .txt</div>
+        </div>
+        <div id="file-result" style="margin-top:.75rem"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:.75rem">
+          <button class="btn btn-ghost" onclick="closeImport()">Yopish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="js/api.js"></script>
+<script src="js/theme.js"></script>
+<script>
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let questions    = [];
+let selectedSubj = '';
+let selectedVis  = 'public';
+let currentUser  = null;
+let editId       = null;
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+(async () => {
+  currentUser = await AuthHelpers.requireAuth('login.html');
+  if (!currentUser) return;
+
+  const prof = await DB.getUser(currentUser.uid).catch(() => null);
+  const name = prof?.name || currentUser.displayName || 'U';
+  document.getElementById('side-name').textContent = name;
+  document.getElementById('side-ava').textContent  = name[0].toUpperCase();
+
+  buildSubjGrid();
+  setVis('public');
+  initFmtPreviews();
+
+  const params = new URLSearchParams(location.search);
+  editId = params.get('id');
+  if (editId) {
+    document.getElementById('page-title').textContent = 'Testni tahrirlash';
+    await loadEdit(editId);
+  } else {
+    addQ('multiple');
+  }
+})();
+
+/* ═══════════════════════════════════════
+   SUBJECT GRID
+═══════════════════════════════════════ */
+function buildSubjGrid() {
+  const grid = document.getElementById('subj-grid');
+  Object.entries(SUBJECTS).forEach(([key, s]) => {
+    const btn = document.createElement('button');
+    btn.className = 'subj-btn';
+    btn.dataset.key = key;
+    btn.innerHTML = `<span class="sb-emoji">${s.emoji}</span>${s.label}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.subj-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedSubj = key;
+      showSelSubj(key);
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function showSelSubj(key) {
+  const el = document.getElementById('selected-subj-wrap');
+  if (!key) { el.style.display = 'none'; return; }
+  const s = getSubject(key);
+  el.style.display = 'block';
+  el.innerHTML = `<span style="font-size:.78rem;color:var(--text-3)">Tanlangan: </span>
+    <strong style="font-size:.82rem;color:var(--accent)">${s.emoji} ${s.label}</strong>`;
+}
+
+window.setCustomSubj = () => {
+  const val = document.getElementById('custom-subj').value.trim();
+  if (!val) return;
+  document.querySelectorAll('.subj-btn').forEach(b => b.classList.remove('active'));
+  selectedSubj = val.toLowerCase().replace(/\s+/g, '-');
+  const el = document.getElementById('selected-subj-wrap');
+  el.style.display = 'block';
+  el.innerHTML = `<span style="font-size:.78rem;color:var(--text-3)">Tanlangan: </span>
+    <strong style="font-size:.82rem;color:var(--accent)">📝 ${esc(val)}</strong>`;
+};
+
+/* ═══════════════════════════════════════
+   VISIBILITY
+═══════════════════════════════════════ */
+window.setVis = (vis) => {
+  selectedVis = vis;
+  document.getElementById('vis-public').classList.toggle('active', vis === 'public');
+  document.getElementById('vis-private').classList.toggle('active', vis === 'private');
+};
+
+/* ═══════════════════════════════════════
+   ADD / RENDER QUESTIONS
+═══════════════════════════════════════ */
+window.addQ = (type = 'multiple') => {
+  const q = {
+    _id:         Date.now() + Math.random(),
+    type,
+    text:        '',
+    options:     type === 'multiple'  ? ['', '', '', ''] :
+                 type === 'truefalse' ? ["Ha", "Yo'q"] : [],
+    correct:     0,
+    explanation: '',
+    points:      1,
+  };
+  questions.push(q);
+  renderAll();
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.q-card');
+    if (cards.length) cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 80);
+};
+
+function renderAll() {
+  document.getElementById('q-container').innerHTML = '';
+  questions.forEach((q, i) => renderCard(q, i));
+  document.getElementById('q-count').textContent = questions.length;
+}
+
+function renderCard(q, idx) {
+  const wrap = document.getElementById('q-container');
+  const card = document.createElement('div');
+  card.className = 'q-card';
+  card.dataset.id = String(q._id);
+
+  const typeLabels = { multiple: 'Ko\'p tanlov', truefalse: 'Ha/Yo\'q', text: 'Matn' };
+
+  card.innerHTML = `
+    <div class="q-header">
+      <div class="q-num">${idx + 1}</div>
+      <div class="q-type-tabs">
+        ${['multiple', 'truefalse', 'text'].map(t =>
+          `<button class="qtt ${q.type === t ? 'active' : ''}" onclick="chType('${q._id}','${t}')">${typeLabels[t]}</button>`
+        ).join('')}
+      </div>
+      <div class="q-actions">
+        <button class="btn btn-ghost btn-sm" onclick="moveQ('${q._id}',-1)" title="Yuqoriga" style="color:var(--text-3)">↑</button>
+        <button class="btn btn-ghost btn-sm" onclick="moveQ('${q._id}',1)"  title="Pastga"  style="color:var(--text-3)">↓</button>
+        <button class="btn btn-danger btn-sm" onclick="delQ('${q._id}')">🗑️</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Savol matni *</label>
+      <textarea class="form-input q-text" data-id="${q._id}" rows="2"
+        placeholder="Savolni yozing...">${escHtml(q.text)}</textarea>
+    </div>
+
+    <div id="opts-${q._id}">${buildOpts(q)}</div>
+
+    <div style="display:flex;align-items:center;gap:.6rem;margin-top:.55rem;flex-wrap:wrap">
+      <label class="form-label" style="margin:0;font-size:.75rem">Ball:</label>
+      <input type="number" class="form-input q-pts"
+        style="width:64px;padding:.38rem .55rem"
+        value="${q.points || 1}" min="1" max="10" data-id="${q._id}"/>
+    </div>
+
+    <button class="expl-toggle" onclick="toggleExpl(this, '${q._id}')">
+      <span>💡</span> Izoh qo'shish (ixtiyoriy)
+      <span style="font-size:.65rem" id="expl-arrow-${q._id}">▼</span>
+    </button>
+    <div class="expl-area ${q.explanation ? 'open' : ''}" id="expl-${q._id}">
+      <textarea class="form-input q-expl" data-id="${q._id}" rows="2"
+        placeholder="Bu savol bo'yicha tushuntirish...">${escHtml(q.explanation)}</textarea>
+    </div>
+  `;
+
+  wrap.appendChild(card);
+
+  /* Events */
+  card.querySelector('.q-text').addEventListener('input', function () {
+    const q = findQ(this.dataset.id);
+    if (q) q.text = this.value;
+  });
+  card.querySelector('.q-expl').addEventListener('input', function () {
+    const q = findQ(this.dataset.id);
+    if (q) q.explanation = this.value;
+  });
+  card.querySelector('.q-pts').addEventListener('change', function () {
+    const q = findQ(this.dataset.id);
+    if (q) q.points = +this.value || 1;
+  });
+}
+
+function buildOpts(q) {
+  if (q.type === 'text') {
+    return `<p style="font-size:.78rem;color:var(--text-3);font-style:italic;padding:.3rem 0">
+      Foydalanuvchi o'z javobini yozadi (erkin matn)</p>`;
+  }
+  const opts = q.options.map((o, i) => `
+    <div class="opt-row">
+      <input type="radio" name="r-${q._id}" class="opt-radio"
+        ${q.correct === i ? 'checked' : ''}
+        onchange="setCorr('${q._id}',${i})"/>
+      <input type="text"
+        class="form-input opt-input ${q.correct === i ? 'correct' : ''}"
+        value="${escHtml(o)}"
+        ${q.type === 'truefalse' ? 'readonly style="cursor:default"' : `placeholder="${String.fromCharCode(65 + i)} variant"`}
+        data-id="${q._id}" data-idx="${i}"
+        oninput="updOpt(this)"/>
+      ${q.type === 'multiple' && q.options.length > 2
+        ? `<button class="btn btn-ghost btn-sm" onclick="rmOpt('${q._id}',${i})" style="flex-shrink:0;color:var(--text-3)">✕</button>`
+        : ''}
+    </div>`).join('');
+
+  const addBtn = q.type === 'multiple'
+    ? `<button class="add-opt-btn" onclick="addOpt('${q._id}')">+ Variant qo'shish</button>`
+    : '';
+
+  const hint = `<div style="font-size:.72rem;color:var(--text-3);margin-top:.35rem">
+    ☝️ To'g'ri javobni belgilash uchun radio tugmasini bosing</div>`;
+
+  return opts + addBtn + hint;
+}
+
+window.toggleExpl = (btn, id) => {
+  const area  = document.getElementById('expl-' + id);
+  const arrow = document.getElementById('expl-arrow-' + id);
+  const open  = area.classList.toggle('open');
+  if (arrow) arrow.textContent = open ? '▲' : '▼';
+};
+
+window.chType = (id, type) => {
+  const q = findQ(id);
+  if (!q || q.type === type) return;
+  q.type = type;
+  const hasContent = (q.options||[]).some(o => String(o).trim());
+  if (type === 'truefalse') {
+    q.options = ["Ha", "Yo'q"];
+  } else if (type === 'text') {
+    q.options = [];
+  } else if (!hasContent) {
+    q.options = type === 'multiple' ? ['', '', '', ''] : [];
+  }
+  q.correct = Math.min(q.correct||0, Math.max((q.options||[]).length-1, 0));
+  renderAll();
+};
+
+window.delQ = (id) => {
+  if (!confirm('Bu savolni o\'chirishni xohlaysizmi?')) return;
+  questions = questions.filter(q => String(q._id) !== String(id));
+  renderAll();
+};
+
+window.moveQ = (id, dir) => {
+  const i = questions.findIndex(q => String(q._id) === String(id));
+  if (i < 0) return;
+  const ni = i + dir;
+  if (ni < 0 || ni >= questions.length) return;
+  [questions[i], questions[ni]] = [questions[ni], questions[i]];
+  renderAll();
+};
+
+window.setCorr = (id, idx) => {
+  const q = findQ(id);
+  if (!q) return;
+  q.correct = idx;
+  /* update CSS */
+  document.querySelectorAll(`[data-id="${id}"].opt-input`).forEach((inp, i) => {
+    inp.classList.toggle('correct', i === idx);
+  });
+};
+
+window.updOpt = (inp) => {
+  const q = findQ(inp.dataset.id);
+  if (q) q.options[+inp.dataset.idx] = inp.value;
+};
+
+window.addOpt = (id) => {
+  const q = findQ(id);
+  if (!q || q.options.length >= 8) return;
+  q.options.push('');
+  document.getElementById('opts-' + id).innerHTML = buildOpts(q);
+};
+
+window.rmOpt = (id, idx) => {
+  const q = findQ(id);
+  if (!q || q.options.length <= 2) return;
+  q.options.splice(idx, 1);
+  if (q.correct >= q.options.length) q.correct = 0;
+  document.getElementById('opts-' + id).innerHTML = buildOpts(q);
+};
+
+/* ═══════════════════════════════════════
+   SAVE
+═══════════════════════════════════════ */
+async function doSave() {
+  const title = document.getElementById('t-title').value.trim();
+  if (!title)      { showAlert('Test nomini kiriting!', 'error'); return; }
+  if (!selectedSubj) { showAlert('Fan / Guruh tanlang!', 'error'); return; }
+  if (!questions.length) { showAlert('Kamida 1 savol qo\'shing!', 'error'); return; }
+
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    if (!q.text.trim()) { showAlert(`${i + 1}-savol matni bo'sh!`, 'error'); return; }
+    if (q.type !== 'text' && q.options.some(o => !o.trim())) {
+      showAlert(`${i + 1}-savoldagi variant bo'sh!`, 'error'); return;
+    }
+  }
+
+  const btn  = document.getElementById('save-btn');
+  const btn2 = document.getElementById('save-btn-2');
+  [btn, btn2].forEach(b => { b.disabled = true; b.textContent = '⏳ Saqlanmoqda...'; });
+
+  const data = {
+    title,
+    description:      document.getElementById('t-desc').value.trim(),
+    subject:          selectedSubj,
+    visibility:       selectedVis,
+    timeLimit:        +document.getElementById('t-time').value || 0,
+    passScore:        +document.getElementById('t-pass').value || 60,
+    shuffleQuestions: document.getElementById('t-shuffle').checked,
+    showResult:       document.getElementById('t-result').checked,
+    questionCount:    questions.length,
+    authorName:       currentUser.displayName || 'Anonim',
+  };
+
+  try {
+    if (editId) {
+      await DB.updateTest(editId, data);
+      await DB.saveQuestions(editId, questions.map(q => ({ ...q, id: undefined })));
+      showAlert('✅ Test yangilandi!', 'success');
+    } else {
+      const result = await DB.createTest(data, currentUser.uid);
+      await DB.saveQuestions(result.id, questions.map(q => ({ ...q, id: undefined })));
+      showAlert(`✅ Test yaratildi! Ulashish kodi: <b>${result.accessCode}</b>`, 'success');
+    }
+    setTimeout(() => goTo('dashboard.html'), 1800);
+  } catch (e) {
+    console.error('Save error:', e);
+    showAlert('❌ ' + e.message, 'error');
+    [btn, btn2].forEach(b => { b.disabled = false; b.textContent = '💾 Saqlash'; });
+  }
+}
+
+document.getElementById('save-btn').onclick  = doSave;
+document.getElementById('save-btn-2').onclick = doSave;
+
+/* ═══════════════════════════════════════
+   EDIT MODE
+═══════════════════════════════════════ */
+async function loadEdit(id) {
+  try {
+    const [t, qs] = await Promise.all([DB.getTest(id), DB.getQuestions(id)]);
+    if (!t) { showAlert('Test topilmadi', 'error'); return; }
+
+    document.getElementById('t-title').value = t.title || '';
+    document.getElementById('t-desc').value  = t.description || '';
+    document.getElementById('t-time').value  = t.timeLimit   || 0;
+    document.getElementById('t-pass').value  = t.passScore   || 60;
+    document.getElementById('t-shuffle').checked = !!t.shuffleQuestions;
+    document.getElementById('t-result').checked  = t.showResult !== false;
+
+    selectedSubj = t.subject || '';
+    setVis(t.visibility || 'public');
+
+    document.querySelectorAll('.subj-btn').forEach(b => {
+      if (b.dataset.key === selectedSubj) b.classList.add('active');
+    });
+    showSelSubj(selectedSubj);
+
+    questions = qs.map((q, i) => ({ ...q, _id: q.id || Date.now() + i }));
+    renderAll();
+  } catch (e) { showAlert('❌ ' + e.message, 'error'); }
+}
+
+/* ═══════════════════════════════════════
+   IMPORT
+═══════════════════════════════════════ */
+const FMT_EXAMPLES = [
+`1. Savol matni?
+A) Variant A
+B) To'g'ri variant *
+C) Variant C
+D) Variant D
+Izoh: Bu yerda tushuntirish.
+
+2. Keyingi savol?
+A) Javob 1 *
+B) Javob 2`,
+
+`1) Savol matni?
+1. Variant A
+2. To'g'ri [+]
+3. Variant C
+4. Variant D
+
+2) Keyingi savol?
+1. Birinchi [+]
+2. Ikkinchi`,
+
+`1. Bu gap to'g'rimi?
+Ha *
+Yo'q
+Izoh: Ha, to'g'ri.
+
+2. Yer yumaloqmi?
+Ha *
+Yo'q`,
+
+`1. Present Perfect zamonni qachon ishlatamiz?
+Javob: Hozirgi zamonga aloqador o'tgan harakatlar uchun
+Izoh: Have/has + V3 shaklida qo'llanadi.
+
+2. "She ___ already eaten" jumlani to'ldiring.
+Javob: has
+Izoh: She (u) uchun "has" ishlatiladi.`,
+
+`1. Inglizcha yozing: I love you
+Yozma:
+
+2. O'zbekiston poytaxti?
+Yozma: Toshkent`,
+
+`1. Quyidagi voqealarni to'g'ri tartibda joylashtiring.
+Tartib:
+1. Tuxum qo'yiladi
+2. Jo'ja tug'iladi
+3. Tovuq o'sadi
+4. Tovuq tuxum qo'yadi`,
+
+`1. Dastur ishga tushish ketma-ketligi.
+Ketma-ketlik:
+- Kod yoziladi
+- Kompilyatsiya qilinadi
+- Dastur ishga tushadi`,
+
+`1. Dunyoning eng baland tog'i ___ hisoblanadi.
+Blank: Everest
+
+2. O'zbekiston ___ yilda mustaqil bo'ldi.
+Blank: 1991`
+];
+
+function initFmtPreviews() {
+  document.getElementById('fmt-preview').textContent = FMT_EXAMPLES[0];
+}
+
+window.showFmt = (idx, btn) => {
+  document.getElementById('fmt-preview').textContent = FMT_EXAMPLES[idx];
+  document.querySelectorAll('.fmtt').forEach((b, i) => b.classList.toggle('on', i === idx));
+};
+
+window.switchTab = (tab) => {
+  document.getElementById('imp-txt-body').style.display  = tab === 'txt'  ? 'block' : 'none';
+  document.getElementById('imp-file-body').style.display = tab === 'file' ? 'block' : 'none';
+  document.getElementById('impt-txt').classList.toggle('on',  tab === 'txt');
+  document.getElementById('impt-file').classList.toggle('on', tab === 'file');
+};
+
+window.openImport = () => {
+  document.getElementById('imp-modal').classList.add('show');
+  switchTab('txt');
+};
+window.closeImport = () => {
+  document.getElementById('imp-modal').classList.remove('show');
+};
+/* Close on backdrop click */
+document.getElementById('imp-modal').addEventListener('click', function (e) {
+  if (e.target === this) closeImport();
+});
+
+// Aktiv format indeksini olish
+function getActiveFmtIdx() {
+  const btns = document.querySelectorAll('.fmtt');
+  for (let i = 0; i < btns.length; i++) {
+    if (btns[i].classList.contains('on')) return i;
+  }
+  return 0;
+}
+
+// Format indeksiga qarab majburiy tur
+function forcedTypeByFmt(idx) {
+  // 0: A)* → multiple
+  // 1: 1)[+] → multiple
+  // 2: Ha/Yo'q → truefalse
+  // 3: Matnli (Javob:) → text
+  // 4: Yozma → text
+  // 5: Tartib → order
+  // 6: Ketma-ketlik → sequence
+  // 7: Bo'sh to'ldirish → fill
+  const map = {0:'multiple', 1:'multiple', 2:'truefalse', 3:'text', 4:'text', 5:'order', 6:'sequence', 7:'fill'};
+  return map[idx] || null;
+}
+
+window.doImport = () => {
+  const raw = document.getElementById('imp-textarea').value.trim();
+  if (!raw) { Toast.error('Matn kiriting!'); return; }
+  const fmtIdx    = getActiveFmtIdx();
+  const forcedType = forcedTypeByFmt(fmtIdx);
+  const imported  = parseTxt(raw, forcedType);
+  if (!imported.length) { Toast.error('Format noto\'g\'ri. Namunaga qarang.'); return; }
+  questions.push(...imported);
+  renderAll();
+  closeImport();
+  Toast.success(`✅ ${imported.length} savol import qilindi!`);
+  document.getElementById('imp-textarea').value = '';
+};
+
+window.handleFile = (inp) => {
+  const file = inp.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const fmtIdx     = getActiveFmtIdx();
+    const forcedType = forcedTypeByFmt(fmtIdx);
+    const imported   = parseTxt(e.target.result, forcedType);
+    const res = document.getElementById('file-result');
+    if (!imported.length) {
+      res.innerHTML = '<div class="alert alert-error">Format noto\'g\'ri</div>';
+      return;
+    }
+    questions.push(...imported);
+    renderAll();
+    res.innerHTML = `<div class="alert alert-success">✅ ${imported.length} savol import qilindi!</div>`;
+    setTimeout(() => closeImport(), 1200);
+  };
+  reader.readAsText(file);
+};
+
+/* Drag & Drop */
+const dz = document.getElementById('drop-zone');
+if (dz) {
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f) {
+      const inp = document.getElementById('file-input');
+      const dt  = new DataTransfer();
+      dt.items.add(f);
+      inp.files = dt.files;
+      window.handleFile(inp);
+    }
+  });
+}
+
+/* ═══════════════════════════════════════
+   TEXT PARSER — barcha turlar
+   Ko'p tanlov | Ha/Yo'q | Matnli | Yozma | Tartib | Ketma-ketlik | Bo'sh to'ldirish
+═══════════════════════════════════════ */
+function parseTxt(raw, forcedType) {
+  const results = [];
+
+  // Bloklarga ajratish — Tartib/Ketma-ketlik ichidagi raqamlarga tegmaymiz
+  const blocks = [];
+  const rawBlocks = raw.split(/\n\s*\n+/);
+  for (const rb of rawBlocks) {
+    const trimmed = rb.trim();
+    if (!trimmed) continue;
+    if (/^tartib\s*:/im.test(trimmed) || /^ketma-?ketlik\s*:/im.test(trimmed)) {
+      blocks.push(trimmed);
+      continue;
+    }
+    const subBlocks = trimmed.split(/(?=^\s*\d+[\.\)]\s+\S)/m);
+    for (const sb of subBlocks) { if (sb.trim()) blocks.push(sb.trim()); }
+  }
+
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) continue;
+
+    let qText = lines[0].replace(/^\s*\d+[\.\)\:]\s*/, '').trim();
+    let explanation = '';
+
+    // ── TARTIB turi ──
+    const tartibIdx = lines.findIndex(l => /^tartib\s*:/i.test(l));
+    if (tartibIdx !== -1) {
+      const items = [];
+      for (let li = tartibIdx + 1; li < lines.length; li++) {
+        const l = lines[li];
+        if (/^izoh\s*:/i.test(l)) { explanation = l.replace(/^izoh\s*:\s*/i, '').trim(); break; }
+        const m = l.match(/^(?:\d+[\.\ )]\s*|[-•]\s*)(.+)/);
+        const t = m ? m[1].trim() : l.trim();
+        if (t) items.push(t);
+      }
+      if (items.length >= 2) {
+        results.push({ _id: Date.now()+Math.random(), type:'order', text:qText,
+          options:[...items], correctOrder:[...items], blanks:[], correct:0, explanation, points:1 });
+        continue;
+      }
+    }
+
+    // ── KETMA-KETLIK turi ──
+    const seqIdx = lines.findIndex(l => /^ketma-?ketlik\s*:/i.test(l));
+    if (seqIdx !== -1) {
+      const items = [];
+      for (let li = seqIdx + 1; li < lines.length; li++) {
+        const l = lines[li];
+        if (/^izoh\s*:/i.test(l)) { explanation = l.replace(/^izoh\s*:\s*/i, '').trim(); break; }
+        const m = l.match(/^(?:\d+[\.\ )]\s*|[-•]\s*)(.+)/);
+        const t = m ? m[1].trim() : l.trim();
+        if (t) items.push(t);
+      }
+      if (items.length >= 2) {
+        results.push({ _id: Date.now()+Math.random(), type:'sequence', text:qText,
+          options:[...items], correctOrder:[...items], blanks:[], correct:0, explanation, points:1 });
+        continue;
+      }
+    }
+
+    // ── BO'SH TO'LDIRISH turi ──
+    const blankLines = lines.filter(l => /^blank\s*:/i.test(l));
+    const hasBlank = /___/.test(qText);
+    if (hasBlank || blankLines.length > 0) {
+      const blanks = blankLines.map(l => l.replace(/^blank\s*:\s*/i,'').trim());
+      if (blanks.length === 0) blanks.push('');
+      const izoh = lines.find(l => /^izoh\s*:/i.test(l));
+      if (izoh) explanation = izoh.replace(/^izoh\s*:\s*/i,'').trim();
+      results.push({ _id: Date.now()+Math.random(), type:'fill', text:qText,
+        options:[], correctOrder:[], blanks, correct:0, explanation, points:1 });
+      continue;
+    }
+
+    // ── KO'P TANLOV / HA-YO'Q / MATNLI / YOZMA ──
+    let options = [], correctIdx = 0, textAnswer = '', isYozma = false;
+
+    for (let li = 1; li < lines.length; li++) {
+      const line = lines[li];
+
+      if (/^izoh\s*:/i.test(line))  { explanation = line.replace(/^izoh\s*:\s*/i,'').trim(); continue; }
+      if (/^javob\s*:/i.test(line)) { textAnswer  = line.replace(/^javob\s*:\s*/i,'').trim(); continue; }
+      if (/^yozma\s*:?/i.test(line)) {
+        isYozma = true;
+        const hint = line.replace(/^yozma\s*:?\s*/i,'').trim();
+        if (hint) textAnswer = hint;
+        continue;
+      }
+
+      // A) B) C) D) E) — to'g'ri javob belgisi oldida ham (*B), +B) yoki oxirida ham (B) *)
+      // Belgisi oldida: *, +, -, !, =
+      const corrPrefixM = line.match(/^([*+\-!=])\s*([A-Ea-e])\s*[\)\.\s]\s*(.+)/);
+      if (corrPrefixM) {
+        let c = corrPrefixM[3].trim();
+        // Oxiridagi belgilarni ham tozala
+        c = c.replace(/\s*[*+\-!=]\s*$/, '').replace(/\s*\[\+\]\s*$/, '').trim();
+        correctIdx = options.length;
+        options.push(c); continue;
+      }
+
+      // Oddiy variant: A) matn yoki matn * oxirida
+      const optLetterM = line.match(/^([A-Ea-e])\s*[\)\.\s]\s*(.+)/);
+      if (optLetterM) {
+        let c = optLetterM[2].trim(), isCorr = false;
+        if (/[*+!=]\s*$/.test(c))     { isCorr=true; c=c.replace(/\s*[*+!=]\s*$/,'').trim(); }
+        if (/\[\+\]/.test(c))         { isCorr=true; c=c.replace(/\s*\[\+\]\s*/g,'').trim(); }
+        if (/\(\+\)/.test(c))         { isCorr=true; c=c.replace(/\s*\(\+\)\s*/g,'').trim(); }
+        if (/\(to.g.ri\)/i.test(c))   { isCorr=true; c=c.replace(/\(to.g.ri\)/gi,'').trim(); }
+        if (isCorr) correctIdx = options.length;
+        options.push(c); continue;
+      }
+
+      // 1) 2) 3) raqamli
+      if (options.length > 0) {
+        const optNumM = line.match(/^\d+[\)\.\s]\s*(.+)/);
+        if (optNumM) {
+          let c = optNumM[1].trim(), isCorr = false;
+          if (/\*\s*$/.test(c)) { isCorr=true; c=c.replace(/\s*\*\s*$/,'').trim(); }
+          if (/\[\+\]/.test(c)) { isCorr=true; c=c.replace(/\s*\[\+\]\s*/g,'').trim(); }
+          if (isCorr) correctIdx = options.length;
+          options.push(c); continue;
+        }
+      }
+
+      // Ha / Yo'q
+      if (/^(ha|yes|true)\s*(\*|\[\+\])?$/i.test(line)) {
+        const isCorr = /(\*|\[\+\])/.test(line);
+        if (isCorr) correctIdx = options.length;
+        options.push('Ha'); continue;
+      }
+      if (/^(yo.q|yoq|no|false)\s*(\*|\[\+\])?$/i.test(line)) {
+        const isCorr = /(\*|\[\+\])/.test(line);
+        if (isCorr) correctIdx = options.length;
+        options.push("Yo'q"); continue;
+      }
+
+      if (options.length === 0 && !textAnswer && !isYozma) qText += ' ' + line;
+    }
+
+    if (!qText.trim()) continue;
+
+    // Agar forcedType berilgan bo'lsa, turni majburan o'zgartir
+    if (forcedType === 'truefalse') {
+      type = 'truefalse';
+      if (options.length === 0) options = ["Ha", "Yo'q"];
+      if (options.length > 2)   options = options.slice(0, 2);
+      if (correctIdx >= options.length) correctIdx = 0;
+    } else if (forcedType === 'text') {
+      type = 'text';
+      options = [];
+    } else if (forcedType === 'multiple' && options.length >= 2) {
+      type = 'multiple';
+    }
+
+    let type = 'text';
+    if (isYozma) {
+      type = 'text';
+      if (textAnswer) explanation = (explanation ? explanation + ' | ' : '') + '✅ Javob: ' + textAnswer;
+    } else if (textAnswer && options.length === 0) {
+      type = 'text';
+      if (!explanation) explanation = '✅ To\'g\'ri javob: ' + textAnswer;
+      else explanation = '✅ To\'g\'ri javob: ' + textAnswer + ' | ' + explanation;
+    } else if (options.length >= 2) {
+      type = 'multiple';
+      const lower = options.map(o => o.toLowerCase());
+      if (options.length === 2 &&
+          (lower[0].includes('ha') || lower[0]==='yes' || lower[0]==='true') &&
+          (lower[1].includes("yo'q") || lower[1].includes('yoq') || lower[1]==='no' || lower[1]==='false')) {
+        type = 'truefalse';
+      }
+    }
+
+    results.push({
+      _id:         Date.now() + Math.random(),
+      type,
+      text:        qText.trim(),
+      options:     (type==='text') ? [] : options,
+      correctOrder: [],
+      blanks:      [],
+      correct:     correctIdx,
+      explanation,
+      points:      1,
+    });
+  }
+
+  return results;
+}
+
+/* ═══════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════ */
+function findQ(id) { return questions.find(q => String(q._id) === String(id)); }
+
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function showAlert(msg, type = 'info') {
+  const el = document.getElementById('save-alert');
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setTimeout(() => el.innerHTML = '', 4500);
+}
+</script>
+</body>
+</html>
