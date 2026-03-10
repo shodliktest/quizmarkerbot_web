@@ -82,33 +82,27 @@ async function stGetFull(tid) {
     });
     const text = await res.text();
 
-    // 1. Hidden div dan olish (streamlit_api.py da qo'shilgan)
-    const divMatch = text.match(/<div id="api-raw"[^>]*>([^<]+)<\/div>/);
-    if (divMatch) {
-      try { return JSON.parse(divMatch[1]); } catch {}
+    // 1. <script type="application/json" id="__api__"> — SSR safe, eng ishonchli
+    const sm = text.match(/<script[^>]+id="__api__"[^>]*>([\s\S]*?)<\/script>/);
+    if (sm) { try { const d = JSON.parse(sm[1].trim()); if (d?.testData||d?.error) return d; } catch {} }
+
+    // 2. hidden div
+    const dm = text.match(/<div id="api-raw"[^>]*>([^<]+)<\/div>/);
+    if (dm) { try { const d = JSON.parse(dm[1]); if (d?.testData||d?.error) return d; } catch {} }
+
+    // 3. pre tag
+    const pm = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/);
+    if (pm) {
+      try {
+        const cl = pm[1].replace(/&quot;/g,'"').replace(/&amp;/g,'&')
+          .replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
+        const d = JSON.parse(cl);
+        if (d?.testData||d?.error) return d;
+      } catch {}
     }
-
-    // 2. <pre> ichidan olish
-    const preMatch = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/);
-    if (preMatch) {
-      try { return JSON.parse(preMatch[1].replace(/&quot;/g,'"').replace(/&amp;/g,'&')); } catch {}
-    }
-
-    // 3. testData pattern
-    const tdMatch = text.match(/(\{"testData":[\s\S]+?"total":\d+\})/);
-    if (tdMatch) { try { return JSON.parse(tdMatch[1]); } catch {} }
-
-    // 4. error pattern
-    const errMatch = text.match(/(\{"error":"[^"]+"})/);
-    if (errMatch) { try { return JSON.parse(errMatch[1]); } catch {} }
-
     return null;
-  } catch (e) {
-    console.error('stGetFull:', e.message);
-    return null;
-  }
+  } catch (e) { console.error('stGetFull:', e.message); return null; }
 }
-
 // ── TG dan test fayl yuklab olish (fallback) ───────────────────
 async function tgGetFull(msgId) {
   try {
