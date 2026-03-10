@@ -137,12 +137,10 @@ async function _req(method, path, body) {
   if (u) { headers['X-TG-ID'] = String(u.id); }
 
   // /api/tests/public → /api/proxy?endpoint=tests/public
-  // /api/test/ABC/full → /api/proxy?endpoint=test/ABC/full
   let url = API_URL;
   const match = path.match(/^\/api\/(.+)/);
   if (match) {
     let ep = match[1];
-    // query string ni ajratish: /api/tests/my?uid=123 → endpoint=tests/my&uid=123
     const qIdx = ep.indexOf('?');
     if (qIdx !== -1) {
       url += '?endpoint=' + ep.slice(0, qIdx) + '&' + ep.slice(qIdx + 1);
@@ -154,7 +152,7 @@ async function _req(method, path, body) {
   }
 
   const opts = { method, headers };
-  if (body && method === 'POST') opts.body = JSON.stringify(body);
+  if (body) opts.body = JSON.stringify(body);
 
   const res  = await fetch(url, opts);
   const data = await res.json().catch(() => ({}));
