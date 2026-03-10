@@ -703,9 +703,9 @@ function mxAdd(test){
       id:          test.id,
       title:       test.title||'Test',
       code:        test.accessCode||'',
-      authorName:  test.authorName||'Anonim',
-      questionCount: test.questionCount||0,
-      timeLimit:   test.timeLimit||0,
+      authorName:  test.creator_name||test.authorName||'Anonim',
+      questionCount: test.question_count||test.questionCount||0,
+      timeLimit:   test.time_limit||test.timeLimit||0,
       addedAt:     Date.now(),
       hidden:      false,
     });
@@ -944,7 +944,7 @@ function renderMyExp(wrap, tests, isAdmin, uid){
     const body=document.createElement('div');
     body.className='fan-items'+(isFirst?' open':'');
     arr.forEach(t=>{
-      const owner=t.authorId===uid;
+      const owner=String(t.creator_id||t.authorId)===String(uid);
       const vtag=t.visibility==='public'
         ?'<span class="mt-vtag mt-pub" style="font-size:.58rem">🌐</span>'
         :'<span class="mt-vtag mt-priv" style="font-size:.58rem">🔒</span>';
@@ -1022,7 +1022,7 @@ let CU=null;
       /* ── Karusel ── */
       myScroll.innerHTML='';
       myTests.forEach(t=>{
-        const owner=t.authorId===CU.uid;
+        const owner=String(t.creator_id||t.authorId)===String(CU.uid||CU.id);
         const subj=t.subject||'other';
         const icon=ICON[subj]||'📚';
         const vtag=t.visibility==='public'
@@ -1219,12 +1219,12 @@ let CU=null;
         c.innerHTML=`
           <div class="card-icon">${icon}</div>
           <div class="card-t">${esc(t.title)}</div>
-          <div class="card-au">${esc(t.authorName||'Anonim')}</div>
+          <div class="card-au">${esc(t.creator_name||t.authorName||'Anonim')}</div>
           <div class="chips">
-            <span class="ch">📝 ${t.questionCount||0}</span>
-            <span class="ch">👁 ${t.attempts||0}</span>
-            ${t.timeLimit?`<span class="ch">⏱ ${t.timeLimit}d</span>`:''}
-            ${t.averageScore?`<span class="ch">⭐${t.averageScore}%</span>`:''}
+            <span class="ch">📝 ${t.question_count||t.questionCount||0}</span>
+            <span class="ch">👁 ${t.solve_count||t.attempts||0}</span>
+            ${(t.time_limit||t.timeLimit)?`<span class="ch">⏱ ${t.time_limit||t.timeLimit}d</span>`:''}
+            ${t.avg_score?`<span class="ch">⭐${Math.round(t.avg_score)}%</span>`:''}
           </div>
           <button class="card-btn">Boshlash →</button>`;
         sc.appendChild(c);
