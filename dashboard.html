@@ -990,10 +990,11 @@ let CU=null;
   setAva('nav-ava',profile,name);
   setAva('p-ava',profile,name);
   document.getElementById('p-nm').textContent=name;
-  document.getElementById('p-role').textContent=profile?.role==='admin'?'👑 Admin':'Foydalanuvchi';
+  const isAdmin = profile?.is_admin || profile?.role==='admin';
+  document.getElementById('p-role').textContent=isAdmin?'👑 Admin':'Foydalanuvchi';
   document.getElementById('greet-h').textContent='Salom, '+name.split(' ')[0]+'! 👋';
 
-  if(profile?.role==='admin'){
+  if(isAdmin){
     document.getElementById('admin-wrap').innerHTML=
       `<button class="ml" style="color:#d97706" onclick="closeMenu();goTo('admin.html')">
         <span class="mi">👑</span> Admin panel
@@ -1121,27 +1122,16 @@ let CU=null;
     const list=[...allTests].filter(t=>(t.subject||'other')===subj);
     if(!list.length){wrap.innerHTML='<div style="text-align:center;padding:.8rem;color:var(--text3);font-size:.76rem">Test yo\'q</div>';return;}
 
-    const getSolve = t => t.solve_count || t.attempts || 0;
-    const getAvg   = t => t.avg_score   || t.averageScore || 0;
-    const getQc    = t => t.question_count || t.questionCount || 0;
-    const getDate  = t => t.created_at ? new Date(t.created_at) : gTs(t.createdAt);
-    const getSubj  = t => t.category || t.subject || 'other';
-    const getAuthor= t => t.creator_name || t.authorName || '';
-
-    if(sortType==='new') list.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
-    else if(sortType==='popular') list.sort((a,b)=>getSolve(b)-getSolve(a));
-    else if(sortType==='score') list.sort((a,b)=>getAvg(b)-getAvg(a));
+    if(sortType==='new') list.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    else if(sortType==='popular') list.sort((a,b)=>(b.attempts||0)-(a.attempts||0));
+    else if(sortType==='score') list.sort((a,b)=>(b.averageScore||0)-(a.averageScore||0));
 
     wrap.innerHTML='';
     list.forEach(t=>{
-      const d=getDate(t);
+      const d=gTs(t.createdAt);
       const dateStr=d?d.toLocaleDateString('uz-UZ',{day:'numeric',month:'short',year:'numeric'}):'';
-      const icon=ICON[getSubj(t)]||'📚';
+      const icon=ICON[t.subject||'other']||'📚';
       const isDone=myDoneIds.has(t.id);
-      const solveCount=getSolve(t);
-      const avgScore=getAvg(t);
-      const qCount=getQc(t);
-      const author=getAuthor(t);
       const el=document.createElement('div');
       el.className='eli';
       el.onclick=()=>goTo('test.html?id='+t.id);
@@ -1149,16 +1139,16 @@ let CU=null;
         <div class="eli-ico">${icon}</div>
         <div class="eli-info">
           <div class="eli-nm">${esc(t.title)}</div>
-          ${author?`<div class="card-au">👤 ${esc(author)}</div>`:''}
           <div class="eli-mt">
-            <span>📝 ${qCount} savol</span>
-            <span>▶ ${solveCount} marta</span>
-            ${avgScore?`<span>⭐ ${avgScore.toFixed?avgScore.toFixed(0):avgScore}%</span>`:''}
-            ${t.time_limit||t.timeLimit?`<span>⏱ ${t.time_limit||t.timeLimit}d</span>`:''}
+            <span>📝 ${t.questionCount||0} savol</span>
+            <span>👁 ${t.attempts||0}</span>
+            ${t.timeLimit?`<span>⏱ ${t.timeLimit}d</span>`:''}
+            ${dateStr?`<span>📅 ${dateStr}</span>`:''}
           </div>
         </div>
         <div class="eli-r">
           ${isDone?'<span class="done-tag">✅ Ishlandi</span>':''}
+          ${t.averageScore?`<span class="avg-tag">⭐${t.averageScore}%</span>`:''}
           <button class="go-btn" onclick="event.stopPropagation();goTo('test.html?id=${t.id}')">Boshlash →</button>
         </div>`;
       wrap.appendChild(el);
