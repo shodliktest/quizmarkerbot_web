@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TestPro — Kirish</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;min-height:100vh}
+body{font-family:'Plus Jakarta Sans',sans-serif;
+  background:linear-gradient(135deg,#f0ebff 0%,#fce7f3 50%,#ebf0ff 100%);
+  display:flex;align-items:center;justify-content:center;padding:1.5rem}
+[data-theme=dark] body{background:linear-gradient(135deg,#0d0820 0%,#160a28 50%,#08101a 100%)}
+
+.card{
+  background:#fff;border-radius:28px;padding:2.75rem 2.25rem 2.25rem;
+  width:100%;max-width:400px;
+  box-shadow:0 24px 72px rgba(108,63,232,.13),0 4px 16px rgba(108,63,232,.06);
+  text-align:center
+}
+[data-theme=dark] .card{background:#13102a;box-shadow:0 24px 72px rgba(0,0,0,.45)}
+
+.logo{
+  font-family:'Unbounded',sans-serif;font-size:1.55rem;font-weight:900;
+  background:linear-gradient(135deg,#6C3FE8,#C040C8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:.35rem
+}
+.tagline{font-size:.8rem;color:#9ca3af;margin-bottom:2rem;line-height:1.5}
+
+/* ID input area */
+.input-area{margin-bottom:1.5rem;text-align:left}
+.input-label{font-size:.78rem;font-weight:700;color:#6C3FE8;margin-bottom:.5rem;display:block}
+.input-wrap{position:relative}
+.id-input{
+  width:100%;padding:.9rem 1rem;border-radius:14px;
+  border:1.5px solid rgba(108,63,232,.25);
+  font-size:1.1rem;font-family:inherit;font-weight:700;
+  background:rgba(108,63,232,.04);color:#1f2937;
+  outline:none;transition:border-color .2s;letter-spacing:2px;text-align:center
+}
+.id-input:focus{border-color:#6C3FE8;background:rgba(108,63,232,.07)}
+[data-theme=dark] .id-input{background:rgba(108,63,232,.1);color:#f3f4f6;border-color:rgba(108,63,232,.3)}
+.id-input::placeholder{letter-spacing:0;font-size:.9rem;font-weight:400;color:#9ca3af}
+
+.btn{
+  width:100%;padding:.88rem;border-radius:14px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#6C3FE8,#C040C8);color:#fff;
+  font-weight:800;font-size:.9rem;font-family:inherit;transition:all .22s;
+  margin-bottom:.5rem
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,63,232,.38)}
+.btn:disabled{opacity:.6;transform:none;cursor:not-allowed}
+
+/* How to get ID */
+.how{
+  border-radius:14px;padding:.95rem 1rem;text-align:left;
+  background:rgba(108,63,232,.05);border:1px solid rgba(108,63,232,.1);
+  margin-bottom:1.5rem
+}
+[data-theme=dark] .how{background:rgba(108,63,232,.1);border-color:rgba(108,63,232,.2)}
+.how-title{font-size:.78rem;font-weight:800;color:#6C3FE8;margin-bottom:.5rem}
+.how-row{display:flex;gap:.6rem;font-size:.78rem;color:#6b7280;line-height:1.55;padding:.18rem 0;align-items:flex-start}
+.how-row b{color:#6C3FE8;font-weight:800}
+[data-theme=dark] .how-row{color:#9ca3af}
+
+/* User preview */
+.preview{
+  display:none;border-radius:16px;padding:1rem;margin-bottom:1rem;
+  background:rgba(34,197,94,.06);border:1.5px solid rgba(34,197,94,.2);
+  text-align:left
+}
+.preview.show{display:block}
+.prev-name{font-size:.95rem;font-weight:800;color:#16a34a;margin-bottom:.2rem}
+.prev-sub{font-size:.75rem;color:#9ca3af}
+[data-theme=dark] .prev-name{color:#4ade80}
+
+/* Already logged */
+.logged{display:none}
+.av{
+  width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(135deg,#6C3FE8,#C040C8);
+  margin:0 auto .95rem;display:flex;align-items:center;justify-content:center;
+  font-size:1.9rem;color:#fff;font-weight:900;font-family:'Unbounded',sans-serif
+}
+.uname{font-size:1.08rem;font-weight:800;margin-bottom:.2rem}
+[data-theme=dark] .uname{color:#f3f4f6}
+.usub{font-size:.77rem;color:#9ca3af;margin-bottom:1.6rem}
+.btn-out{background:none;color:#ef4444;border:1.5px solid rgba(239,68,68,.25)}
+.btn-out:hover{background:rgba(239,68,68,.07);transform:none;box-shadow:none}
+
+.err{color:#ef4444;font-size:.8rem;padding:.6rem;margin-bottom:.8rem;
+  background:rgba(239,68,68,.07);border-radius:10px;border:1px solid rgba(239,68,68,.18);display:none}
+.err.show{display:block}
+
+.back{margin-top:1.3rem;font-size:.77rem;color:#9ca3af}
+.back a{color:#6C3FE8;font-weight:700;text-decoration:none}
+.back a:hover{text-decoration:underline}
+
+.tbtn{
+  position:fixed;top:.9rem;right:.9rem;width:36px;height:36px;
+  border-radius:10px;border:1.5px solid rgba(0,0,0,.1);
+  background:rgba(255,255,255,.9);cursor:pointer;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)
+}
+[data-theme=dark] .tbtn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:#fff}
+
+.sp{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<button class="tbtn" id="tbtn" aria-label="Tema"></button>
+
+<div class="card">
+  <div class="logo">TestPro</div>
+  <div class="tagline">Bilimingizni sinang va o'stiring 🚀</div>
+
+  <!-- === Allaqachon kirgan === -->
+  <div class="logged" id="logged">
+    <div class="av" id="u-av"></div>
+    <div class="uname" id="u-nm"></div>
+    <div class="usub"  id="u-sb"></div>
+    <button class="btn" id="dash-btn">🚀 Dashboardga o'tish</button>
+    <button class="btn btn-out" id="out-btn">Chiqish</button>
+  </div>
+
+  <!-- === Kirish === -->
+  <div id="login-sec">
+
+    <div class="how">
+      <div class="how-title">📲 Qanday kirish kerak?</div>
+      <div class="how-row">1️⃣ <span>Botga o'ting: <b>@BOT_NAME</b></span></div>
+      <div class="how-row">2️⃣ <span><b>/id</b> buyrug'ini yuboring</span></div>
+      <div class="how-row">3️⃣ <span>Chiqgan <b>raqamni</b> quyida kiriting</span></div>
+    </div>
+
+    <div class="input-area">
+      <label class="input-label" for="id-input">🆔 Telegram ID</label>
+      <div class="input-wrap">
+        <input class="id-input" id="id-input" type="number"
+               placeholder="Masalan: 123456789" autocomplete="off"/>
+      </div>
+    </div>
+
+    <div class="preview" id="preview">
+      <div class="prev-name" id="prev-name"></div>
+      <div class="prev-sub"  id="prev-sub"></div>
+    </div>
+
+    <div class="err" id="err-msg"></div>
+
+    <button class="btn" id="login-btn" disabled>Kirish</button>
+  </div>
+
+  <div class="back"><a href="index.html">← Bosh sahifaga qaytish</a></div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+/* ── Theme ── */
+const TH={
+  get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
+  set(t){
+    document.documentElement.setAttribute('data-theme',t);
+    localStorage.setItem('tp_theme',t);
+    document.getElementById('tbtn').textContent=t==='dark'?'☀️':'🌙';
+  },
+  toggle(){this.set(this.get()==='dark'?'light':'dark')}
+};
+TH.set(TH.get());
+document.getElementById('tbtn').onclick=()=>TH.toggle();
+
+/* ── Bot name ── */
+document.querySelector('.how-row b[style]') // skip
+document.querySelectorAll('.how-row b').forEach(el=>{
+  if(el.textContent==='@BOT_NAME') el.textContent='@'+BOT_USERNAME;
+});
+
+/* ── Redirect ── */
+function goToDash(){
+  const next=new URLSearchParams(location.search).get('next')||'dashboard.html';
+  goTo(next);
+}
+
+/* ── Allaqachon kirgani bormi? ── */
+const U=TGAuth.get();
+if(U){
+  document.getElementById('login-sec').style.display='none';
+  document.getElementById('logged').style.display='block';
+  const nm=[U.first_name,U.last_name].filter(Boolean).join(' ')||U.name||'Foydalanuvchi';
+  document.getElementById('u-nm').textContent=nm;
+  document.getElementById('u-sb').textContent=U.username?'@'+U.username:'Telegram foydalanuvchi';
+  const av=document.getElementById('u-av');
+  av.textContent=(nm[0]||'?').toUpperCase();
+  document.getElementById('dash-btn').onclick=goToDash;
+  document.getElementById('out-btn').onclick=()=>{
+    TGAuth.clear();
+    location.reload();
+  };
+}
+
+/* ── ID Login ── */
+const inp    = document.getElementById('id-input');
+const btn    = document.getElementById('login-btn');
+const errEl  = document.getElementById('err-msg');
+const prevEl = document.getElementById('preview');
+let   lookupTimer = null;
+
+function showErr(msg){ errEl.textContent=msg; errEl.classList.add('show'); }
+function hideErr()   { errEl.classList.remove('show'); }
+function showPrev(name,sub){
+  document.getElementById('prev-name').textContent='✅ '+name;
+  document.getElementById('prev-sub').textContent=sub||'';
+  prevEl.classList.add('show');
+}
+function hidePrev(){ prevEl.classList.remove('show'); }
+
+inp.addEventListener('input', ()=>{
+  const val = inp.value.trim();
+  hideErr(); hidePrev();
+  btn.disabled = val.length < 5;
+
+  clearTimeout(lookupTimer);
+  if(val.length >= 5){
+    lookupTimer = setTimeout(()=> lookupUser(val), 600);
+  }
+});
+
+async function lookupUser(uid){
+  try{
+    const res = await fetch(`${API_URL}/?endpoint=user/${uid}`);
+    const data = await res.json();
+    if(data && data.name){
+      const uname = data.username ? '@'+data.username : 'Telegram foydalanuvchi';
+      showPrev(data.name, uname);
+      hideErr();
+    }
+  } catch(e){ /* silent */ }
+}
+
+inp.addEventListener('keydown', e=>{ if(e.key==='Enter' && !btn.disabled) doLogin(); });
+btn.onclick = doLogin;
+
+async function doLogin(){
+  const uid = inp.value.trim();
+  if(!uid){ showErr('ID ni kiriting'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="sp"></span>Tekshirilmoqda...';
+  hideErr();
+
+  try{
+    const res  = await fetch(`${API_URL}/?endpoint=user/${uid}`);
+    const data = await res.json();
+
+    if(data && data.name){
+      // Foydalanuvchini saqlash
+      TGAuth.save({
+        id:         parseInt(uid),
+        first_name: data.name,
+        username:   data.username || '',
+        name:       data.name,
+        _tg_id:     parseInt(uid)
+      });
+      goToDash();
+    } else {
+      showErr('❌ Bu ID topilmadi. Botda /id buyrug\'ini yuboring.');
+      btn.disabled = false;
+      btn.textContent = 'Kirish';
+    }
+  } catch(e){
+    showErr('⚠️ Server bilan bog\'lanishda xato. Keyinroq urinib ko\'ring.');
+    btn.disabled = false;
+    btn.textContent = 'Kirish';
+  }
+}
+</script>
+</body>
+</html>
