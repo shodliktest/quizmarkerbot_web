@@ -90,6 +90,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;
 .btn-out{background:none;color:#ef4444;border:1.5px solid rgba(239,68,68,.25)}
 .btn-out:hover{background:rgba(239,68,68,.07);transform:none;box-shadow:none}
 
+.bot-btn{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  margin-top:.85rem;padding:.75rem 1rem;border-radius:12px;
+  background:linear-gradient(135deg,#229ED9,#1a7fc4);color:#fff;
+  font-weight:800;font-size:.85rem;text-decoration:none;
+  transition:all .2s;
+}
+.bot-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(34,158,217,.4)}
+
 .err{color:#ef4444;font-size:.8rem;padding:.6rem;margin-bottom:.8rem;
   background:rgba(239,68,68,.07);border-radius:10px;border:1px solid rgba(239,68,68,.18);display:none}
 .err.show{display:block}
@@ -132,9 +141,12 @@ body{font-family:'Plus Jakarta Sans',sans-serif;
 
     <div class="how">
       <div class="how-title">📲 Qanday kirish kerak?</div>
-      <div class="how-row">1️⃣ <span>Botga o'ting: <b>@BOT_NAME</b></span></div>
-      <div class="how-row">2️⃣ <span><b>/id</b> buyrug'ini yuboring</span></div>
+      <div class="how-row">1️⃣ <span>Quyidagi tugmani bosing</span></div>
+      <div class="how-row">2️⃣ <span>Bot <b>ID ingizni</b> yuboradi</span></div>
       <div class="how-row">3️⃣ <span>Chiqgan <b>raqamni</b> quyida kiriting</span></div>
+      <a id="bot-link" href="#" target="_blank" class="bot-btn">
+        <span>✈️ Botdan ID olish</span>
+      </a>
     </div>
 
     <div class="input-area">
@@ -172,6 +184,9 @@ const TH={
 };
 TH.set(TH.get());
 document.getElementById('tbtn').onclick=()=>TH.toggle();
+
+/* ── Bot deep link ── */
+document.getElementById('bot-link').href = 'https://t.me/' + BOT_USERNAME + '?start=getid';
 
 /* ── Bot name ── */
 document.querySelector('.how-row b[style]') // skip
