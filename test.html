@@ -422,7 +422,48 @@ window.shareTest=async()=>{
     }
 
     if(!qs||!qs.length){showErr('Savollar yo\'q','Bu testda savol qo\'shilmagan');return;}
-    questions=testData.shuffleQuestions?qs.sort(()=>Math.random()-.5):[...qs];
+    // ── Savol formatini normalize qilamiz ──
+    function normalizeQ(arr) {
+      return (arr || []).map(q => {
+        // type
+        const type = (q.type === 'multiple_choice' || q.type === 'multiple') ? 'multiple'
+                   : (q.type === 'true_false' || q.type === 'truefalse')     ? 'truefalse'
+                   : (q.type === 'fill' || q.type === 'fill_blank')           ? 'fill'
+                   : (q.type === 'order' || q.type === 'ordering')            ? 'order'
+                   : (q.type === 'sequence')                                  ? 'sequence'
+                   : q.type || 'multiple';
+
+        // text
+        const text = q.text || q.question || q.q || '';
+
+        // options — A) B) C) D) prefikslarini saqlaymiz yoki olib tashlaymiz
+        const rawOpts = q.options || q.answers || q.variants || [];
+        const options = rawOpts.map(o => String(o));
+
+        // correct — string bo'lsa index ga aylantiramiz
+        let correct = 0;
+        if (typeof q.correct === 'number') {
+          correct = q.correct;
+        } else if (typeof q.correct === 'string') {
+          // "B) She works..." → options ichidan qidiramiz
+          const idx = options.findIndex(o => o === q.correct || o.trim() === q.correct.trim());
+          correct = idx >= 0 ? idx : 0;
+        } else if (typeof q.answer_index === 'number') {
+          correct = q.answer_index;
+        }
+
+        return {
+          ...q,
+          type,
+          text,
+          options,
+          correct,
+          explanation: q.explanation || q.izoh || '',
+          points:      q.points || 1,
+        };
+      });
+    }
+    questions = normalizeQ(testData.shuffleQuestions ? qs.sort(()=>Math.random()-.5) : [...qs]);
 
     // Har bir savol uchun boshlang'ich holat
     questions.forEach((_,i)=>{
@@ -841,12 +882,10 @@ function finish(){
   if(CU){
     const uaArr=questions.map((_,i)=>answers[i]!==undefined?answers[i]:-1);
     const _u = CU || {};
-    const _uid = String(_u.id || _u.uid || _u._tg_id || '');
-    const _uname = [_u.first_name, _u.last_name].filter(Boolean).join(' ') || _u.name || '';
     DB.saveResult({
-      userId:       _uid,
+      userId:       String(_u.id || _u.uid || _u._tg_id || ''),
       testId:       testData.id || testData.test_id || testId,
-      userName:     _uname,
+      userName:     [_u.first_name, _u.last_name].filter(Boolean).join(' ') || _u.name || '',
       userUsername: _u.username || '',
       score:        correct,
       total:        tot,
