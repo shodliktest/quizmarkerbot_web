@@ -72,21 +72,30 @@ async function getIndex() {
 }
 
 // ── Streamlit dan test/full olish ──────────────────────────────
-// ── TG dan test fayl yuklab olish (fallback) ───────────────────
+// ── TG dan test fayl yuklab olish ─────────────────────────────
 async function tgGetFull(msgId) {
   try {
     const fwd = await tgPost('forwardMessage', {
       chat_id: CHANNEL_ID, from_chat_id: CHANNEL_ID, message_id: parseInt(msgId),
     });
     const doc = fwd?.result?.document;
-    if (!doc) return null;
-    tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: fwd.result.message_id });
+    if (!doc) {
+      console.error('tgGetFull: doc topilmadi', JSON.stringify(fwd).slice(0,200));
+      return null;
+    }
     const f = await tgPost('getFile', { file_id: doc.file_id });
     const p = f?.result?.file_path;
     if (!p) return null;
     const raw = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${p}`);
-    return raw.json();
-  } catch { return null; }
+    if (!raw.ok) return null;
+    const data = await raw.json();
+    // Forward xabarni o'chir (async)
+    tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: fwd.result.message_id }).catch(()=>{});
+    return data;
+  } catch(e) {
+    console.error('tgGetFull error:', String(e));
+    return null;
+  }
 }
 
 // ── Multipart yuborish ─────────────────────────────────────────
@@ -188,7 +197,10 @@ export default async function handler(request) {
     if (!msgId) return jsonResp({ error: 'Test fayli topilmadi' }, 404);
 
     const full = await tgGetFull(msgId);
-    if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
+    if (!full?.questions?.length) return jsonResp({
+      error: 'Savollar topilmadi',
+      debug: { msgId, has_full: !!full, keys: full ? Object.keys(full) : [] }
+    }, 404);
 
     const t = normMeta({ ...meta, ...full });
     t.id      = t.id      || t.test_id || tid;
