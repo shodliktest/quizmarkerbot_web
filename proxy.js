@@ -17,7 +17,6 @@ export const config = { runtime: 'edge' };
 
 const BOT_TOKEN   = process.env.BOT_TOKEN          || '';
 const CHANNEL_ID  = process.env.STORAGE_CHANNEL_ID || '';
-const STREAMLIT   = (process.env.STREAMLIT_URL     || 'https://webapiquizmarkerbot.streamlit.app').replace(/\/$/, '');
 const ADMIN_IDS   = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const ADMIN_PASS  = process.env.ADMIN_PASSWORD     || 'admin123';
 const TG          = `https://api.telegram.org/bot${BOT_TOKEN}`;
@@ -73,36 +72,6 @@ async function getIndex() {
 }
 
 // ── Streamlit dan test/full olish ──────────────────────────────
-async function stGetFull(tid) {
-  try {
-    const url = `${STREAMLIT}/?endpoint=test/${tid}/full`;
-    const res  = await fetch(url, {
-      headers: { 'Accept': 'text/html,application/json' },
-      signal: AbortSignal.timeout(25000),
-    });
-    const text = await res.text();
-
-    // 1. <script type="application/json" id="__api__"> — SSR safe, eng ishonchli
-    const sm = text.match(/<script[^>]+id="__api__"[^>]*>([\s\S]*?)<\/script>/);
-    if (sm) { try { const d = JSON.parse(sm[1].trim()); if (d?.testData||d?.error) return d; } catch {} }
-
-    // 2. hidden div
-    const dm = text.match(/<div id="api-raw"[^>]*>([^<]+)<\/div>/);
-    if (dm) { try { const d = JSON.parse(dm[1]); if (d?.testData||d?.error) return d; } catch {} }
-
-    // 3. pre tag
-    const pm = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/);
-    if (pm) {
-      try {
-        const cl = pm[1].replace(/&quot;/g,'"').replace(/&amp;/g,'&')
-          .replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim();
-        const d = JSON.parse(cl);
-        if (d?.testData||d?.error) return d;
-      } catch {}
-    }
-    return null;
-  } catch (e) { console.error('stGetFull:', e.message); return null; }
-}
 // ── TG dan test fayl yuklab olish (fallback) ───────────────────
 async function tgGetFull(msgId) {
   try {
@@ -190,39 +159,27 @@ export default async function handler(request) {
     return jsonResp(mine);
   }
 
-  // ── test/{id}/full — STREAMLIT + TG fallback ──────────────────
+  // ── test/{id}/full — TG kanaldan yuklab olish ────────────────────
   if (ep.startsWith('test/') && ep.endsWith('/full')) {
-    const tid = ep.split('/')[1];
+    const tid   = ep.split('/')[1];
+    const index = await getIndex();
+    if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
 
-    // 1. Streamlit dan olishga harakat
-    let result = await stGetFull(tid);
+    const meta  = (index.tests_meta || []).find(t => t.test_id === tid);
+    if (!meta) return jsonResp({ error: 'Test topilmadi' }, 404);
 
-    // 2. Streamlit ishlamasa — TG dan yuklab olish
-    if (!result?.testData || !result?.questions?.length) {
-      const index = await getIndex();
-      const msgId = index?.[`test_${tid}`];
-      if (msgId) {
-        const full = await tgGetFull(msgId);
-        if (full?.questions?.length) {
-          const meta = (index.tests_meta || []).find(t => t.test_id === tid) || {};
-          result = {
-            testData:  normMeta({ ...meta, ...full }),
-            questions: full.questions,
-            total:     full.questions.length,
-          };
-        }
-      }
-    }
+    const msgId = index[`test_${tid}`];
+    if (!msgId) return jsonResp({ error: 'Test fayli topilmadi' }, 404);
 
-    if (!result?.testData) return jsonResp({ error: 'Test topilmadi' }, 404);
+    const full = await tgGetFull(msgId);
+    if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
 
-    // Normalizatsiya
-    const t = result.testData;
-    t.id       = t.id       || t.test_id || tid;
-    t.test_id  = t.test_id  || tid;
-    t.authorId = t.authorId || String(t.creator_id || '');
-    t.subject  = t.subject  || t.category || 'other';
-    return jsonResp({ testData: t, questions: result.questions || [], total: (result.questions || []).length });
+    const t = normMeta({ ...meta, ...full });
+    t.id      = t.id      || t.test_id || tid;
+    t.test_id = t.test_id || tid;
+    t.authorId= t.authorId|| String(t.creator_id || '');
+    t.subject = t.subject || t.category || 'other';
+    return jsonResp({ testData: t, questions: full.questions, total: full.questions.length });
   }
 
   // ── test/{id}/meta ────────────────────────────────────────────
