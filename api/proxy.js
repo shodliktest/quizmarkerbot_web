@@ -17,7 +17,7 @@ export const config = { runtime: 'edge' };
 
 const BOT_TOKEN   = process.env.BOT_TOKEN          || '';
 const CHANNEL_ID  = process.env.STORAGE_CHANNEL_ID || '';
-const STREAMLIT   = (process.env.STREAMLIT_URL     || 'https://webapiquizmarkerbot.streamlit.app').replace(/\/$/, '');
+const STREAMLIT   = (process.env.STREAMLIT_API_URL || process.env.STREAMLIT_URL     || 'https://webapiquizmarkerbot.streamlit.app').replace(/\/$/, '');
 const ADMIN_IDS   = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const ADMIN_PASS  = process.env.ADMIN_PASSWORD     || 'admin123';
 const TG          = `https://api.telegram.org/bot${BOT_TOKEN}`;
