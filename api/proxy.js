@@ -269,6 +269,43 @@ export default async function handler(request) {
     return jsonResp(full?.questions || []);
   }
 
+  // ── test/{id}/questions POST — savollarni saqlash ─────────────
+  if (ep.match(/^test\/[^/]+\/questions$/) && request.method === 'POST') {
+    const tid       = ep.split('/')[1];
+    const questions = body?.questions || [];
+    const index     = await getIndex();
+    if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
+
+    const msgId = index[`test_${tid}`];
+    if (!msgId) return jsonResp({ error: 'Test topilmadi' }, 404);
+
+    // Mavjud test faylini yuklab olamiz
+    const existing = await tgGetFull(msgId) || {};
+    const meta = (index.tests_meta || []).find(t => t.test_id === tid) || {};
+
+    // Yangilangan test fayli
+    const updated = {
+      ...existing,
+      ...meta,
+      test_id:        tid,
+      questions:      questions,
+      question_count: questions.length,
+    };
+
+    // Yangi fayl yuboramiz
+    const tgData = await sendDoc(`test_${tid}.json`, updated,
+      `📝 TEST | ${meta.title || tid} | ${tid}`);
+    if (!tgData?.ok) return jsonResp({ error: 'Kanalga yuborishda xato' }, 500);
+
+    // Index ni yangilaymiz (yangi message_id)
+    index[`test_${tid}`] = tgData.result.message_id;
+    const m = (index.tests_meta || []).find(t => t.test_id === tid);
+    if (m) m.question_count = questions.length;
+    await saveIndex(index);
+
+    return jsonResp({ ok: true, count: questions.length });
+  }
+
   // ── test/{id}/update ──────────────────────────────────────────
   if (ep.match(/^test\/[^/]+\/update$/) && request.method === 'POST') {
     const tid   = ep.split('/')[1];
