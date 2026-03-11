@@ -303,24 +303,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
 
 <script src="js/api.js"></script>
 <script>
-/* ── Agar api.js da yo'q bo'lsa fallback helper lar ── */
-if(typeof fmtTime==='undefined'){
-  window.fmtTime=s=>{const m=Math.floor(s/60),sec=s%60;return m+':'+(sec<10?'0':'')+sec;};
-}
-if(typeof esc==='undefined'){
-  window.esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-if(typeof getSubject==='undefined'){
-  const _SUBJ={english:{label:'English'},russian:{label:'Ruscha'},uzbek:{label:"O'zbekcha"},
-    turkish:{label:'Turkcha'},arabic:{label:'Arabcha'},math:{label:'Matematika'},
-    it:{label:'IT'},science:{label:'Fan'},history:{label:'Tarix'},other:{label:'Boshqa'}};
-  window.getSubject=k=>_SUBJ[k]||{label:k||'Boshqa'};
-}
-if(typeof goTo==='undefined'){
-  window.goTo=url=>window.location.href=url;
-}
-</script>
-<script>
 /* Theme */
 const TH={
   get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
@@ -431,10 +413,10 @@ window.shareTest=async()=>{
     // Access control
     if(testData.visibility==='private'){
       const unlocked=JSON.parse(localStorage.getItem('tp_unlocked')||'[]');
-      const isOwner=CU&&(CU.id||CU.uid||String(CU._tg_id||''))===(testData.authorId||testData.creator_id||'');
+      const isOwner=CU&&CU.uid===testData.authorId;
       if(!isOwner&&!unlocked.includes(id)){
         let isAdmin=false;
-        if(CU){const p=await DB.getUser(CU.id||CU.uid||String(CU._tg_id||'')).catch(()=>null);isAdmin=p?.role==='admin';}
+        if(CU){const p=await DB.getUser(CU.uid).catch(()=>null);isAdmin=p?.role==='admin';}
         if(!isAdmin){showErr('Ruxsat yo\'q','Bu test shaxsiy. Kod orqali kiring.');return;}
       }
     }
@@ -456,17 +438,27 @@ window.shareTest=async()=>{
       const pass=prevResult.score>=(testData.passScore||60);
       document.getElementById('scr-result').style.display='block';
       document.getElementById('sc-circle').className='sc-circle '+(pass?'sc-pass':'sc-fail');
-      document.getElementById('sc-circle').style.setProperty('--prog',prevResult.score+'%');
       document.getElementById('sc-pct').textContent=prevResult.score+'%';
-      document.getElementById('sc-lbl').textContent=pass?"O'TDINGIZ":'XATO';
-      document.getElementById('r-c').textContent=prevResult.correct||0;
-      document.getElementById('r-w').textContent=(prevResult.total||0)-(prevResult.correct||0);
-      document.getElementById('r-t').textContent=fmtTime(prevResult.elapsed||0);
-      document.getElementById('res-title').textContent=testData.title||'Test';
-      document.getElementById('res-sub').textContent=pass?'🎉 Tabriklaymiz! Ajoyib natija!':"💪 Yana urinib ko'ring!";
-      // Qayta yechish uchun Ko'rish tugmasini qayta ishlatamiz
-      document.getElementById('scr-load').style.display='none';
-      document.getElementById('scr-result').style.display='block';
+      document.getElementById('sc-lbl').textContent=pass?"✅ O'tdingiz!":"❌ O'tmadingiz";
+      document.getElementById('sc-correct').textContent=prevResult.correct||0;
+      document.getElementById('sc-wrong').textContent=(prevResult.total||0)-(prevResult.correct||0);
+      document.getElementById('sc-total').textContent=prevResult.total||0;
+      document.getElementById('sc-time').textContent=fmtTime(prevResult.elapsed||0);
+      // Qayta yechish tugmasi
+      const retryBtn=document.getElementById('retry-btn');
+      if(retryBtn){
+        retryBtn.style.display='inline-flex';
+        retryBtn.onclick=()=>{
+          Session.clear(id);
+          // Natijani o'chirmasdan, faqat sessionni tozalab yangi test boshlash
+          answers={};orderStates={};seqStates={};curIdx=0;
+          questions.forEach((_,i)=>{orderStates[i]=null;seqStates[i]=null;});
+          startTime=Date.now();sessionFinished=false;
+          document.getElementById('scr-result').style.display='none';
+          document.getElementById('scr-test').style.display='block';
+          renderDots();renderQ();
+        };
+      }
       return;
     }
 
@@ -506,11 +498,10 @@ window.shareTest=async()=>{
     // Show test
     document.getElementById('scr-load').style.display='none';
     document.getElementById('scr-test').style.display='block';
-    const _subj=testData.subject||testData.category||'other';
-    const sub=getSubject(_subj);
+    const sub=getSubject(testData.subject||'other');
     document.getElementById('t-title').textContent=testData.title||'Test';
     document.getElementById('t-chips').innerHTML=`
-      <span class="ch">${(_icon||{english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',uzbek:'🇺🇿',math:'🧮',it:'💻',science:'🔬',religion:'📖',history:'🏛️',other:'📚'})[_subj]||'📚'} ${sub.label}</span>
+      <span class="ch">${ICON[testData.subject]||'📚'} ${sub.label}</span>
       <span class="ch">📝 ${questions.length} savol</span>
       ${testData.timeLimit?`<span class="ch">⏱ ${testData.timeLimit} daq</span>`:''}`;
     renderDots();
@@ -850,7 +841,7 @@ function finish(){
   if(CU){
     const uaArr=questions.map((_,i)=>answers[i]!==undefined?answers[i]:-1);
     DB.saveResult({
-      userId:CU.id||CU.uid||String(CU._tg_id||''),testId:testData.id||testData.test_id||testId,testTitle:testData.title||'Test',
+      userId:CU.uid,testId:testData.id,testTitle:testData.title||'Test',
       subject:testData.subject||'other',score,correct,total:tot,elapsed,
       userAnswers:uaArr
     }).catch(()=>{});
