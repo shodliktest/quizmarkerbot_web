@@ -125,6 +125,22 @@ export default async function handler(request) {
 
   const url = new URL(request.url);
   const ep  = url.searchParams.get('endpoint') || '';
+
+  // ── DEBUG ──────────────────────────────────────────────────────
+  if (ep === 'debug') {
+    const chat = await tgPost('getChat', { chat_id: CHANNEL_ID });
+    const pin  = chat?.result?.pinned_message;
+    return jsonResp({
+      bot_token_set: !!BOT_TOKEN,
+      channel_id:    CHANNEL_ID,
+      chat_ok:       chat?.ok,
+      chat_error:    chat?.error_code,
+      chat_desc:     chat?.description,
+      has_pin:       !!pin,
+      pin_has_doc:   !!pin?.document,
+      pin_file:      pin?.document?.file_name || null,
+    });
+  }
   let body  = null;
   if (request.method === 'POST') {
     try { body = await request.json(); } catch {}
