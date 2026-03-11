@@ -840,10 +840,20 @@ function finish(){
 
   if(CU){
     const uaArr=questions.map((_,i)=>answers[i]!==undefined?answers[i]:-1);
+    const _u = CU || {};
+    const _uid = String(_u.id || _u.uid || _u._tg_id || '');
+    const _uname = [_u.first_name, _u.last_name].filter(Boolean).join(' ') || _u.name || '';
     DB.saveResult({
-      userId:CU.uid,testId:testData.id,testTitle:testData.title||'Test',
-      subject:testData.subject||'other',score,correct,total:tot,elapsed,
-      userAnswers:uaArr
+      userId:       _uid,
+      testId:       testData.id || testData.test_id || testId,
+      userName:     _uname,
+      userUsername: _u.username || '',
+      score:        correct,
+      total:        tot,
+      percentage:   score,
+      passing_score: testData.passScore || testData.passing_score || 60,
+      detailed_results: uaArr,
+      completedAt:  Date.now(),
     }).catch(()=>{});
   }
 }
