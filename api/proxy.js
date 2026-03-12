@@ -42,13 +42,80 @@ async function tgPost(method, body) {
   return res.json();
 }
 
+
+// ══ FORMAT KONVERTATSIYA ═══════════════════════════════════════
+// Web format  → Bot format (saqlashda)
+function webToBot(q) {
+  const opts   = (q.options || []).map(String);
+  const labels = ['A','B','C','D','E','F','G','H'];
+  // Optionlarga A) B) prefix yo'q bo'lsa qo'shamiz
+  const fmtOpts = opts.map((o, i) => {
+    const lbl = labels[i] || String.fromCharCode(65 + i);
+    return /^[A-H]\s*[).]/.test(o) ? o : `${lbl}) ${o}`;
+  });
+  // correct: index → "B) She works..."
+  let correctStr = '';
+  if (typeof q.correct === 'number') {
+    correctStr = fmtOpts[q.correct] || fmtOpts[0] || '';
+  } else if (typeof q.correct === 'string') {
+    // Allaqachon string (bot format)
+    correctStr = q.correct;
+  }
+  // type: multiple → multiple_choice
+  const typeMap = { multiple: 'multiple_choice', truefalse: 'true_false', 'true_false': 'true_false', multiple_choice: 'multiple_choice' };
+  return {
+    type:        typeMap[q.type] || q.type || 'multiple_choice',
+    question:    q.question || q.text || '',
+    options:     fmtOpts,
+    correct:     correctStr,
+    explanation: q.explanation || '',
+    points:      q.points || 1,
+    poll_time:   q.poll_time || 30,
+  };
+}
+
+// Bot format → Web format (o'qishda)
+function botToWeb(q, idx) {
+  const opts = (q.options || []).map(String);
+  const typeMap = { multiple_choice: 'multiple', true_false: 'truefalse', truefalse: 'truefalse', multiple: 'multiple' };
+  // correct: "B) She works..." → index 1
+  let correctIdx = 0;
+  if (typeof q.correct === 'number') {
+    correctIdx = q.correct;
+  } else if (typeof q.correct === 'string') {
+    const m = q.correct.match(/^([A-H])\s*[).]/i);
+    if (m) {
+      correctIdx = m[1].toUpperCase().charCodeAt(0) - 65;
+    } else {
+      // To'liq matn bilan moslashtirish
+      const ci = opts.findIndex(o => o === q.correct || o.includes(q.correct) || q.correct.includes(o.replace(/^[A-H][).] */, '')));
+      correctIdx = ci >= 0 ? ci : 0;
+    }
+  }
+  return {
+    type:        typeMap[q.type] || q.type || 'multiple',
+    text:        q.text || q.question || '',
+    question:    q.text || q.question || '',
+    options:     opts,
+    correct:     correctIdx,
+    explanation: q.explanation || '',
+    points:      q.points || 1,
+    poll_time:   q.poll_time || 30,
+  };
+}
+// ═══════════════════════════════════════════════════════════════
 function normMeta(t) {
   const out = { ...t };
   delete out.questions;
-  out.id       = out.id       || out.test_id;
-  out.authorId = out.authorId || String(out.creator_id || '');
-  out.subject  = out.subject  || out.category || 'other';
+  out.id           = out.id       || out.test_id;
+  out.test_id      = out.test_id  || out.id;
+  out.authorId     = out.authorId || String(out.creator_id || '');
+  out.subject      = out.subject  || out.category || 'other';
+  out.category     = out.category || out.subject  || 'other';
   out.creator_name = out.creator_name || out.authorName || '';
+  out.is_active    = out.is_active !== false;   // default: true
+  out.is_paused    = out.is_paused || false;     // default: false
+  out.question_count = out.question_count || out.questionCount || 0;
   return out;
 }
 
@@ -56,7 +123,7 @@ function normMeta(t) {
 let _idx = null, _idxTs = 0;
 
 async function getIndex() {
-  if (_idx && Date.now() - _idxTs < 300_000) return _idx;
+  if (_idx && Date.now() - _idxTs < 60_000) return _idx;
   try {
     const chat = await tgPost('getChat', { chat_id: CHANNEL_ID });
     const pin  = chat?.result?.pinned_message;
@@ -151,7 +218,7 @@ export default async function handler(request) {
     const index = await getIndex();
     if (!index) return jsonResp([]);
     const meta = (index.tests_meta || [])
-      .filter(t => t.visibility === 'public' && t.is_active !== false)
+      .filter(t => t.visibility === 'public' && t.is_active !== false && !t.is_paused)
       .map(({ questions, ...t }) => normMeta(t));
     await Promise.all(meta.map(async t => {
       if (t.creator_id && !t.creator_name) {
@@ -195,7 +262,9 @@ export default async function handler(request) {
     t.test_id = t.test_id || tid;
     t.authorId= t.authorId|| String(t.creator_id || '');
     t.subject = t.subject || t.category || 'other';
-    return jsonResp({ testData: t, questions: full.questions, total: full.questions.length });
+    // Bot → Web format konvertatsiya (correct: "B)..." → index 1)
+    const webQs = (full.questions || []).map((q, i) => botToWeb(q, i));
+    return jsonResp({ testData: t, questions: webQs, total: webQs.length });
   }
 
   // ── test/{id}/meta ────────────────────────────────────────────
@@ -218,50 +287,22 @@ export default async function handler(request) {
 
   // ── test/create ───────────────────────────────────────────────
   if (ep === 'test/create' && request.method === 'POST') {
-    // web va bot format maydonlarini ikkalasini ham qabul qilish
-    const {
-      authorId, creator_id,
-      title, description,
-      subject, category,
-      visibility,
-      timeLimit, time_limit,
-      passScore, passing_score,
-      shuffleQuestions, shuffle_questions,
-      showResult, show_result,
-      questionCount, question_count,
-      authorName, creator_name,
-      questions,
-      difficulty,
-      poll_time,
-      max_attempts,
-    } = body || {};
+    const { authorId, title, description, subject, category, visibility,
+            timeLimit, passScore, shuffleQuestions, showResult, questionCount,
+            authorName, questions, difficulty, poll_time, max_attempts } = body || {};
     if (!title) return jsonResp({ error: 'Title kerak' }, 400);
     const tid = Array.from(crypto.getRandomValues(new Uint8Array(4)))
       .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-    const qs = questions || [];
     const testDoc = {
-      test_id:          tid,
-      creator_id:       parseInt(authorId || creator_id) || 0,
-      creator_name:     authorName || creator_name || '',
-      title:            title || 'Nomsiz',
-      category:         category || subject || 'Boshqa',
-      difficulty:       difficulty || 'medium',
-      visibility:       visibility || 'public',
-      time_limit:       parseInt(time_limit || timeLimit) || 0,
-      poll_time:        parseInt(poll_time) || 30,
-      passing_score:    parseInt(passing_score || passScore) || 60,
-      max_attempts:     parseInt(max_attempts) || 0,
-      questions:        qs,
-      question_count:   qs.length || parseInt(question_count || questionCount) || 0,
-      solve_count:      0,
-      avg_score:        0.0,
-      is_active:        true,
-      is_paused:        false,
-      created_at:       new Date().toISOString(),
-      description:      description || '',
-      shuffle_questions: !!(shuffle_questions || shuffleQuestions),
-      show_result:      (show_result ?? showResult) !== false,
-      source:           'web',
+      test_id: tid, creator_id: parseInt(authorId) || 0, creator_name: authorName || '',
+      title: title || 'Nomsiz', category: category || subject || 'Boshqa',
+      difficulty: difficulty || 'medium', visibility: visibility || 'public',
+      time_limit: parseInt(timeLimit) || 0, poll_time: parseInt(poll_time) || 30,
+      passing_score: parseInt(passScore) || 60, max_attempts: parseInt(max_attempts) || 0,
+      questions: (questions || []).map(q => webToBot(q)), question_count: (questions || []).length || parseInt(questionCount) || 0,
+      solve_count: 0, avg_score: 0.0, is_active: true, is_paused: false,
+      created_at: new Date().toISOString(), description: description || '',
+      shuffle_questions: !!shuffleQuestions, show_result: showResult !== false, source: 'web',
     };
     const tgData = await sendDoc(`test_${tid}.json`, testDoc, `📝 TEST | ${title} | ${tid}`);
     if (!tgData?.ok) return jsonResp({ error: 'Kanalga yuborishda xato' }, 500);
@@ -282,7 +323,29 @@ export default async function handler(request) {
     const msgId = index?.[`test_${tid}`];
     if (!msgId) return jsonResp([]);
     const full = await tgGetFull(msgId);
-    return jsonResp(full?.questions || []);
+    const webQs2 = (full?.questions || []).map((q, i) => botToWeb(q, i));
+    return jsonResp(webQs2);
+  }
+
+  // ── test/{id}/questions POST (savollarni yangilash) ──────────
+  if (ep.match(/^\/api\/test\/[^\/]+\/questions$|^test\/[^\/]+\/questions$/) && request.method === 'POST') {
+    const tid2  = ep.split('/')[1];  // test/{id}/questions
+    const qs2   = (body?.questions || []).map(q => webToBot(q));
+    const index2 = await getIndex();
+    if (!index2) return jsonResp({ error: 'Index topilmadi' }, 500);
+    const msgId2 = index2?.[`test_${tid2}`];
+    let oldDoc2 = {};
+    if (msgId2) { const old2 = await tgGetFull(msgId2); if (old2) oldDoc2 = old2; }
+    const meta2 = (index2.tests_meta || []).find(t => t.test_id === tid2) || {};
+    const newDoc2 = { ...oldDoc2, ...meta2, test_id: tid2, questions: qs2, question_count: qs2.length };
+    delete newDoc2._id;
+    const tgData2 = await sendDoc(`test_${tid2}.json`, newDoc2, `📝 TEST | ${meta2.title || tid2} | ${tid2}`);
+    if (!tgData2?.ok) return jsonResp({ error: 'Kanalga yuborishda xato' }, 500);
+    index2[`test_${tid2}`] = tgData2.result.message_id;
+    const m2 = (index2.tests_meta || []).find(t => t.test_id === tid2);
+    if (m2) m2.question_count = qs2.length;
+    await saveIndex(index2);
+    return jsonResp({ ok: true, count: qs2.length });
   }
 
   // ── test/{id}/update ──────────────────────────────────────────
