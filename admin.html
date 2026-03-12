@@ -172,6 +172,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;
 
 <script src="js/api.js"></script>
 <script>
+if(typeof normalizeQ==='undefined'){window.normalizeQ=function(arr){return(arr||[]).map(q=>{const type=q.type==='multiple_choice'?'multiple':q.type==='true_false'?'truefalse':q.type||'multiple';const text=q.text||q.question||q.q||'';const options=(q.options||[]).map(o=>String(o));let correct=0;if(typeof q.correct==='number'){correct=q.correct;}else if(typeof q.correct==='string'){const idx=options.findIndex(o=>o===q.correct||o.trim()===q.correct.trim());correct=idx>=0?idx:0;}return{...q,type,text,options,correct,explanation:q.explanation||'',points:q.points||1};});};}
+if(typeof esc==='undefined'){window.esc=function(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;};}
+if(typeof fmtTime==='undefined'){window.fmtTime=function(s){s=s||0;return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};}
+if(typeof fmtDate==='undefined'){window.fmtDate=function(ts){if(!ts)return'—';try{const ms=(typeof ts==='number'&&ts<1e12)?ts*1000:ts;return new Date(ms).toLocaleDateString('uz-UZ',{day:'numeric',month:'short',year:'numeric'});}catch{return'—';}}}
+if(typeof getSubject==='undefined'){const _S={english:{label:'English',emoji:'🇬🇧'},arabic:{label:'Arabcha',emoji:'🕌'},russian:{label:'Ruscha',emoji:'🇷🇺'},turkish:{label:'Turkcha',emoji:'🇹🇷'},uzbek:{label:"O'zbekcha",emoji:'🇺🇿'},math:{label:'Matematika',emoji:'🧮'},it:{label:'IT/CS',emoji:'💻'},science:{label:'Fanlar',emoji:'🔬'},religion:{label:'Din',emoji:'📖'},history:{label:'Tarix',emoji:'🏛️'},biology:{label:'Biologiya',emoji:'🧬'},chemistry:{label:'Kimyo',emoji:'⚗️'},physics:{label:'Fizika',emoji:'⚡'},literature:{label:'Adabiyot',emoji:'✍️'},sport:{label:'Sport',emoji:'⚽'},other:{label:'Boshqa',emoji:'📚'}};window.getSubject=function(k){if(!k)return _S.other;const l=k.toLowerCase().replace(/[\s\-_]/g,'');if(_S[l])return _S[l];const f=Object.entries(_S).find(([x])=>l.includes(x));return f?f[1]:{label:k,emoji:'📚'};};window.getIco=function(s){if(!s)return'📚';const k=(s||'').toLowerCase().replace(/[\s\-_]/g,'');const I={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',uzbek:'🇺🇿',math:'🧮',it:'💻',science:'🔬',religion:'📖',history:'🏛️',biology:'🧬',chemistry:'⚗️',physics:'⚡',literature:'✍️',sport:'⚽',other:'📚'};return I[k]||Object.entries(I).find(([x])=>k.includes(x))?.[1]||'📚';};}
+if(typeof goTo==='undefined'){const _B=(()=>{const p=window.location.pathname;const i=p.lastIndexOf('/');return i>0?p.slice(0,i+1):'/'})();window.goTo=function(page){window.location.href=_B+page;};}
+</script>
+<script>
 /* ── THEME ── */
 const T={
   get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},

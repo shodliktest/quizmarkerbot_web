@@ -151,6 +151,43 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
 
 <script src="js/api.js"></script>
 <script>
+/* ── Inline fallbacks: api.js yuklanmasa ham ishlaydi ── */
+if(typeof normalizeQ==='undefined'){
+  window.normalizeQ=function(arr){
+    return(arr||[]).map(q=>{
+      const type=q.type==='multiple_choice'?'multiple':q.type==='true_false'?'truefalse':q.type||'multiple';
+      const text=q.text||q.question||q.q||'';
+      const options=(q.options||[]).map(o=>String(o));
+      let correct=0;
+      if(typeof q.correct==='number'){correct=q.correct;}
+      else if(typeof q.correct==='string'){
+        const idx=options.findIndex(o=>o===q.correct||o.trim()===q.correct.trim());
+        correct=idx>=0?idx:0;
+      }
+      return{...q,type,text,options,correct,explanation:q.explanation||'',points:q.points||1};
+    });
+  };
+}
+if(typeof esc==='undefined'){
+  window.esc=function(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;};
+}
+if(typeof fmtTime==='undefined'){
+  window.fmtTime=function(s){s=s||0;return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};
+}
+if(typeof getSubject==='undefined'){
+  const _SUBJ={english:{label:'English',emoji:'🇬🇧'},arabic:{label:'Arabcha',emoji:'🕌'},russian:{label:'Ruscha',emoji:'🇷🇺'},turkish:{label:'Turkcha',emoji:'🇹🇷'},uzbek:{label:"O'zbekcha",emoji:'🇺🇿'},math:{label:'Matematika',emoji:'🧮'},it:{label:'IT / CS',emoji:'💻'},science:{label:'Fanlar',emoji:'🔬'},religion:{label:'Din',emoji:'📖'},history:{label:'Tarix',emoji:'🏛️'},biology:{label:'Biologiya',emoji:'🧬'},chemistry:{label:'Kimyo',emoji:'⚗️'},physics:{label:'Fizika',emoji:'⚡'},literature:{label:'Adabiyot',emoji:'✍️'},sport:{label:'Sport',emoji:'⚽'},other:{label:'Boshqa',emoji:'📚'}};
+  window.getSubject=function(k){if(!k)return _SUBJ.other;const low=k.toLowerCase().replace(/[\s\-_]/g,'');if(_SUBJ[low])return _SUBJ[low];const f=Object.entries(_SUBJ).find(([key])=>low.includes(key));return f?f[1]:{label:k,emoji:'📚'};};
+  window.getIco=function(s){if(!s)return'📚';const k=(s||'').toLowerCase().replace(/[\s\-_]/g,'');const IC={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',uzbek:'🇺🇿',math:'🧮',it:'💻',science:'🔬',religion:'📖',history:'🏛️',biology:'🧬',chemistry:'⚗️',physics:'⚡',literature:'✍️',sport:'⚽',other:'📚'};return IC[k]||Object.entries(IC).find(([x])=>k.includes(x))?.[1]||'📚';};
+}
+if(typeof goTo==='undefined'){
+  const _BASE=(()=>{const p=window.location.pathname;const i=p.lastIndexOf('/');return i>0?p.slice(0,i+1):'/'})();
+  window.goTo=function(page){window.location.href=_BASE+page;};
+}
+if(typeof DB==='undefined'){
+  console.error('api.js yuklanmadi! js/api.js faylini tekshiring.');
+}
+</script>
+<script>
 /* THEME */
 const TH={get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},set(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tp_theme',t);const b=document.getElementById('tbtn');if(b)b.textContent=t==='dark'?'☀️':'🌙'},toggle(){this.set(this.get()==='dark'?'light':'dark')}};
 TH.set(TH.get());document.getElementById('tbtn').onclick=()=>TH.toggle();

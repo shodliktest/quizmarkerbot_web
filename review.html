@@ -2,50 +2,27 @@
 <html lang="uz" data-theme="light">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
 <title>TestPro — Tahlil</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#EEF0FF;--card:#fff;--text:#1a1a2e;--text2:#6b7280;--text3:#9ca3af;
-  --acc:#6C3FE8;--acc2:#C040C8;--border:rgba(108,63,232,.1);--shadow:0 2px 10px rgba(108,63,232,.07);
-  --green:#059669;--green-bg:rgba(5,150,105,.08);--green-b:rgba(5,150,105,.25);
-  --red:#ef4444;--red-bg:rgba(239,68,68,.07);--red-b:rgba(239,68,68,.22);
-}
-[data-theme=dark]{
-  --bg:#0d0820;--card:#140d28;--text:#e8e0ff;--text2:#9ca3af;--text3:#6b7280;
-  --border:rgba(108,63,232,.2);--shadow:0 2px 12px rgba(0,0,0,.35);
-  --green-bg:rgba(5,150,105,.12);--red-bg:rgba(239,68,68,.1);
-}
+:root{--bg:#EEF0FF;--card:#fff;--text:#1a1a2e;--text2:#6b7280;--text3:#9ca3af;--acc:#6C3FE8;--acc2:#C040C8;--border:rgba(108,63,232,.1);--shadow:0 2px 10px rgba(108,63,232,.07);--green:#059669;--green-bg:rgba(5,150,105,.08);--green-b:rgba(5,150,105,.22);--red:#ef4444;--red-bg:rgba(239,68,68,.07);--red-b:rgba(239,68,68,.22)}
+[data-theme=dark]{--bg:#0d0820;--card:#140d28;--text:#e8e0ff;--text2:#9ca3af;--text3:#6b7280;--border:rgba(108,63,232,.2);--shadow:0 2px 12px rgba(0,0,0,.35);--green-bg:rgba(5,150,105,.12);--red-bg:rgba(239,68,68,.1)}
 body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(--bg);color:var(--text)}
-
-/* NAV */
-.nav{position:fixed;top:0;left:0;right:0;height:54px;z-index:500;
-  display:flex;align-items:center;justify-content:space-between;padding:0 1rem;background:var(--bg)}
-.logo{font-family:'Unbounded',sans-serif;font-size:1.1rem;font-weight:900;cursor:pointer;
-  background:linear-gradient(135deg,var(--acc),var(--acc2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav{position:fixed;top:0;left:0;right:0;height:54px;z-index:500;display:flex;align-items:center;justify-content:space-between;padding:0 1rem;background:var(--bg);border-bottom:1px solid var(--border)}
+.logo{font-family:'Unbounded',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .nav-r{display:flex;align-items:center;gap:.4rem}
-.ibtn{width:34px;height:34px;border-radius:99px;border:none;cursor:pointer;font-size:.88rem;
-  background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center}
+.ibtn{width:34px;height:34px;border-radius:99px;border:none;cursor:pointer;font-size:.88rem;background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;color:var(--text)}
 [data-theme=dark] .ibtn{background:rgba(255,255,255,.1)}
-.bbtn{padding:.38rem .82rem;border-radius:99px;font-size:.78rem;font-weight:700;
-  cursor:pointer;border:none;font-family:inherit;background:rgba(255,255,255,.8);color:var(--text2)}
+.bbtn{padding:.38rem .82rem;border-radius:99px;font-size:.78rem;font-weight:700;cursor:pointer;border:none;font-family:inherit;background:rgba(255,255,255,.8);color:var(--text2)}
 [data-theme=dark] .bbtn{background:rgba(255,255,255,.1)}
-
-/* PAGE */
 .page{padding:66px 1rem 3rem;max-width:640px;margin:0 auto}
 
-/* SUMMARY CARD */
-.summary{background:var(--card);border-radius:18px;padding:1.2rem;margin-bottom:1.1rem;
-  border:1px solid var(--border);box-shadow:var(--shadow)}
+/* SUMMARY */
+.summary{background:var(--card);border-radius:18px;padding:1.2rem;margin-bottom:1.1rem;border:1px solid var(--border);box-shadow:var(--shadow)}
 .sum-top{display:flex;align-items:center;gap:.9rem;margin-bottom:.9rem}
-.sum-circle{
-  width:72px;height:72px;border-radius:50%;flex-shrink:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border:3.5px solid var(--acc);
-}
+.sum-circle{width:72px;height:72px;border-radius:50%;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;border:3.5px solid var(--acc)}
 .sum-circle.pass{border-color:var(--green);background:var(--green-bg)}
 .sum-circle.fail{border-color:var(--red);background:var(--red-bg)}
 .sum-pct{font-family:'Unbounded',sans-serif;font-size:1.35rem;font-weight:900;line-height:1}
@@ -53,86 +30,46 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
 .sum-circle.fail .sum-pct{color:var(--red)}
 .sum-lbl{font-size:.55rem;font-weight:700;letter-spacing:.05em;opacity:.7;margin-top:.1rem}
 .sum-info{flex:1;min-width:0}
-.sum-title{font-family:'Unbounded',sans-serif;font-size:.88rem;font-weight:900;margin-bottom:.25rem;
-  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sum-title{font-family:'Unbounded',sans-serif;font-size:.86rem;font-weight:900;margin-bottom:.22rem;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .sum-sub{font-size:.72rem;color:var(--text3)}
+.pass-tag{display:inline-flex;align-items:center;gap:.3rem;margin-top:.55rem;padding:.2rem .62rem;border-radius:99px;font-size:.7rem;font-weight:700}
+.tag-pass{background:var(--green-bg);color:var(--green);border:1px solid var(--green-b)}
+.tag-fail{background:var(--red-bg);color:var(--red);border:1px solid var(--red-b)}
 .sum-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem}
 .ss{background:var(--bg);border-radius:10px;padding:.5rem .3rem;text-align:center;border:1px solid var(--border)}
 .ssv{font-family:'Unbounded',sans-serif;font-size:.85rem;font-weight:900;color:var(--acc)}
 .ssl{font-size:.55rem;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-top:.06rem}
-.pass-tag{display:inline-flex;align-items:center;gap:.3rem;margin-top:.7rem;
-  padding:.22rem .65rem;border-radius:99px;font-size:.7rem;font-weight:700}
-.tag-pass{background:var(--green-bg);color:var(--green);border:1px solid var(--green-b)}
-.tag-fail{background:var(--red-bg);color:var(--red);border:1px solid var(--red-b)}
-
-/* PROGRESS BAR */
-.prog-wrap{background:rgba(108,63,232,.1);border-radius:99px;height:6px;margin:.75rem 0 .5rem;overflow:hidden}
-.prog-bar{height:100%;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:99px}
-
-/* SECTION TITLE */
-.sec-t{font-size:.9rem;font-weight:800;margin-bottom:.75rem;
-  display:flex;align-items:center;gap:.35rem}
+.prog{background:rgba(108,63,232,.1);border-radius:99px;height:6px;margin:.75rem 0 .5rem;overflow:hidden}
+.prog-b{height:100%;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:99px}
 
 /* QUESTION CARD */
-.qc{background:var(--card);border-radius:16px;padding:1rem;margin-bottom:.75rem;
-  border:1.5px solid var(--border);box-shadow:var(--shadow)}
+.sec-t{font-size:.9rem;font-weight:800;margin-bottom:.75rem;display:flex;align-items:center;gap:.35rem}
+.qc{background:var(--card);border-radius:16px;padding:1rem;margin-bottom:.75rem;border:1.5px solid var(--border);box-shadow:var(--shadow)}
 .qc.q-ok{border-color:var(--green-b)}
 .qc.q-err{border-color:var(--red-b)}
 .qc.q-skip{border-color:rgba(245,158,11,.25)}
 .q-hdr{display:flex;align-items:flex-start;gap:.55rem;margin-bottom:.72rem}
-.q-badge{width:26px;height:26px;border-radius:8px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.72rem;font-weight:900;font-family:'Unbounded',sans-serif;color:#fff}
+.q-badge{width:26px;height:26px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;font-family:'Unbounded',sans-serif;color:#fff}
 .qc.q-ok .q-badge{background:var(--green)}
 .qc.q-err .q-badge{background:var(--red)}
 .qc.q-skip .q-badge{background:#d97706}
-.q-text{font-size:.88rem;font-weight:700;line-height:1.5;color:var(--text);flex:1}
-
-/* OPTION */
-.opt{display:flex;align-items:center;gap:.6rem;padding:.62rem .78rem;
-  border-radius:11px;border:1.5px solid var(--border);margin-bottom:.35rem;
-  font-size:.83rem;font-weight:500;color:var(--text2)}
-.opt-correct{
-  border-color:var(--green-b)!important;background:var(--green-bg)!important;
-  color:var(--green)!important;font-weight:700}
-.opt-wrong{
-  border-color:var(--red-b)!important;background:var(--red-bg)!important;
-  color:var(--red)!important;font-weight:700}
-.opt-lt{width:24px;height:24px;border-radius:50%;border:2px solid currentColor;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.65rem;font-weight:900;flex-shrink:0}
-.opt-correct .opt-lt{background:var(--green);color:#fff;border-color:var(--green)}
-.opt-wrong .opt-lt{background:var(--red);color:#fff;border-color:var(--red)}
-.opt-mark{font-size:.75rem;margin-left:auto;flex-shrink:0}
-
-/* EXPLANATION */
-.expl{margin-top:.55rem;padding:.58rem .75rem;border-radius:10px;
-  background:rgba(108,63,232,.06);border-left:3px solid var(--acc);
-  font-size:.76rem;color:var(--text2);line-height:1.55}
+.q-text{font-size:.88rem;font-weight:700;line-height:1.5;flex:1}
+.opt{display:flex;align-items:center;gap:.6rem;padding:.62rem .78rem;border-radius:11px;border:1.5px solid var(--border);margin-bottom:.35rem;font-size:.83rem;font-weight:500;color:var(--text2)}
+.opt-ok{border-color:var(--green-b)!important;background:var(--green-bg)!important;color:var(--green)!important;font-weight:700}
+.opt-err{border-color:var(--red-b)!important;background:var(--red-bg)!important;color:var(--red)!important;font-weight:700}
+.opt-lt{width:24px;height:24px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:900;flex-shrink:0}
+.opt-ok .opt-lt{background:var(--green);color:#fff;border-color:var(--green)}
+.opt-err .opt-lt{background:var(--red);color:#fff;border-color:var(--red)}
+.expl{margin-top:.55rem;padding:.58rem .75rem;border-radius:10px;background:rgba(108,63,232,.06);border-left:3px solid var(--acc);font-size:.76rem;color:var(--text2);line-height:1.55}
 [data-theme=dark] .expl{color:#c4b5fd;background:rgba(108,63,232,.13)}
-
-/* SKIP NOTICE */
-.skip-notice{text-align:center;padding:.65rem;font-size:.76rem;color:#d97706;
-  background:rgba(245,158,11,.07);border-radius:9px;border:1px solid rgba(245,158,11,.2);margin-top:.3rem}
-
-/* TEXT answer */
-.txt-ans{background:rgba(108,63,232,.05);border-radius:10px;padding:.6rem .75rem;
-  font-size:.8rem;color:var(--text2);border:1px dashed rgba(108,63,232,.2);margin-top:.5rem}
-
-/* LOADER */
-.sp{width:30px;height:30px;border:3px solid rgba(108,63,232,.15);border-top-color:var(--acc);
-  border-radius:50%;animation:spin .7s linear infinite;margin:3rem auto}
+.skip-notice{text-align:center;padding:.6rem;font-size:.76rem;color:#d97706;background:rgba(245,158,11,.07);border-radius:9px;border:1px solid rgba(245,158,11,.2);margin-top:.3rem}
+.sp{width:30px;height:30px;border:3px solid rgba(108,63,232,.15);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite;margin:3rem auto;display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
 .err-box{background:var(--card);border-radius:18px;padding:1.5rem;text-align:center;border:1px solid var(--border)}
-.err-box h3{font-size:1rem;font-weight:800;margin-bottom:.4rem}
-.err-box p{font-size:.8rem;color:var(--text3);margin-bottom:1rem}
-.err-btn{padding:.65rem 1.5rem;border-radius:11px;border:none;cursor:pointer;
-  background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;
-  font-weight:700;font-size:.84rem;font-family:inherit}
+.err-btn{padding:.65rem 1.5rem;border-radius:11px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-weight:700;font-size:.84rem;font-family:inherit;margin-top:.8rem}
 </style>
 </head>
 <body>
-
 <nav class="nav">
   <div class="logo" onclick="goTo('index.html')">TestPro</div>
   <div class="nav-r">
@@ -140,195 +77,142 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
     <button class="ibtn" id="tbtn">🌙</button>
   </div>
 </nav>
+<div class="page"><div id="content"><span class="sp"></span></div></div>
 
-<div class="page">
-  <div id="content"><div class="sp"></div></div>
-</div>
 <script src="js/api.js"></script>
 <script>
-/* THEME */
-const TH={
-  get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
-  set(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tp_theme',t);
-    const b=document.getElementById('tbtn');if(b)b.textContent=t==='dark'?'☀️':'🌙';},
-  toggle(){this.set(this.get()==='dark'?'light':'dark')}
-};
-TH.set(TH.get());
-document.getElementById('tbtn').onclick=()=>TH.toggle();
+if(typeof normalizeQ==='undefined'){window.normalizeQ=function(arr){return(arr||[]).map(q=>{const type=q.type==='multiple_choice'?'multiple':q.type==='true_false'?'truefalse':q.type||'multiple';const text=q.text||q.question||q.q||'';const options=(q.options||[]).map(o=>String(o));let correct=0;if(typeof q.correct==='number'){correct=q.correct;}else if(typeof q.correct==='string'){const idx=options.findIndex(o=>o===q.correct||o.trim()===q.correct.trim());correct=idx>=0?idx:0;}return{...q,type,text,options,correct,explanation:q.explanation||'',points:q.points||1};});};}
+if(typeof esc==='undefined'){window.esc=function(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;};}
+if(typeof fmtTime==='undefined'){window.fmtTime=function(s){s=s||0;return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};}
+if(typeof fmtDate==='undefined'){window.fmtDate=function(ts){if(!ts)return'—';try{const ms=(typeof ts==='number'&&ts<1e12)?ts*1000:ts;return new Date(ms).toLocaleDateString('uz-UZ',{day:'numeric',month:'short',year:'numeric'});}catch{return'—';}}}
+if(typeof getSubject==='undefined'){const _S={english:{label:'English',emoji:'🇬🇧'},arabic:{label:'Arabcha',emoji:'🕌'},russian:{label:'Ruscha',emoji:'🇷🇺'},turkish:{label:'Turkcha',emoji:'🇹🇷'},uzbek:{label:"O'zbekcha",emoji:'🇺🇿'},math:{label:'Matematika',emoji:'🧮'},it:{label:'IT/CS',emoji:'💻'},science:{label:'Fanlar',emoji:'🔬'},religion:{label:'Din',emoji:'📖'},history:{label:'Tarix',emoji:'🏛️'},biology:{label:'Biologiya',emoji:'🧬'},chemistry:{label:'Kimyo',emoji:'⚗️'},physics:{label:'Fizika',emoji:'⚡'},literature:{label:'Adabiyot',emoji:'✍️'},sport:{label:'Sport',emoji:'⚽'},other:{label:'Boshqa',emoji:'📚'}};window.getSubject=function(k){if(!k)return _S.other;const l=k.toLowerCase().replace(/[\s\-_]/g,'');if(_S[l])return _S[l];const f=Object.entries(_S).find(([x])=>l.includes(x));return f?f[1]:{label:k,emoji:'📚'};};window.getIco=function(s){if(!s)return'📚';const k=(s||'').toLowerCase().replace(/[\s\-_]/g,'');const I={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',uzbek:'🇺🇿',math:'🧮',it:'💻',science:'🔬',religion:'📖',history:'🏛️',biology:'🧬',chemistry:'⚗️',physics:'⚡',literature:'✍️',sport:'⚽',other:'📚'};return I[k]||Object.entries(I).find(([x])=>k.includes(x))?.[1]||'📚';};}
+if(typeof goTo==='undefined'){const _B=(()=>{const p=window.location.pathname;const i=p.lastIndexOf('/');return i>0?p.slice(0,i+1):'/'})();window.goTo=function(page){window.location.href=_B+page;};}
+</script>
+<script>
+const TH={get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},set(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tp_theme',t);const b=document.getElementById('tbtn');if(b)b.textContent=t==='dark'?'☀️':'🌙'},toggle(){this.set(this.get()==='dark'?'light':'dark')}};
+TH.set(TH.get());document.getElementById('tbtn').onclick=()=>TH.toggle();
 
-const ICON={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',math:'🧮',it:'💻',science:'🔬',religion:'📖',other:'📚'};
-
-function getTs(ts){
-  if(!ts)return null;
-  try{if(!ts)return null;if(typeof ts==='number')return new Date(ts);if(ts?.toDate)return ts.toDate();if(ts?.seconds)return new Date(ts.seconds*1000);return new Date(ts);}catch{return null;}
-}
-function timeStr(ts){
-  const d=getTs(ts);if(!d)return '';
-  return d.toLocaleDateString('uz-UZ',{day:'numeric',month:'long',year:'numeric'})+
-    ' • '+d.toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
-}
-function elapsed2s(s){s=s||0;return Math.floor(s/60)+'daq '+String(s%60).padStart(2,'0')+'s';}
+function elapsed2s(s){s=s||0;return Math.floor(s/60)+'d '+String(s%60).padStart(2,'0')+'s';}
+function timeStr(ts){if(!ts)return '';try{const d=new Date(ts);return d.toLocaleDateString('uz-UZ',{day:'numeric',month:'long',year:'numeric'})+' • '+d.toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});}catch{return '';}}
 
 (async()=>{
   const wrap=document.getElementById('content');
   const id=new URLSearchParams(location.search).get('id');
-
   if(!id){
-    wrap.innerHTML=`<div class="err-box"><h3>❌ ID topilmadi</h3><p>URL da natija ID yo'q</p>
-      <button class="err-btn" onclick="goTo('history.html')">← Orqaga</button></div>`;
+    wrap.innerHTML=`<div class="err-box"><h3 style="font-size:1rem;margin-bottom:.4rem">❌ ID topilmadi</h3><button class="err-btn" onclick="goTo('history.html')">← Orqaga</button></div>`;
     return;
   }
 
-  let CU=null;
-  try{CU=await AuthHelpers.getCurrentUser();}catch(e){CU=null;}
+  // Natijani localStorage dan olish
+  const allResults=JSON.parse(localStorage.getItem('tp_results')||'[]');
+  const R=allResults.find(r=>r.id===id);
+  if(!R){
+    wrap.innerHTML=`<div class="err-box"><h3 style="font-size:1rem;margin-bottom:.4rem">Natija topilmadi</h3><p style="font-size:.8rem;color:var(--text3);margin-bottom:.5rem">Bu natija mavjud emas yoki o'chirilgan</p><button class="err-btn" onclick="goTo('history.html')">← Orqaga</button></div>`;
+    return;
+  }
 
+  const testId=R.testId||R.test_id||'';
+  const pct=Math.round(R.percentage||R.score||0);
+  const passScore=R.passing_score||R.passScore||60;
+  const passed=pct>=passScore;
+  const sub=getSubject(R.subject||'other');
+  const ico=getIco(R.subject||'other');
+
+  // Savollarni olish (cache dan yoki API dan)
+  let questions=[];
+  let testDeleted=false;
   try{
-    /* 1. Result olish — localStorage dan */
-    const allResults=JSON.parse(localStorage.getItem('tp_results')||'[]');
-    const R=allResults.find(r=>r.id===id);
-    if(!R){
-      wrap.innerHTML=`<div class="err-box"><h3>Natija topilmadi</h3>
-        <p>Bu natija mavjud emas yoki o'chirilgan</p>
-        <button class="err-btn" onclick="goTo('history.html')">← Orqaga</button></div>`;
-      return;
+    const d=await DB.getTestWithQuestions(testId);
+    if(d?.questions?.length){
+      questions=normalizeQ(d.questions);
+    }else{
+      testDeleted=true;
     }
+  }catch{testDeleted=true;}
 
-    /* 2. Test + questions olish */
-    const tDoc=await db.collection('tests').doc(R.testId).get();
-    let questions=[];
-    let testDeleted=false;
-    if(!tDoc.exists){testDeleted=true;}
-    else{questions=await DB.getQuestions(R.testId);}
+  // userAnswers — natijadan yoki cache dan
+  const userAnswers=R.userAnswers||R.detailed_results||Cache.loadAnswers(testId)||[];
 
-    /* userAnswers - avval R da, yo'q bo'lsa Cache dan */
-    const userAnswers=R.userAnswers || Cache.loadAnswers(R.testId) || [];
-    const pass=R.score>=(tDoc.exists?tDoc.data().passScore||60:60);
-    const sub=getSubject(R.subject||'other');
-    const icon=ICON[R.subject||'other']||'📚';
-
-    /* 3. Render summary */
-    wrap.innerHTML=`
-      <div class="summary">
-        <div class="sum-top">
-          <div class="sum-circle ${pass?'pass':'fail'}">
-            <div class="sum-pct">${R.score||0}%</div>
-            <div class="sum-lbl">NATIJA</div>
-          </div>
-          <div class="sum-info">
-            <div class="sum-title">${esc(R.testTitle||'Test')}</div>
-            <div class="sum-sub">${icon} ${sub.label} • ${timeStr(R.completedAt)}</div>
-            <div class="pass-tag ${pass?'tag-pass':'tag-fail'}">${pass?'✅ O\'tdi':'❌ O\'tmadi'}</div>
-          </div>
+  // Render summary
+  wrap.innerHTML=`
+    <div class="summary">
+      <div class="sum-top">
+        <div class="sum-circle ${passed?'pass':'fail'}">
+          <div class="sum-pct">${pct}%</div>
+          <div class="sum-lbl">NATIJA</div>
         </div>
-        <div class="prog-wrap"><div class="prog-bar" style="width:${R.score||0}%"></div></div>
-        <div class="sum-stats">
-          <div class="ss"><div class="ssv" style="color:#059669">${R.correct||0}</div><div class="ssl">To'g'ri</div></div>
-          <div class="ss"><div class="ssv" style="color:#ef4444">${(R.total||0)-(R.correct||0)}</div><div class="ssl">Xato</div></div>
-          <div class="ss"><div class="ssv">${R.total||0}</div><div class="ssl">Jami</div></div>
-          <div class="ss"><div class="ssv" style="font-size:.72rem">${elapsed2s(R.elapsed)}</div><div class="ssl">Vaqt</div></div>
+        <div class="sum-info">
+          <div class="sum-title">${esc(R.testTitle||testId||'Test')}</div>
+          <div class="sum-sub">${ico} ${sub.label} • ${timeStr(R.completedAt)}</div>
+          <div class="pass-tag ${passed?'tag-pass':'tag-fail'}">${passed?'✅ O\'tdi':'❌ O\'tmadi'}</div>
         </div>
       </div>
-      <div class="sec-t">📊 Savol tahlili${testDeleted?' <span style="font-size:.7rem;color:#d97706;font-weight:600">(test o\'chirilgan)</span>':''}</div>
-      <div id="q-wrap"></div>`;
+      <div class="prog"><div class="prog-b" style="width:${pct}%"></div></div>
+      <div class="sum-stats">
+        <div class="ss"><div class="ssv" style="color:var(--green)">${R.correct||0}</div><div class="ssl">To'g'ri</div></div>
+        <div class="ss"><div class="ssv" style="color:var(--red)">${(R.total||0)-(R.correct||0)}</div><div class="ssl">Xato</div></div>
+        <div class="ss"><div class="ssv">${R.total||0}</div><div class="ssl">Jami</div></div>
+        <div class="ss"><div class="ssv" style="font-size:.7rem">${elapsed2s(R.elapsed)}</div><div class="ssl">Vaqt</div></div>
+      </div>
+    </div>
+    <div class="sec-t">📊 Savol tahlili${testDeleted?' <span style="font-size:.7rem;color:#d97706;font-weight:600">(test o\'chirilgan)</span>':''}</div>
+    <div id="q-wrap"></div>`;
 
-    if(testDeleted||!questions.length){
-      document.getElementById('q-wrap').innerHTML=
-        `<div style="text-align:center;padding:1.5rem;background:var(--card);border-radius:14px;border:1px solid var(--border)">
-          <div style="font-size:1.8rem;margin-bottom:.5rem">📭</div>
-          <div style="font-size:.86rem;font-weight:700">Savollar mavjud emas</div>
-          <div style="font-size:.76rem;color:var(--text3);margin-top:.25rem">
-            ${testDeleted?'Test muallif tomonidan o\'chirilgan':'Bu testda savollar yo\'q'}
-          </div>
-        </div>`;
-      return;
-    }
+  const qWrap=document.getElementById('q-wrap');
 
-    /* 4. Render questions */
-    const qWrap=document.getElementById('q-wrap');
+  if(testDeleted||!questions.length){
+    qWrap.innerHTML=`<div style="text-align:center;padding:1.5rem;background:var(--card);border-radius:14px;border:1px solid var(--border)">
+      <div style="font-size:1.8rem;margin-bottom:.5rem">📭</div>
+      <div style="font-size:.86rem;font-weight:700">Savollar mavjud emas</div>
+      <div style="font-size:.76rem;color:var(--text3);margin-top:.25rem">${testDeleted?'Test muallif tomonidan o\'chirilgan':'Bu testda savollar yo\'q'}</div>
+    </div>`;
+    return;
+  }
 
-    if(userAnswers.length===0){
-      const warn=document.createElement('div');
-      warn.style.cssText='padding:.7rem .9rem;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:11px;font-size:.76rem;color:#d97706;font-weight:600;margin-bottom:.85rem';
-      warn.textContent='⚠️ Bu eski natija — sizning belgilagan javoblaringiz saqlanmagan. Faqat to\'g\'ri variantlar ko\'rsatiladi.';
-      qWrap.appendChild(warn);
-    }
+  // userAnswers bo'sh bo'lsa ogohlantirish
+  if(!userAnswers.length){
+    const w=document.createElement('div');
+    w.style.cssText='padding:.7rem .9rem;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:11px;font-size:.76rem;color:#d97706;font-weight:600;margin-bottom:.85rem';
+    w.textContent='⚠️ Bu eski natija — javoblar saqlanmagan. Faqat to\'g\'ri variantlar ko\'rsatiladi.';
+    qWrap.appendChild(w);
+  }
 
-    questions.forEach((q,i)=>{
-      const ua=userAnswers.length>i?userAnswers[i]:-1;
-      const isText=q.type==='text';
-      const isSkip=!isText&&ua===-1;
-      const isOk=!isText&&!isSkip&&ua===q.correct;
-      const isErr=!isText&&!isSkip&&ua!==q.correct;
+  // Render questions
+  questions.forEach((q,i)=>{
+    const ua=Array.isArray(userAnswers)&&userAnswers.length>i?userAnswers[i]:-1;
+    const isSkip=ua===-1||ua===null||ua===undefined;
+    const isOk=!isSkip&&ua===q.correct;
+    const isErr=!isSkip&&ua!==q.correct;
+    const cls=isSkip?'q-skip':isOk?'q-ok':'q-err';
+    const badge=isSkip?'⏭':isOk?'✓':'✗';
 
-      // For text type: determine ok/err based on correct answer comparison
-      let textOk=false,textErr=false;
-      if(isText){
-        function normStr0(s){return String(s||'').trim().toLowerCase().replace(/\s+/g,' ');}
-        const ca0=q.correctAnswer||(q.explanation&&/^✅ To.g.ri javob:/i.test(q.explanation)?q.explanation.replace(/^✅ To\.g\.ri javob:\s*/i,'').split('|')[0].trim():'');
-        const ua0=ua!==-1?String(ua):'';
-        if(ua0&&ca0){textOk=normStr0(ua0)===normStr0(ca0);textErr=!textOk;}
-      }
-      const cls=isText?(ua===-1?'q-skip':textOk?'q-ok':'q-err'):isSkip?'q-skip':isOk?'q-ok':'q-err';
-      const badge=isText?(ua===-1?'⏭':textOk?'✓':'✗'):isSkip?'⏭':isOk?'✓':'✗';
+    const card=document.createElement('div');
+    card.className='qc '+cls;
 
-      const card=document.createElement('div');
-      card.className=`qc ${cls}`;
+    let body=`<div class="q-hdr">
+      <div class="q-badge">${badge}</div>
+      <div class="q-text">${i+1}. ${esc(q.text||q.question||'')}</div>
+    </div>`;
 
-      /* Question header */
-      let body=`
-        <div class="q-hdr">
-          <div class="q-badge">${badge}</div>
-          <div class="q-text">${i+1}. ${esc(q.text||q.question||'')}</div>
-        </div>`;
-
-      if(isText){
-        /* Text answer — to'g'ri javob bilan taqqoslash */
-        function normStr(s){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
-        const correctAns = q.correctAnswer || (q.explanation && /^✅ To.g.ri javob:/i.test(q.explanation)
-          ? q.explanation.replace(/^✅ To\.g\.ri javob:\s*/i,'').split('|')[0].trim() : '');
-        const userAns = ua !== -1 ? String(ua) : '';
-        const tIsCorr = userAns && correctAns && normStr(userAns) === normStr(correctAns);
-        const tIsWrong = userAns && correctAns && !tIsCorr;
-        const realExpl = (q.explanation||'').replace(/^✅ To\.g\.ri javob:[^|]*/i,'').replace(/^\s*\|\s*/,'').trim();
-
-        const taStyle = tIsCorr
-          ? 'border-color:#059669;background:rgba(5,150,105,.07)'
-          : tIsWrong ? 'border-color:#ef4444;background:rgba(239,68,68,.06)' : '';
-
-        body+=`<div class="txt-ans" style="${taStyle}">
-          <span style="font-size:.65rem;font-weight:700;color:var(--acc)">Sizning javobingiz:</span><br/>
-          ${esc(userAns||'(yozilmadi)')}
-        </div>`;
-        if(tIsCorr) body+=`<div class="expl" style="border-left-color:#059669;background:rgba(5,150,105,.07);color:#059669">✅ To'g'ri javob!</div>`;
-        if(tIsWrong&&correctAns) body+=`<div class="expl" style="border-left-color:#ef4444;background:rgba(239,68,68,.06);color:#ef4444">❌ To'g'ri: <b>${esc(correctAns)}</b></div>`;
-        if(realExpl) body+=`<div class="expl">💡 ${esc(realExpl)}</div>`;
-      } else {
-        /* Options */
-        const opts=q.options||[];
-        opts.forEach((o,j)=>{
-          let cls2='opt';
-          let mark='';
-          if(j===q.correct){cls2='opt opt-correct';mark='✅';}
-          else if(j===ua&&ua!==q.correct){cls2='opt opt-wrong';mark='❌';}
-          body+=`<div class="${cls2}">
-            <span class="opt-lt">${String.fromCharCode(65+j)}</span>
-            ${esc(o)}
-            <span class="opt-mark">${mark}</span>
-          </div>`;
-        });
-        if(isSkip) body+=`<div class="skip-notice">⏭ Bu savol o'tkazib yuborildi</div>`;
-        if(q.explanation) body+=`<div class="expl">💡 ${esc(q.explanation)}</div>`;
-      }
-
-      card.innerHTML=body;
-      qWrap.appendChild(card);
+    const opts=q.options||[];
+    opts.forEach((o,j)=>{
+      let cls2='opt';
+      let mark='';
+      if(j===q.correct){cls2='opt opt-ok';mark='✅';}
+      else if(!isSkip&&j===ua&&ua!==q.correct){cls2='opt opt-err';mark='❌';}
+      body+=`<div class="${cls2}">
+        <span class="opt-lt">${String.fromCharCode(65+j)}</span>
+        ${esc(o)}
+        <span style="margin-left:auto;font-size:.75rem;flex-shrink:0">${mark}</span>
+      </div>`;
     });
 
-  }catch(e){
-    console.error('Review error:',e);
-    wrap.innerHTML=`<div class="err-box"><h3>❌ Xatolik</h3><p>${e.message}</p>
-      <button class="err-btn" onclick="goTo('history.html')">← Orqaga</button></div>`;
-  }
+    if(isSkip) body+=`<div class="skip-notice">⏭ Bu savol o'tkazib yuborildi</div>`;
+    if(q.explanation) body+=`<div class="expl">💡 ${esc(q.explanation)}</div>`;
+
+    card.innerHTML=body;
+    qWrap.appendChild(card);
+  });
 })();
 </script>
 </body>
