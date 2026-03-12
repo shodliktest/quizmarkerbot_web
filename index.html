@@ -8,128 +8,98 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
-:root{
-  --bg:#EEF0FF;--card:#fff;--text:#1a1a2e;--text2:#6b7280;--text3:#9ca3af;
-  --acc:#6C3FE8;--acc2:#C040C8;--border:rgba(108,63,232,.12);
-  --green:#059669;--red:#ef4444;
-  --shadow:0 4px 20px rgba(108,63,232,.07)
-}
-[data-theme=dark]{
-  --bg:#0d0820;--card:#140d28;--text:#e8e0ff;--text2:#9ca3af;--text3:#6b7280;
-  --border:rgba(108,63,232,.22);--shadow:0 4px 20px rgba(0,0,0,.3)
-}
+:root{--bg:#EEF0FF;--card:#fff;--text:#1a1a2e;--text2:#6b7280;--text3:#9ca3af;
+  --acc:#6C3FE8;--acc2:#C040C8;--border:rgba(108,63,232,.1);
+  --shadow:0 2px 12px rgba(108,63,232,.08)}
+[data-theme=dark]{--bg:#0d0820;--card:#140d28;--text:#e8e0ff;--text2:#9ca3af;--text3:#6b7280;
+  --border:rgba(108,63,232,.2);--shadow:0 2px 12px rgba(0,0,0,.3)}
 body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(--bg);color:var(--text);overflow-x:hidden}
 
 /* NAV */
-.nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:500;
+.nav{position:fixed;top:0;left:0;right:0;height:54px;z-index:500;
   display:flex;align-items:center;justify-content:space-between;padding:0 1rem;
-  background:var(--bg);border-bottom:1px solid var(--border);backdrop-filter:blur(10px)}
-.logo{font-family:'Unbounded',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;
+  background:var(--bg)}
+.logo{font-family:'Unbounded',sans-serif;font-size:1.15rem;font-weight:900;cursor:pointer;
   background:linear-gradient(135deg,var(--acc),var(--acc2));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .nav-mid{display:flex;align-items:center;gap:.2rem}
-.ntab{padding:.38rem .82rem;border-radius:99px;font-size:.8rem;font-weight:700;
+.ntab{padding:.4rem .82rem;border-radius:99px;font-size:.8rem;font-weight:700;
   cursor:pointer;border:none;font-family:inherit;background:transparent;
   color:var(--text2);transition:all .2s}
-.ntab.on{background:var(--card);color:var(--acc);box-shadow:0 2px 8px rgba(108,63,232,.1)}
-[data-theme=dark] .ntab.on{background:rgba(255,255,255,.08)}
+.ntab.on{background:rgba(255,255,255,.9);color:var(--acc);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+[data-theme=dark] .ntab.on{background:rgba(255,255,255,.1)}
 .nav-r{display:flex;align-items:center;gap:.4rem}
-.ibtn{width:36px;height:36px;border-radius:12px;border:1.5px solid var(--border);cursor:pointer;
-  font-size:.9rem;background:var(--card);display:flex;align-items:center;justify-content:center;
-  color:var(--text);transition:all .2s}
-.ibtn:hover{border-color:rgba(108,63,232,.4);background:rgba(108,63,232,.05)}
-.lbtn{padding:.4rem .95rem;border-radius:99px;font-size:.78rem;font-weight:700;
+.ibtn{width:34px;height:34px;border-radius:99px;border:none;cursor:pointer;font-size:.9rem;
+  background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center}
+[data-theme=dark] .ibtn{background:rgba(255,255,255,.1)}
+.lbtn{padding:.4rem .88rem;border-radius:99px;font-size:.78rem;font-weight:700;
   border:none;cursor:pointer;font-family:inherit;
-  background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;transition:all .2s}
-.lbtn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(108,63,232,.35)}
+  background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff}
 
 /* PAGE */
-.page{padding:68px 0 3rem}
+.page{padding:66px 0 3rem}
 
-/* SUBJECT GROUP */
-.grp{margin-bottom:2rem}
-.grp-hdr{display:flex;align-items:center;justify-content:space-between;padding:0 1rem;margin-bottom:.85rem}
+/* GROUP */
+.grp{margin-bottom:1.8rem}
+.grp-hdr{display:flex;align-items:center;justify-content:space-between;padding:0 1rem;margin-bottom:.75rem}
 .grp-l{display:flex;align-items:center;gap:.65rem}
-.grp-icon{width:46px;height:46px;border-radius:14px;background:var(--card);
-  box-shadow:var(--shadow);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
-.grp-nm{font-size:.95rem;font-weight:800;color:var(--text)}
+.grp-icon{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.9);
+  box-shadow:0 2px 10px rgba(0,0,0,.07);
+  display:flex;align-items:center;justify-content:center;font-size:1.55rem;flex-shrink:0}
+[data-theme=dark] .grp-icon{background:rgba(255,255,255,.1)}
+.grp-nm{font-size:.94rem;font-weight:800}
 .grp-ct{font-size:.72rem;color:var(--text3);font-weight:600;margin-top:.05rem}
-.see-all{font-size:.78rem;font-weight:700;color:var(--acc);cursor:pointer;border:none;
-  background:rgba(108,63,232,.07);border-radius:99px;padding:.32rem .75rem;
-  font-family:inherit;white-space:nowrap;border:1px solid rgba(108,63,232,.14);transition:all .2s}
-.see-all:hover{background:rgba(108,63,232,.14)}
+.see-all{font-size:.78rem;font-weight:700;color:var(--acc);cursor:pointer;border:none;background:none;font-family:inherit}
 
 /* SCROLL */
-.scroll{display:flex;gap:.75rem;overflow-x:auto;padding:0 1rem .75rem;
+.cards-row{display:flex;gap:.75rem;overflow-x:auto;padding:0 1rem .5rem;
   scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
-.scroll::-webkit-scrollbar{display:none}
+.cards-row::-webkit-scrollbar{display:none}
 
 /* CARD */
-.card{min-width:172px;max-width:172px;flex-shrink:0;scroll-snap-align:start;
-  background:var(--card);border-radius:20px;padding:1rem;
-  border:1px solid var(--border);box-shadow:var(--shadow);
-  cursor:pointer;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column}
-.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(108,63,232,.15)}
-.card-icon{width:44px;height:44px;border-radius:12px;background:rgba(108,63,232,.08);
-  display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:.65rem}
-.card-title{font-size:.86rem;font-weight:800;color:var(--text);margin-bottom:.15rem;
+.card{min-width:175px;max-width:175px;flex-shrink:0;scroll-snap-align:start;
+  background:var(--card);border-radius:18px;padding:.9rem;
+  border:1.5px solid var(--border);box-shadow:var(--shadow);
+  cursor:pointer;display:flex;flex-direction:column}
+.card-icon{width:46px;height:46px;border-radius:13px;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:1.45rem;margin-bottom:.6rem}
+.card-title{font-size:.85rem;font-weight:800;margin-bottom:.15rem;
   overflow:hidden;text-overflow:ellipsis;display:-webkit-box;
-  -webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4;flex:1}
-.card-author{font-size:.68rem;color:var(--text3);margin-bottom:.5rem;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.35}
+.card-author{font-size:.68rem;color:var(--text3);margin-bottom:.45rem;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chips{display:flex;gap:.28rem;flex-wrap:wrap;margin-bottom:.65rem}
-.ch{display:inline-flex;align-items:center;gap:.22rem;padding:.22rem .48rem;border-radius:99px;
-  font-size:.66rem;font-weight:700;background:rgba(108,63,232,.08);color:var(--acc);
-  border:1px solid rgba(108,63,232,.14)}
-.card-btn{display:block;width:100%;padding:.62rem;border-radius:12px;border:none;
+.chips{display:flex;gap:.28rem;flex-wrap:wrap;margin-bottom:.6rem}
+.ch{display:inline-flex;align-items:center;padding:.15rem .42rem;border-radius:99px;
+  font-size:.64rem;font-weight:600;background:rgba(108,63,232,.07);color:var(--acc);
+  border:1px solid rgba(108,63,232,.12)}
+.card-btn{display:block;width:100%;padding:.6rem;border-radius:11px;border:none;
   cursor:pointer;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;
-  font-family:inherit;font-size:.82rem;font-weight:700;text-align:center;
-  transition:all .2s;margin-top:auto}
-.card-btn:hover{box-shadow:0 4px 14px rgba(108,63,232,.35)}
+  font-family:inherit;font-size:.8rem;font-weight:700;margin-top:auto}
 
 /* HERO */
 .hero{text-align:center;padding:3.5rem 1.5rem}
-.hero-h{font-family:'Unbounded',sans-serif;font-size:clamp(1.5rem,5vw,2.2rem);
-  font-weight:900;line-height:1.15;margin-bottom:.85rem}
+.hero-h{font-family:'Unbounded',sans-serif;font-size:clamp(1.6rem,5vw,2.5rem);
+  font-weight:900;line-height:1.1;margin-bottom:.85rem}
 .hero-h span{background:linear-gradient(135deg,var(--acc),var(--acc2));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-p{font-size:.88rem;color:var(--text2);max-width:360px;margin:0 auto 1.5rem;line-height:1.65}
-.hero-btn{padding:.82rem 2.2rem;border-radius:14px;border:none;cursor:pointer;
+.hero-p{font-size:.88rem;color:var(--text2);max-width:380px;margin:0 auto 1.5rem;line-height:1.6}
+.hero-btn{padding:.78rem 2rem;border-radius:13px;border:none;cursor:pointer;
   background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;
-  font-family:inherit;font-size:.92rem;font-weight:700;transition:all .22s}
-.hero-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,63,232,.35)}
+  font-family:inherit;font-size:.9rem;font-weight:700}
 
-/* CTA BANNER */
-.cta{margin:0 1rem 1rem;background:linear-gradient(135deg,var(--acc),var(--acc2));
+/* CTA */
+.cta{margin:1rem 1rem 0;background:linear-gradient(135deg,var(--acc),var(--acc2));
   border-radius:20px;padding:1.5rem;text-align:center}
-.cta-h{font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:900;color:#fff;margin-bottom:.45rem}
-.cta-p{font-size:.78rem;color:rgba(255,255,255,.82);margin-bottom:1rem;line-height:1.55}
-.cta-btn{padding:.65rem 1.75rem;border-radius:11px;border:none;cursor:pointer;
-  background:#fff;color:var(--acc);font-weight:800;font-size:.85rem;font-family:inherit;transition:all .2s}
-.cta-btn:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(0,0,0,.2)}
-
-/* ALL TESTS VIEW */
-.all-wrap{padding:0 1rem}
-.all-hdr{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem}
-.back-btn{width:36px;height:36px;border-radius:12px;border:1.5px solid var(--border);
-  cursor:pointer;background:var(--card);display:flex;align-items:center;justify-content:center;
-  font-size:1rem;color:var(--text);flex-shrink:0;transition:all .2s}
-.back-btn:hover{border-color:rgba(108,63,232,.4);color:var(--acc)}
-.all-title{font-family:'Unbounded',sans-serif;font-size:.95rem;font-weight:900}
-.all-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
-@media(min-width:480px){.all-grid{grid-template-columns:repeat(3,1fr)}}
-.all-card{background:var(--card);border-radius:18px;padding:.95rem;
-  border:1px solid var(--border);box-shadow:var(--shadow);
-  cursor:pointer;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column}
-.all-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(108,63,232,.15)}
+.cta-h{font-family:'Unbounded',sans-serif;font-size:1.05rem;font-weight:900;color:#fff;margin-bottom:.5rem}
+.cta-p{font-size:.78rem;color:rgba(255,255,255,.82);margin-bottom:1rem}
+.cta-btn{padding:.65rem 1.6rem;border-radius:11px;border:none;cursor:pointer;
+  background:#fff;color:var(--acc);font-weight:800;font-size:.84rem;font-family:inherit}
 
 /* LOADER */
-.sp{width:36px;height:36px;border:3px solid rgba(108,63,232,.15);border-top-color:var(--acc);
-  border-radius:50%;animation:spin .7s linear infinite;margin:3rem auto}
+.sp{width:28px;height:28px;border:3px solid rgba(108,63,232,.15);border-top-color:var(--acc);
+  border-radius:50%;animation:spin .7s linear infinite;margin:2.5rem auto}
 @keyframes spin{to{transform:rotate(360deg)}}
-.emp{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:.85rem}
-.err{text-align:center;padding:2rem;color:var(--red);font-size:.85rem}
+.err{text-align:center;padding:1.5rem;color:#ef4444;font-size:.82rem;line-height:1.6}
 </style>
 </head>
 <body>
@@ -151,7 +121,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
   <div class="cta" id="cta" style="display:none">
     <div class="cta-h">O'z testingizni yarating!</div>
     <p class="cta-p">Bir necha daqiqada professional test yarating va do'stlaringiz bilan ulashing</p>
-    <button class="cta-btn" onclick="goTo('create.html')">✏️ Test yaratish →</button>
+    <button class="cta-btn" onclick="goTo('login.html')">Boshlash →</button>
   </div>
 </div>
 
@@ -172,140 +142,99 @@ AuthHelpers.getCurrentUser().then(u=>{
   if(u){const b=document.getElementById('auth-btn');b.textContent='Dashboard';b.onclick=()=>goTo('dashboard.html');}
 }).catch(()=>{});
 
-/* Fan + emoji xaritasi — "other" uchun 📚 */
 const ICON={
-  english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',
-  math:'🧮',it:'💻',science:'🔬',religion:'📖',
-  uzbek:'🇺🇿',german:'🇩🇪',french:'🇫🇷',chinese:'🇨🇳',
-  history:'🏛️',geography:'🗺️',biology:'🧬',chemistry:'⚗️',
-  physics:'⚡',law:'⚖️',economics:'💹',literature:'✍️',
-  sport:'⚽',music:'🎵',art:'🎨',medicine:'🩺',other:'📚'
+  'Ingliz tili':'🇬🇧','english':'🇬🇧',
+  'Koreys tili':'🇰🇷','korean':'🇰🇷',
+  'Rus tili':'🇷🇺','russian':'🇷🇺',
+  'Turk tili':'🇹🇷','turkish':'🇹🇷',
+  'Matematika':'🧮','math':'🧮',
+  'IT':'💻','it':'💻',
+  'Fan':'🔬','science':'🔬',
+  'Din':'📖','religion':'📖',
+  'Morphy':'♟️',
+  'other':'📚'
 };
-function getIcon(subj){
-  if(!subj) return '📚';
-  const k=subj.toLowerCase().replace(/\s+/g,'-');
-  return ICON[k] || ICON[Object.keys(ICON).find(key=>k.includes(key))||'other'] || '📚';
-}
 
-/* State */
-let allPublic=[];
-let currentView='home'; // 'home' | 'subject:{key}'
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* Load */
 (async()=>{
-  const wrap=document.getElementById('content');
-  try{
-    const tests=await DB.getPublicTests();
-    allPublic=tests.filter(t=>t.visibility==='public'||!t.visibility);
+  const wrap = document.getElementById('content');
+  try {
+    const tests = await DB.getPublicTests();
+    const pub = (tests||[]).filter(t => t.visibility === 'public');
 
-    if(!allPublic.length){
-      wrap.innerHTML=`<div class="hero">
+    if(!pub.length){
+      wrap.innerHTML = `<div class="hero">
         <div class="hero-h">TestPro ga<br/><span>xush kelibsiz!</span></div>
-        <p class="hero-p">Hozircha ommaviy test mavjud emas. Birinchi bo'ling!</p>
+        <p class="hero-p">Hozircha ommaviy test mavjud emas.</p>
         <button class="hero-btn" onclick="goTo('login.html')">Test yaratish →</button>
       </div>`;
       return;
     }
 
-    renderHome();
-    document.getElementById('cta').style.display='block';
-  }catch(e){
-    console.error(e);
-    wrap.innerHTML=`<div class="err">❌ Yuklanmadi: ${e.message}</div>`;
-  }
-})();
+    /* Kategoriya bo'yicha guruhlash */
+    const grps = {};
+    pub.forEach(t => {
+      const k = t.category || t.subject || 'other';
+      if(!grps[k]) grps[k] = [];
+      grps[k].push(t);
+    });
 
-function renderHome(){
-  currentView='home';
-  const wrap=document.getElementById('content');
-  wrap.innerHTML='';
+    wrap.innerHTML = '';
 
-  /* Fanlarga ajrat */
-  const grps={};
-  allPublic.forEach(t=>{
-    const k=(t.subject||t.category||'other').toLowerCase().replace(/\s+/g,'-');
-    if(!grps[k])grps[k]=[];grps[k].push(t);
-  });
+    Object.entries(grps).forEach(([subj, arr]) => {
+      const icon = ICON[subj] || '📚';
 
-  Object.entries(grps).forEach(([subj,arr])=>{
-    const sub=getSubject(subj);
-    const icon=getIcon(subj);
-    const label=sub.label||subj;
+      /* Guruh wrapper */
+      const g = document.createElement('div');
+      g.className = 'grp';
 
-    const g=document.createElement('div');
-    g.className='grp';
-    g.innerHTML=`
-      <div class="grp-hdr">
+      /* Header */
+      const hdr = document.createElement('div');
+      hdr.className = 'grp-hdr';
+      hdr.innerHTML = `
         <div class="grp-l">
           <div class="grp-icon">${icon}</div>
           <div>
-            <div class="grp-nm">${esc(label)}</div>
+            <div class="grp-nm">${esc(subj)}</div>
             <div class="grp-ct">${arr.length} ta test</div>
           </div>
-        </div>
-        <button class="see-all" onclick="renderSubject('${subj}')">Barchasini ko'rish →</button>
-      </div>
-      <div class="scroll" id="sc-${subj}"></div>`;
+        </div>`;
+      g.appendChild(hdr);
 
-    const scroll=g.querySelector(`#sc-${subj}`);
-    arr.slice(0,8).forEach(t=>{
-      const c=document.createElement('div');
-      c.className='card';
-      c.onclick=()=>goTo('test.html?id='+(t.id||t.test_id));
-      c.innerHTML=`
-        <div class="card-icon">${icon}</div>
-        <div class="card-title">${esc(t.title)}</div>
-        <div class="card-author">${esc(t.creator_name||t.authorName||'Anonim')}</div>
-        <div class="chips">
-          <span class="ch">📝 ${t.question_count||t.questionCount||0}</span>
-          ${t.solve_count?`<span class="ch">👁 ${t.solve_count}</span>`:''}
-          ${(t.time_limit||t.timeLimit)?`<span class="ch">⏱ ${t.time_limit||t.timeLimit}daq</span>`:''}
-          ${t.avg_score?`<span class="ch">⭐${Math.round(t.avg_score)}%</span>`:''}
-        </div>
-        <button class="card-btn">Boshlash →</button>`;
-      scroll.appendChild(c);
+      /* Cards row */
+      const row = document.createElement('div');
+      row.className = 'cards-row';
+
+      arr.forEach(t => {
+        const c = document.createElement('div');
+        c.className = 'card';
+        c.onclick = () => goTo('test.html?id=' + (t.id || t.test_id));
+        c.innerHTML = `
+          <div class="card-icon">${icon}</div>
+          <div class="card-title">${esc(t.title)}</div>
+          <div class="card-author">${esc(t.creator_name || t.authorName || 'Anonim')}</div>
+          <div class="chips">
+            <span class="ch">📝 ${t.question_count || 0}</span>
+            <span class="ch">👁 ${t.solve_count || 0}</span>
+            ${t.time_limit ? `<span class="ch">⏱ ${t.time_limit}daq</span>` : ''}
+            ${t.avg_score ? `<span class="ch">⭐${Math.round(t.avg_score)}%</span>` : ''}
+          </div>
+          <button class="card-btn">Boshlash →</button>`;
+        row.appendChild(c);
+      });
+
+      g.appendChild(row);
+      wrap.appendChild(g);
     });
-    wrap.appendChild(g);
-  });
-}
 
-function renderSubject(subj){
-  currentView='subject:'+subj;
-  const wrap=document.getElementById('content');
-  const arr=allPublic.filter(t=>(t.subject||t.category||'other').toLowerCase().replace(/\s+/g,'-')===subj);
-  const sub=getSubject(subj);
-  const icon=getIcon(subj);
-  const label=sub.label||subj;
+    document.getElementById('cta').style.display = 'block';
 
-  wrap.innerHTML=`
-    <div class="all-wrap">
-      <div class="all-hdr">
-        <button class="back-btn" onclick="renderHome()">←</button>
-        <div class="grp-icon">${icon}</div>
-        <div>
-          <div class="all-title">${esc(label)}</div>
-          <div style="font-size:.72rem;color:var(--text3);font-weight:600">${arr.length} ta test</div>
-        </div>
-      </div>
-      <div class="all-grid" id="all-grid"></div>
-    </div>`;
-
-  const grid=wrap.querySelector('#all-grid');
-  arr.forEach(t=>{
-    const c=document.createElement('div');
-    c.className='all-card';
-    c.onclick=()=>goTo('test.html?id='+(t.id||t.test_id));
-    c.innerHTML=`
-      <div class="card-icon" style="margin-bottom:.55rem">${icon}</div>
-      <div class="card-title">${esc(t.title)}</div>
-      <div class="card-author">${esc(t.creator_name||t.authorName||'Anonim')}</div>
-      <div class="chips" style="margin-top:auto;padding-top:.4rem">
-        <span class="ch">📝 ${t.question_count||t.questionCount||0}</span>
-        ${(t.time_limit||t.timeLimit)?`<span class="ch">⏱ ${t.time_limit||t.timeLimit}daq</span>`:''}
-      </div>`;
-    grid.appendChild(c);
-  });
-}
+  } catch(e) {
+    console.error(e);
+    wrap.innerHTML = `<div class="err">❌ Xatolik: ${e.message}</div>`;
+  }
+})();
 </script>
 </body>
 </html>

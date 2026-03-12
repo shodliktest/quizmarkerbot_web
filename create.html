@@ -328,14 +328,27 @@ input:checked+.tog-s:before{transform:translateX(18px)}
       </div>
     </div>
 
-    <div class="two-col" style="margin-top:.75rem">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-top:.75rem">
       <div class="fg" style="margin:0">
-        <div class="flbl">Vaqt (daqiqa)</div>
-        <input class="finp" id="t-time" type="number" value="0" min="0" max="180" placeholder="0=cheksiz"/>
+        <div class="flbl">⏱ Umumiy vaqt</div>
+        <div style="position:relative">
+          <input class="finp" id="t-time" type="number" value="0" min="0" max="180" placeholder="0=cheksiz" style="padding-right:2.5rem"/>
+          <span style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);font-size:.72rem;color:var(--text3);font-weight:700;pointer-events:none">daq</span>
+        </div>
       </div>
       <div class="fg" style="margin:0">
-        <div class="flbl">O'tish bali (%)</div>
-        <input class="finp" id="t-pass" type="number" value="60" min="0" max="100"/>
+        <div class="flbl">⏳ Har savol</div>
+        <div style="position:relative">
+          <input class="finp" id="t-poll" type="number" value="30" min="5" max="120" placeholder="30" style="padding-right:2.2rem"/>
+          <span style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);font-size:.72rem;color:var(--text3);font-weight:700;pointer-events:none">sek</span>
+        </div>
+      </div>
+      <div class="fg" style="margin:0">
+        <div class="flbl">🎯 O'tish bali</div>
+        <div style="position:relative">
+          <input class="finp" id="t-pass" type="number" value="60" min="0" max="100" style="padding-right:1.8rem"/>
+          <span style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);font-size:.72rem;color:var(--text3);font-weight:700;pointer-events:none">%</span>
+        </div>
       </div>
     </div>
 
@@ -553,7 +566,8 @@ window.addQ=(type='multiple')=>{
     type,
     text:'',
     options: type==='multiple'?['','','','']:type==='truefalse'?["Ha","Yo'q"]:[],
-    correct:0,explanation:'',points:1
+    correct:0,explanation:'',points:1,
+    poll_time: +document.getElementById('t-poll')?.value || 30,
   });
   renderAll();
   setTimeout(()=>{
@@ -596,10 +610,18 @@ function renderCard(q,idx){
       <div class="ferr q-terr" id="qt-${q._id}">❌ Savol matni bo'sh!</div>
     </div>
     <div id="opts-${q._id}">${buildOpts(q)}</div>
-    <div style="display:flex;align-items:center;gap:.6rem;margin-top:.55rem">
-      <div class="flbl" style="margin:0;font-size:.75rem">Ball:</div>
-      <input type="number" class="finp q-pts" style="width:68px;padding:.38rem .6rem"
-        value="${q.points||1}" min="1" max="10" data-id="${q._id}"/>
+    <div style="display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;margin-top:.55rem">
+      <div style="display:flex;align-items:center;gap:.38rem">
+        <div class="flbl" style="margin:0;font-size:.75rem">Ball:</div>
+        <input type="number" class="finp q-pts" style="width:62px;padding:.35rem .5rem"
+          value="${q.points||1}" min="1" max="10" data-id="${q._id}"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:.38rem">
+        <div class="flbl" style="margin:0;font-size:.75rem" title="Telegram poll uchun bu savol vaqti">⏳ Poll (sek):</div>
+        <input type="number" class="finp q-poll" style="width:70px;padding:.35rem .5rem"
+          value="${q.poll_time||+document.getElementById('t-poll')?.value||30}" min="5" max="300"
+          data-id="${q._id}" title="Bu savolga ajratilgan poll vaqti (sekund)"/>
+      </div>
     </div>
     <button class="expl-toggle" onclick="togExpl(this,'${q._id}')">
       💡 Izoh qo'shish (ixtiyoriy)
@@ -620,6 +642,9 @@ function renderCard(q,idx){
   });
   card.querySelector('.q-pts').addEventListener('change',function(){
     const q=findQ(this.dataset.id);if(q)q.points=+this.value||1;
+  });
+  card.querySelector('.q-poll').addEventListener('change',function(){
+    const q=findQ(this.dataset.id);if(q)q.poll_time=+this.value||30;
   });
 }
 
@@ -761,38 +786,76 @@ async function doSave(){
   const btn2=document.getElementById('save-top');
   [btn,btn2].forEach(b=>{b.disabled=true;b.innerHTML='<span class="sp-sm"></span>Saqlanmoqda...';});
 
-  const uid=currentUser.uid||currentUser.id||String(currentUser._tg_id||'');
-  const name=[currentUser.first_name,currentUser.last_name].filter(Boolean).join(' ')||currentUser.name||'Anonim';
+  const _u  = currentUser || {};
+  const uid = String(_u.id || _u.uid || _u._tg_id || '');
+  const name= [_u.first_name, _u.last_name].filter(Boolean).join(' ') || _u.name || 'Anonim';
 
-  const data={
-    title:               document.getElementById('t-title').value.trim(),
-    description:         document.getElementById('t-desc').value.trim(),
-    subject:             selectedSubj,
-    category:            selectedSubj,
-    visibility:          selectedVis,
-    timeLimit:           +document.getElementById('t-time').value||0,
-    passScore:           +document.getElementById('t-pass').value||60,
-    shuffleQuestions:    document.getElementById('t-shuffle').checked,
-    showResult:          document.getElementById('t-result').checked,
-    questionCount:       questions.length,
-    authorName:          name,
-    authorId:            uid,
-    questions:           questions.map(({_id,...rest})=>rest),
+  // Savollarni proxy.js formatiga o'tkazamiz
+  function toProxyQ(q) {
+    const opts = q.options || [];
+    const labels = ['A','B','C','D','E','F','G','H'];
+    // Variantlarni "A) matn" formatiga keltiramiz
+    const fmtOpts = opts.map((o, i) => {
+      const prefix = labels[i] ? labels[i] + ') ' : '';
+      // Agar allaqachon "A) " bilan boshlansa, qo'shmaymiz
+      return /^[A-H]\)\s/.test(o) ? o : prefix + o;
+    });
+    // correct — index dan string ga
+    const correctStr = fmtOpts[q.correct] || fmtOpts[0] || '';
+    return {
+      type:        q.type === 'multiple' ? 'multiple_choice'
+                 : q.type === 'truefalse' ? 'true_false'
+                 : q.type || 'multiple_choice',
+      question:    q.text || '',
+      options:     fmtOpts,
+      correct:     correctStr,
+      explanation: q.explanation || '',
+      points:      q.points || 1,
+      poll_time:   q.poll_time || +document.getElementById('t-poll')?.value || 30,
+    };
+  }
+
+  const proxyQuestions = questions.map(({_id,...q}) => toProxyQ(q));
+
+  const data = {
+    // proxy.js test/create field nomlari
+    creator_id:       parseInt(uid) || 0,
+    creator_name:     name,
+    authorId:         uid,
+    authorName:       name,
+    title:            document.getElementById('t-title').value.trim(),
+    description:      document.getElementById('t-desc').value.trim(),
+    category:         selectedSubj,
+    subject:          selectedSubj,
+    difficulty:       'medium',
+    visibility:       selectedVis,
+    time_limit:       +document.getElementById('t-time').value || 0,
+    timeLimit:        +document.getElementById('t-time').value || 0,
+    poll_time:        +document.getElementById('t-poll').value || 30,
+    passing_score:    +document.getElementById('t-pass').value || 60,
+    passScore:        +document.getElementById('t-pass').value || 60,
+    max_attempts:     0,
+    shuffle_questions: document.getElementById('t-shuffle').checked,
+    shuffleQuestions:  document.getElementById('t-shuffle').checked,
+    show_result:      document.getElementById('t-result').checked,
+    showResult:       document.getElementById('t-result').checked,
+    question_count:   proxyQuestions.length,
+    questionCount:    proxyQuestions.length,
+    questions:        proxyQuestions,
+    source:           'web',
   };
 
   try{
-    let testId,accessCode;
     if(editId){
-      await DB.updateTest(editId,data);
-      await DB.saveQuestions(editId, data.questions);
+      await DB.updateTest(editId, data);
+      await DB.saveQuestions(editId, proxyQuestions);
       showAlert('✅ Test yangilandi!','ok');
       setTimeout(()=>goTo('dashboard.html'),1800);
     } else {
-      const res=await DB.createTest(data, uid);
-      testId    = res.id||res.test_id;
-      accessCode= res.accessCode||res.code||testId;
-      await DB.saveQuestions(testId, data.questions);
-      showAlert(`✅ Test yaratildi!<br>🔑 Ulashish kodi: <b style="font-size:1.05em">${accessCode}</b>`,'ok');
+      const res = await DB.createTest(data, uid);
+      const newId = res.id || res.test_id;
+      if(!newId) throw new Error(res.error || 'Test ID qaytmadi');
+      showAlert(`✅ Test yaratildi! ID: <b>${newId}</b>`,'ok');
       setTimeout(()=>goTo('dashboard.html'),2200);
     }
   }catch(e){
@@ -815,8 +878,9 @@ async function loadEdit(id){
     const qs=r?.questions||[];
     if(!t){showAlert('Test topilmadi','err');return;}
     document.getElementById('t-title').value=t.title||'';
-    document.getElementById('t-desc').value =t.description||'';
+    document.getElementById('t-desc').value =t.description||t.desc||'';
     document.getElementById('t-time').value =t.timeLimit||t.time_limit||0;
+    document.getElementById('t-poll').value =t.poll_time||t.pollTime||30;
     document.getElementById('t-pass').value =t.passScore||t.passing_score||60;
     document.getElementById('t-shuffle').checked=!!(t.shuffleQuestions||t.shuffle_questions);
     document.getElementById('t-result').checked =t.showResult!==false&&t.show_result!==false;
@@ -829,7 +893,26 @@ async function loadEdit(id){
       const found=SUBJ_LIST.find(s=>s.key===selectedSubj);
       showSelSubj(found?found.emoji+' '+found.label:'📚 '+selectedSubj);
     }
-    questions=qs.map((q,i)=>({...q,_id:q.id||q._id||Date.now()+i}));
+    // Proxy formatdagi savollarni web formatga o'giramiz
+    questions = qs.map((q, i) => {
+      const rawOpts = q.options || [];
+      const correctStr = q.correct || '';
+      const correctIdx = typeof q.correct === 'number'
+        ? q.correct
+        : rawOpts.findIndex(o => o === correctStr || o.trim() === correctStr.trim());
+      return {
+        _id:         Date.now() + i + Math.random(),
+        type:        q.type === 'multiple_choice' ? 'multiple'
+                   : q.type === 'true_false'      ? 'truefalse'
+                   : q.type || 'multiple',
+        text:        q.text || q.question || '',
+        options:     rawOpts,
+        correct:     correctIdx >= 0 ? correctIdx : 0,
+        explanation: q.explanation || '',
+        points:      q.points || 1,
+        poll_time:   q.poll_time || t.poll_time || t.pollTime || 30,
+      };
+    });
     renderAll();
   }catch(e){showAlert('❌ '+e.message,'err');}
 }
