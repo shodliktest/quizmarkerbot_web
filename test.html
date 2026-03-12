@@ -138,6 +138,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
       <div class="res-btns">
         <button class="rbtn rbtn-s" onclick="goTo('dashboard.html')">🏠 Dashboard</button>
         <button class="rbtn rbtn-p" id="review-btn" onclick="toggleReview()">📋 Ko'rish</button>
+        <button class="rbtn rbtn-s" onclick="retryTest()">🔄 Qayta yechish</button>
       </div>
       <div id="rev-wrap" style="display:none;text-align:left;margin-top:.75rem">
         <div style="font-size:.86rem;font-weight:800;margin-bottom:.75rem">📊 Javoblar tahlili:</div>
@@ -312,7 +313,7 @@ async function finish(){
   // Natijani saqlash — userAnswers bilan birga
   const userAnswersArr=questions.map((_,i)=>answers[i]!==undefined?answers[i]:-1);
   try{
-    await DB.saveResult({
+    const rid = await DB.saveResult({
       testId:        testData.test_id||testData.id,
       testTitle:     testData.title||'Test',
       subject:       testData.category||testData.subject||'other',
@@ -326,9 +327,34 @@ async function finish(){
       userAnswers:   userAnswersArr,
       detailed_results: userAnswersArr,
     });
-    // Cache answers for review
+    // Cache answers for review (result id bilan)
     Cache.saveAnswers(testData.test_id, userAnswersArr);
+    // Qayta yechish uchun test cache ni tozalamaymiz, faqat answers ni
   }catch(e){console.warn('saveResult:',e);}
+}
+
+/* RETRY */
+function retryTest(){
+  // Cache va javoblarni tozalab qayta boshlash
+  const id=testData?.test_id||testData?.id||new URLSearchParams(location.search).get('id');
+  if(id) Cache.clearTest(id);
+  answers={};curIdx=0;startTime=Date.now();
+  clearInterval(timerInt);
+  // Savollarni aralashtirish
+  if(testData.shuffle_questions||testData.shuffleQuestions)
+    questions=[...questions].sort(()=>Math.random()-.5);
+  document.getElementById('scr-result').style.display='none';
+  document.getElementById('scr-test').style.display='block';
+  // Timerni qayta ishga tushirish
+  const timeSec=(testData.time_limit||testData.timeLimit||0)*60;
+  if(timeSec>0){
+    let rem=timeSec;
+    const tw=document.getElementById('timer-wrap');
+    const upd=()=>{tw.innerHTML=`<div class="timer${rem<60?' warn':''}">${fmtTime(rem)}</div>`;};
+    upd();
+    timerInt=setInterval(()=>{rem--;upd();if(rem<=0){clearInterval(timerInt);finish();}},1000);
+  }
+  renderQ();
 }
 
 /* REVIEW */
