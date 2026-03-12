@@ -72,30 +72,21 @@ async function getIndex() {
 }
 
 // ── Streamlit dan test/full olish ──────────────────────────────
-// ── TG dan test fayl yuklab olish ─────────────────────────────
+// ── TG dan test fayl yuklab olish (fallback) ───────────────────
 async function tgGetFull(msgId) {
   try {
     const fwd = await tgPost('forwardMessage', {
       chat_id: CHANNEL_ID, from_chat_id: CHANNEL_ID, message_id: parseInt(msgId),
     });
     const doc = fwd?.result?.document;
-    if (!doc) {
-      console.error('tgGetFull: doc topilmadi', JSON.stringify(fwd).slice(0,200));
-      return null;
-    }
+    if (!doc) return null;
+    tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: fwd.result.message_id });
     const f = await tgPost('getFile', { file_id: doc.file_id });
     const p = f?.result?.file_path;
     if (!p) return null;
     const raw = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${p}`);
-    if (!raw.ok) return null;
-    const data = await raw.json();
-    // Forward xabarni o'chir (async)
-    tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: fwd.result.message_id }).catch(()=>{});
-    return data;
-  } catch(e) {
-    console.error('tgGetFull error:', String(e));
-    return null;
-  }
+    return raw.json();
+  } catch { return null; }
 }
 
 // ── Multipart yuborish ─────────────────────────────────────────
@@ -197,10 +188,7 @@ export default async function handler(request) {
     if (!msgId) return jsonResp({ error: 'Test fayli topilmadi' }, 404);
 
     const full = await tgGetFull(msgId);
-    if (!full?.questions?.length) return jsonResp({
-      error: 'Savollar topilmadi',
-      debug: { msgId, has_full: !!full, keys: full ? Object.keys(full) : [] }
-    }, 404);
+    if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
 
     const t = normMeta({ ...meta, ...full });
     t.id      = t.id      || t.test_id || tid;
@@ -230,22 +218,50 @@ export default async function handler(request) {
 
   // ── test/create ───────────────────────────────────────────────
   if (ep === 'test/create' && request.method === 'POST') {
-    const { authorId, title, description, subject, category, visibility,
-            timeLimit, passScore, shuffleQuestions, showResult, questionCount,
-            authorName, questions, difficulty, poll_time, max_attempts } = body || {};
+    // web va bot format maydonlarini ikkalasini ham qabul qilish
+    const {
+      authorId, creator_id,
+      title, description,
+      subject, category,
+      visibility,
+      timeLimit, time_limit,
+      passScore, passing_score,
+      shuffleQuestions, shuffle_questions,
+      showResult, show_result,
+      questionCount, question_count,
+      authorName, creator_name,
+      questions,
+      difficulty,
+      poll_time,
+      max_attempts,
+    } = body || {};
     if (!title) return jsonResp({ error: 'Title kerak' }, 400);
     const tid = Array.from(crypto.getRandomValues(new Uint8Array(4)))
       .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const qs = questions || [];
     const testDoc = {
-      test_id: tid, creator_id: parseInt(authorId) || 0, creator_name: authorName || '',
-      title: title || 'Nomsiz', category: category || subject || 'Boshqa',
-      difficulty: difficulty || 'medium', visibility: visibility || 'public',
-      time_limit: parseInt(timeLimit) || 0, poll_time: parseInt(poll_time) || 30,
-      passing_score: parseInt(passScore) || 60, max_attempts: parseInt(max_attempts) || 0,
-      questions: questions || [], question_count: (questions || []).length || parseInt(questionCount) || 0,
-      solve_count: 0, avg_score: 0.0, is_active: true, is_paused: false,
-      created_at: new Date().toISOString(), description: description || '',
-      shuffle_questions: !!shuffleQuestions, show_result: showResult !== false, source: 'web',
+      test_id:          tid,
+      creator_id:       parseInt(authorId || creator_id) || 0,
+      creator_name:     authorName || creator_name || '',
+      title:            title || 'Nomsiz',
+      category:         category || subject || 'Boshqa',
+      difficulty:       difficulty || 'medium',
+      visibility:       visibility || 'public',
+      time_limit:       parseInt(time_limit || timeLimit) || 0,
+      poll_time:        parseInt(poll_time) || 30,
+      passing_score:    parseInt(passing_score || passScore) || 60,
+      max_attempts:     parseInt(max_attempts) || 0,
+      questions:        qs,
+      question_count:   qs.length || parseInt(question_count || questionCount) || 0,
+      solve_count:      0,
+      avg_score:        0.0,
+      is_active:        true,
+      is_paused:        false,
+      created_at:       new Date().toISOString(),
+      description:      description || '',
+      shuffle_questions: !!(shuffle_questions || shuffleQuestions),
+      show_result:      (show_result ?? showResult) !== false,
+      source:           'web',
     };
     const tgData = await sendDoc(`test_${tid}.json`, testDoc, `📝 TEST | ${title} | ${tid}`);
     if (!tgData?.ok) return jsonResp({ error: 'Kanalga yuborishda xato' }, 500);
@@ -267,43 +283,6 @@ export default async function handler(request) {
     if (!msgId) return jsonResp([]);
     const full = await tgGetFull(msgId);
     return jsonResp(full?.questions || []);
-  }
-
-  // ── test/{id}/questions POST — savollarni saqlash ─────────────
-  if (ep.match(/^test\/[^/]+\/questions$/) && request.method === 'POST') {
-    const tid       = ep.split('/')[1];
-    const questions = body?.questions || [];
-    const index     = await getIndex();
-    if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
-
-    const msgId = index[`test_${tid}`];
-    if (!msgId) return jsonResp({ error: 'Test topilmadi' }, 404);
-
-    // Mavjud test faylini yuklab olamiz
-    const existing = await tgGetFull(msgId) || {};
-    const meta = (index.tests_meta || []).find(t => t.test_id === tid) || {};
-
-    // Yangilangan test fayli
-    const updated = {
-      ...existing,
-      ...meta,
-      test_id:        tid,
-      questions:      questions,
-      question_count: questions.length,
-    };
-
-    // Yangi fayl yuboramiz
-    const tgData = await sendDoc(`test_${tid}.json`, updated,
-      `📝 TEST | ${meta.title || tid} | ${tid}`);
-    if (!tgData?.ok) return jsonResp({ error: 'Kanalga yuborishda xato' }, 500);
-
-    // Index ni yangilaymiz (yangi message_id)
-    index[`test_${tid}`] = tgData.result.message_id;
-    const m = (index.tests_meta || []).find(t => t.test_id === tid);
-    if (m) m.question_count = questions.length;
-    await saveIndex(index);
-
-    return jsonResp({ ok: true, count: questions.length });
   }
 
   // ── test/{id}/update ──────────────────────────────────────────
