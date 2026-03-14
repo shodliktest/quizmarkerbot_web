@@ -453,6 +453,26 @@ input:checked+.tog-s:before{transform:translateX(18px)}
 
 <script src="js/api.js"></script>
 <script>
+// Stub funksiyalar — api.js yuklanmasidan oldin ham onclick ishlashi uchun
+window.openImport  = window.openImport  || function(){};
+window.closeImport = window.closeImport || function(){};
+window.doImport    = window.doImport    || function(){};
+window.addQ        = window.addQ        || function(){};
+window.chType      = window.chType      || function(){};
+window.delQ        = window.delQ        || function(){};
+window.moveQ       = window.moveQ       || function(){};
+window.setCorr     = window.setCorr     || function(){};
+window.updOpt      = window.updOpt      || function(){};
+window.updCorrectTxt = window.updCorrectTxt || function(){};
+window.updAccepted = window.updAccepted || function(){};
+window.addOpt      = window.addOpt      || function(){};
+window.rmOpt       = window.rmOpt       || function(){};
+window.togExpl     = window.togExpl     || function(){};
+window.setVis      = window.setVis      || function(){};
+window.setCustomSubj=window.setCustomSubj||function(){};
+window.showFmt     = window.showFmt     || function(){};
+window.switchImpTab= window.switchImpTab|| function(){};
+window.handleFile  = window.handleFile  || function(){};
 /* ─────────────────────────────────────
    STATE
 ───────────────────────────────────── */
@@ -472,7 +492,7 @@ const TH={
   toggle(){this.set(this.get()==='dark'?'light':'dark')}
 };
 TH.set(TH.get());
-document.getElementById('tbtn').onclick=()=>TH.toggle();
+try{document.getElementById('tbtn').onclick=()=>TH.toggle();}catch(e){}
 
 (async()=>{
   currentUser=await AuthHelpers.requireAuth('login.html');
@@ -899,8 +919,8 @@ async function doSave(){
   }
 }
 
-document.getElementById('save-btn').onclick=doSave;
-document.getElementById('save-top').onclick=doSave;
+try{document.getElementById('save-btn').onclick=doSave;}catch(e){}
+try{document.getElementById('save-top').onclick=doSave;}catch(e){}
 
 /* ─────────────────────────────────────
    EDIT MODE
@@ -988,7 +1008,7 @@ window.openImport=()=>{
   switchImpTab('txt');
 };
 window.closeImport=()=>document.getElementById('imp-modal').classList.remove('show');
-document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImport();});
+try{document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImport();});}catch(e){}
 
 window.doImport=()=>{
   const raw=document.getElementById('imp-ta').value.trim();
@@ -1029,91 +1049,50 @@ dz.addEventListener('drop',e=>{
    TXT PARSER
 ───────────────────────────────────── */
 function parseTxt(raw){
-  // 
- → 
- normalizatsiya
-  raw = raw.replace(/
-/g,'\n').replace(/
-/g,'\n');
+  raw = raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const results=[];
 
-  // To'g'ri javob belgilari: oldin yoki keyin: * + - = # ==
-  // Boshida: *A) yoki +A) yoki -A) yoki #A) yoki ==A)
-  // Oxirida: A) matn * yoki A) matn [+] yoki A) matn ==
-
   function isCorrectMark(s){
-    // Boshida belgili: *A) yoki +C) yoki -B) yoki #D) yoki ==C)
-    return /^(\*{1,2}|[+\-=#]{1,2})\s*[A-Ha-h][\)\.:]/i.test(s)||
-           // Oxirida belgili: matn * yoki matn + yoki matn == yoki [+] yoki (+)
+    return /^(\*{1,2}|[+\-=#]{1,2})\s*[A-Ha-h][\).:]/i.test(s)||
            /[\s](\*{1,2}|={1,2}|[+\-#])\s*$/.test(s)||
            /\[\+\]/.test(s)||/\(\+\)/.test(s);
   }
-
   function stripMark(s){
-    // Boshidagi belgini olib tashlash
     s=s.replace(/^(\*{1,2}|[+\-=#]{1,2})\s*/,'');
-    // Oxiridagi belgini olib tashlash
     s=s.replace(/\s*(\*{1,2}|={1,2}|[+\-#])\s*$/,'');
     s=s.replace(/\s*\[\+\]\s*/g,'').replace(/\s*\(\+\)\s*/g,'');
     return s.trim();
   }
 
-  // Bloklarga bo'lish: raqam+belgi bilan boshlangan qator yangi blok
-  const blocks=raw.split(/\n(?=\s*\d+\s*[.):]\ *\S)/g);
+  const blocks=raw.split(/\n(?=\s*\d+\s*[.):][ ]*\S)/g);
 
   for(const block of blocks){
     const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
     if(!lines.length)continue;
-    let qText='',options=[],correctIdx=0,explanation='',hasOpts=false;
+    let qText='',options=[],correctIdx=0,correctTxt='',acceptedTxts=[],explanation='',hasOpts=false;
 
-    let correctTxt='', acceptedTxts=[];
     for(const line of lines){
-      // Izoh
-      if(/^izoh\s*:/i.test(line)){
-        explanation=line.replace(/^izoh\s*:\s*/i,'').trim();continue;
-      }
-      // Javob: (matnli savol uchun)
-      if(/^javob\s*:/i.test(line)){
-        correctTxt=line.replace(/^javob\s*:\s*/i,'').trim();continue;
-      }
-      // Qabul: (alternativ javoblar)
+      if(/^izoh\s*:/i.test(line)){explanation=line.replace(/^izoh\s*:\s*/i,'').trim();continue;}
+      if(/^javob\s*:/i.test(line)){correctTxt=line.replace(/^javob\s*:\s*/i,'').trim();continue;}
       if(/^qabul\s*:/i.test(line)){
         acceptedTxts=line.replace(/^qabul\s*:\s*/i,'').split(',').map(s=>s.trim()).filter(Boolean);continue;
       }
-
-      // Variant: A) B) C) D) yoki 1) 2) 3) — boshida belgi bo'lishi mumkin
-      // Pattern: ixtiyoriy belgi + harf/raqam + )/./: + matn
-      const optM=line.match(/^([*+\\-=#]{0,2})\\s*(?:([A-Ha-h])[\\).:] *|([1-9]\\d*)[\\):] *)(.+)/i);
+      const optM=line.match(/^([*+\-=#]{0,2})\s*(?:([A-Ha-h])[).:][ ]*|([1-9]\d*)[):][  ]*)(.+)/i);
       if(optM){
         hasOpts=true;
-        const prefixMark=optM[1]; // boshidagi belgi
-        let content=(optM[4]||'').trim();  // 4-group: matn
+        const prefixMark=optM[1];
+        let content=(optM[4]||'').trim();
         const isCorr=prefixMark.length>0||isCorrectMark(content);
         if(isCorr)content=stripMark(content);
         if(isCorr)correctIdx=options.length;
         options.push(content);continue;
       }
-
-      // Ha/Yo'q savollari
-      if(!hasOpts&&/^(ha|yes|true)\s*$/i.test(stripMark(line))){
-        hasOpts=true;
-        const isCorr=isCorrectMark(line)||/^(ha|yes|true)$/i.test(line.trim());
-        if(isCorr)correctIdx=options.length;
-        options.push('Ha');continue;
-      }
-      if(!hasOpts&&/^(yo'q|yoq|no|false)\s*$/i.test(stripMark(line))){
-        hasOpts=true;
-        const isCorr=isCorrectMark(line);
-        if(isCorr)correctIdx=options.length;
-        options.push("Yo'q");continue;
-      }
-
-      // Savol matni
-      if(!hasOpts)qText+=(qText?' ':''))+line.replace(/^\d+[\s.):]\ */,'');
+      if(!hasOpts)qText+=(qText?' ':'')+line.replace(/^\d+[\s.):][ ]*/,'');
     }
 
-    if(!qText&&lines[0])qText=lines[0].replace(/^\d+[\s.):]\s*/,'');
+    if(!qText&&lines[0])qText=lines[0].replace(/^\d+[\s.):] */,'');
     if(!qText)continue;
+
     let type='text';
     if(options.length>=2){
       type='multiple';
@@ -1129,8 +1108,6 @@ function parseTxt(raw){
   }
   return results;
 }
-
-
 function findQ(id){return questions.find(q=>String(q._id)===String(id));}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showAlert(msg,type){
