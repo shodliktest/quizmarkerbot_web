@@ -419,13 +419,13 @@ input:checked+.tog-s:before{transform:translateX(18px)}
         </div>
         <div class="fmt-pre" id="fmt-pre"></div>
         <div style="font-size:.72rem;color:var(--text3);margin-bottom:.65rem">
-          💡 To'g'ri javob belgilari: <b>*C)</b> yoki <b>C) matn *</b> yoki <b>+C)</b> <b>-C)</b> <b>#C)</b> <b>==C)</b> &nbsp;·&nbsp; <b>Izoh:</b> = tushuntirish
+          💡 <b>*</b> yoki <b>[+]</b> = to'g'ri javob &nbsp;·&nbsp; <b>Izoh:</b> = tushuntirish
         </div>
         <div class="fg">
           <div class="flbl">Savollarni kiriting:</div>
           <textarea class="finp" id="imp-ta" rows="9"
             style="font-family:monospace;font-size:.82rem;resize:vertical"
-            placeholder="1. Choose the correct sentence.&#10;A) She kept to talk.&#10;B) She kept talk.&#10;*C) She kept talking.&#10;D) She kept talked.&#10;Izoh: Keep + V-ing ishlatiladi.&#10;&#10;2. Savol matni?&#10;+A) To'g'ri javob&#10;B) Variant&#10;C) Variant&#10;D) Variant"></textarea>
+            placeholder="1. Savol matni?&#10;A) Variant&#10;B) To'g'ri javob *&#10;C) Variant&#10;D) Variant&#10;Izoh: Tushuntirish..."></textarea>
         </div>
         <div class="modal-foot">
           <button class="mbtn mbtn-g" onclick="closeImport()">Bekor</button>
@@ -453,26 +453,6 @@ input:checked+.tog-s:before{transform:translateX(18px)}
 
 <script src="js/api.js"></script>
 <script>
-// Stub funksiyalar — api.js yuklanmasidan oldin ham onclick ishlashi uchun
-window.openImport  = window.openImport  || function(){};
-window.closeImport = window.closeImport || function(){};
-window.doImport    = window.doImport    || function(){};
-window.addQ        = window.addQ        || function(){};
-window.chType      = window.chType      || function(){};
-window.delQ        = window.delQ        || function(){};
-window.moveQ       = window.moveQ       || function(){};
-window.setCorr     = window.setCorr     || function(){};
-window.updOpt      = window.updOpt      || function(){};
-window.updCorrectTxt = window.updCorrectTxt || function(){};
-window.updAccepted = window.updAccepted || function(){};
-window.addOpt      = window.addOpt      || function(){};
-window.rmOpt       = window.rmOpt       || function(){};
-window.togExpl     = window.togExpl     || function(){};
-window.setVis      = window.setVis      || function(){};
-window.setCustomSubj=window.setCustomSubj||function(){};
-window.showFmt     = window.showFmt     || function(){};
-window.switchImpTab= window.switchImpTab|| function(){};
-window.handleFile  = window.handleFile  || function(){};
 /* ─────────────────────────────────────
    STATE
 ───────────────────────────────────── */
@@ -492,7 +472,7 @@ const TH={
   toggle(){this.set(this.get()==='dark'?'light':'dark')}
 };
 TH.set(TH.get());
-try{document.getElementById('tbtn').onclick=()=>TH.toggle();}catch(e){}
+document.getElementById('tbtn').onclick=()=>TH.toggle();
 
 (async()=>{
   currentUser=await AuthHelpers.requireAuth('login.html');
@@ -586,7 +566,7 @@ window.addQ=(type='multiple')=>{
     type,
     text:'',
     options: type==='multiple'?['','','','']:type==='truefalse'?["Ha","Yo'q"]:[],
-    correct:type==='text'?'':0,explanation:'',points:1,accepted_answers:[],
+    correct:0,explanation:'',points:1,
     poll_time: +document.getElementById('t-poll')?.value || 30,
   });
   renderAll();
@@ -669,23 +649,7 @@ function renderCard(q,idx){
 }
 
 function buildOpts(q){
-  if(q.type==='text') return `
-    <div class="fg" style="margin-top:.5rem">
-      <div class="flbl">✅ To'g'ri javob <span class="req">*</span></div>
-      <input type="text" class="finp q-correct-txt" data-id="${q._id}"
-        value="${escH(q.correct||'')}"
-        placeholder="Masalan: apple"
-        oninput="updCorrectTxt(this)"/>
-      <div class="ferr q-cerr" id="qc-${q._id}" style="display:none">❌ To'g'ri javob kiritilmagan!</div>
-    </div>
-    <div class="fg" style="margin-top:.35rem">
-      <div class="flbl" style="font-size:.76rem;color:var(--muted)">📝 Qabul qilinadigan javoblar <span style="font-weight:400">(ixtiyoriy, vergul bilan)</span></div>
-      <input type="text" class="finp q-accepted-txt" data-id="${q._id}"
-        value="${escH((q.accepted_answers||[]).join(', '))}"
-        placeholder="Masalan: Apple, APPLE"
-        oninput="updAccepted(this)"/>
-    </div>
-    <div class="opt-hint">✍️ Bot foydalanuvchidan aynan shu javobni yozishni so'raydi</div>`;
+  if(q.type==='text') return `<div class="opt-hint">✏️ Foydalanuvchi o'z javobini erkin yozadi</div>`;
 
   const hint=`<div class="opt-hint">☝️ To'g'ri javobni belgilash uchun ○ radio tugmasini bosing</div>`;
   const addBtn=q.type==='multiple'
@@ -715,9 +679,7 @@ window.chType=(id,type)=>{
   const q=findQ(id);if(!q)return;
   q.type=type;
   q.options=type==='multiple'?['','','','']:type==='truefalse'?["Ha","Yo'q"]:[];
-  q.correct=type==='text'?'':0;
-  if(type==='text')q.accepted_answers=q.accepted_answers||[];
-  renderAll();
+  q.correct=0;renderAll();
 };
 window.delQ=id=>{
   if(!confirm("Bu savolni o'chirishni xohlaysizmi?"))return;
@@ -735,16 +697,6 @@ window.setCorr=(id,idx)=>{
 window.updOpt=inp=>{
   const q=findQ(inp.dataset.id);
   if(q){q.options[+inp.dataset.idx]=inp.value;inp.classList.remove('err');}
-};
-window.updCorrectTxt=inp=>{
-  const q=findQ(inp.dataset.id);
-  if(q){q.correct=inp.value;inp.classList.remove('err');}
-};
-window.updAccepted=inp=>{
-  const q=findQ(inp.dataset.id);
-  if(q){
-    q.accepted_answers=inp.value.split(',').map(s=>s.trim()).filter(Boolean);
-  }
 };
 window.addOpt=id=>{
   const q=findQ(id);if(!q||q.options.length>=8)return;
@@ -788,16 +740,7 @@ function validate(){
       if(card)card.classList.add('has-error');
       errors.push({label:`📝 ${i+1}-savol matni bo'sh`,el:ta||card});
     }
-    if(q.type==='text'){
-      if(!String(q.correct||'').trim()){
-        const ci=card?.querySelector('.q-correct-txt');
-        if(ci)ci.classList.add('err');
-        document.getElementById('qc-'+q._id)?.removeAttribute('style');
-        document.getElementById('qc-'+q._id)?.classList.add('show');
-        if(card)card.classList.add('has-error');
-        errors.push({label:`✅ ${i+1}-savol: to'g'ri javob kiritilmagan`,el:ci||card});
-      }
-    } else {
+    if(q.type!=='text'){
       q.options.forEach((o,oi)=>{
         if(!o.trim()){
           const inps=card?.querySelectorAll('.opt-v');
@@ -847,30 +790,16 @@ async function doSave(){
   const uid = String(_u.id || _u.uid || _u._tg_id || '');
   const name= [_u.first_name, _u.last_name].filter(Boolean).join(' ') || _u.name || 'Anonim';
 
-  // Web formatda saqlaymiz — proxy.js o'zi normalizeForBot() bilan convert qiladi
-  const globalPoll = +document.getElementById('t-poll')?.value || 30;
-  const webQuestions = questions.map(({_id, ...q}) => {
-    if(q.type === 'text') {
-      // Matn savol — bot uchun to'g'ridan bot formatida
-      return {
-        type:             'open',
-        question:         q.text || '',
-        options:          [],
-        correct:          String(q.correct || '').trim(),
-        explanation:      q.explanation || '',
-        accepted_answers: (q.accepted_answers || []).filter(Boolean),
-        points:           q.points || 1,
-      };
-    }
-    return {
-      type:        q.type || 'multiple',
-      text:        q.text || '',
-      options:     (q.options || []).map(String),
-      correct:     typeof q.correct === 'number' ? q.correct : 0,
-      explanation: q.explanation || '',
-      points:      q.points || 1,
-    };
-  });
+  // Web formatda saqlaymiz — proxy.js o'zi webToBot() bilan convert qiladi
+  const webQuestions = questions.map(({_id, ...q}) => ({
+    type:        q.type || 'multiple',   // 'multiple' | 'truefalse' | 'text'
+    text:        q.text || '',
+    options:     (q.options || []).map(String),
+    correct:     typeof q.correct === 'number' ? q.correct : 0,
+    explanation: q.explanation || '',
+    points:      q.points || 1,
+    poll_time:   q.poll_time || +document.getElementById('t-poll')?.value || 30,
+  }));
 
   const data = {
     creator_id:        parseInt(uid) || 0,
@@ -919,8 +848,8 @@ async function doSave(){
   }
 }
 
-try{document.getElementById('save-btn').onclick=doSave;}catch(e){}
-try{document.getElementById('save-top').onclick=doSave;}catch(e){}
+document.getElementById('save-btn').onclick=doSave;
+document.getElementById('save-top').onclick=doSave;
 
 /* ─────────────────────────────────────
    EDIT MODE
@@ -1008,7 +937,7 @@ window.openImport=()=>{
   switchImpTab('txt');
 };
 window.closeImport=()=>document.getElementById('imp-modal').classList.remove('show');
-try{document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImport();});}catch(e){}
+document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImport();});
 
 window.doImport=()=>{
   const raw=document.getElementById('imp-ta').value.trim();
@@ -1049,65 +978,69 @@ dz.addEventListener('drop',e=>{
    TXT PARSER
 ───────────────────────────────────── */
 function parseTxt(raw){
-  raw = raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  raw=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const results=[];
-
-  function isCorrectMark(s){
-    return /^(\*{1,2}|[+\-=#]{1,2})\s*[A-Ha-h][\).:]/i.test(s)||
-           /[\s](\*{1,2}|={1,2}|[+\-#])\s*$/.test(s)||
-           /\[\+\]/.test(s)||/\(\+\)/.test(s);
-  }
-  function stripMark(s){
-    s=s.replace(/^(\*{1,2}|[+\-=#]{1,2})\s*/,'');
-    s=s.replace(/\s*(\*{1,2}|={1,2}|[+\-#])\s*$/,'');
-    s=s.replace(/\s*\[\+\]\s*/g,'').replace(/\s*\(\+\)\s*/g,'');
-    return s.trim();
-  }
-
-  const blocks=raw.split(/\n(?=\s*\d+\s*[.):][ ]*\S)/g);
-
+  const blocks=raw.split(/\n(?=\s*\d+[\.\)\:])/g);
   for(const block of blocks){
     const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
     if(!lines.length)continue;
     let qText='',options=[],correctIdx=0,correctTxt='',acceptedTxts=[],explanation='',hasOpts=false;
-
-    for(const line of lines){
+    for(var li=0;li<lines.length;li++){
+      var line=lines[li];
       if(/^izoh\s*:/i.test(line)){explanation=line.replace(/^izoh\s*:\s*/i,'').trim();continue;}
       if(/^javob\s*:/i.test(line)){correctTxt=line.replace(/^javob\s*:\s*/i,'').trim();continue;}
-      if(/^qabul\s*:/i.test(line)){
-        acceptedTxts=line.replace(/^qabul\s*:\s*/i,'').split(',').map(s=>s.trim()).filter(Boolean);continue;
-      }
-      const optM=line.match(/^([*+\-=#]{0,2})\s*(?:([A-Ha-h])[).:][ ]*|([1-9]\d*)[):][  ]*)(.+)/i);
+      if(/^qabul\s*:/i.test(line)){acceptedTxts=line.replace(/^qabul\s*:\s*/i,'').split(',').map(function(s){return s.trim();}).filter(Boolean);continue;}
+      if(li===0&&!hasOpts){qText=line.replace(/^\d+[\.\)\:]\s*/,'');continue;}
+      var prefM=line.match(/^([*+\-=#]{1,2})\s*([A-Da-d])\s*[\)\.\:]\s*(.+)/);
+      if(prefM){hasOpts=true;correctIdx=options.length;options.push(prefM[3].trim());continue;}
+      var optM=line.match(/^(?:[A-Da-d]\s*[\)\.\:]|\d+[\)\.\s])\s*(.+)/);
       if(optM){
-        hasOpts=true;
-        const prefixMark=optM[1];
-        let content=(optM[4]||'').trim();
-        const isCorr=prefixMark.length>0||isCorrectMark(content);
-        if(isCorr)content=stripMark(content);
+        hasOpts=true;var content=optM[1].trim(),isCorr=false;
+        if(/\*\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\*\s*$/,'').trim();}
+        if(/\+\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\+\s*$/,'').trim();}
+        if(/-\s*$/.test(content)){isCorr=true;content=content.replace(/\s*-\s*$/,'').trim();}
+        if(/#\s*$/.test(content)){isCorr=true;content=content.replace(/\s*#\s*$/,'').trim();}
+        if(/={1,2}\s*$/.test(content)){isCorr=true;content=content.replace(/\s*={1,2}\s*$/,'').trim();}
+        if(/\[\+\]/.test(content)){isCorr=true;content=content.replace(/\s*\[\+\]\s*/g,'').trim();}
+        if(/\(\+\)/.test(content)){isCorr=true;content=content.replace(/\s*\(\+\)\s*/g,'').trim();}
         if(isCorr)correctIdx=options.length;
         options.push(content);continue;
       }
-      if(!hasOpts)qText+=(qText?' ':'')+line.replace(/^\d+[\s.):][ ]*/,'');
+      if(!hasOpts&&/^(ha|yes|true)\s*(\*|\[\+\])?$/i.test(line)){
+        hasOpts=true;
+        var isCorr2=/(\\*|\[\+\])/.test(line)||/^(ha|yes|true)$/i.test(line.split(/[\s\*\[\]]/)[0]);
+        if(isCorr2)correctIdx=options.length;
+        options.push(line.replace(/\s*[\*\[\]\+]+\s*$/,'').trim());continue;
+      }
+      if(!hasOpts&&/^(yo'q|yoq|no|false)\s*(\*|\[\+\])?$/i.test(line)){
+        hasOpts=true;
+        var isCorr3=/(\*|\[\+\])/.test(line);
+        if(isCorr3)correctIdx=options.length;
+        options.push(line.replace(/\s*[\*\[\]\+]+\s*$/,'').trim());continue;
+      }
+      if(!hasOpts)qText+=(qText?' ':'')+line.replace(/^\d+[\.\)\:]\s*/,'');
     }
-
-    if(!qText&&lines[0])qText=lines[0].replace(/^\d+[\s.):] */,'');
+    if(!qText&&lines[0])qText=lines[0].replace(/^\d+[\.\)\:]\s*/,'');
     if(!qText)continue;
-
-    let type='text';
+    var type='text';
     if(options.length>=2){
       type='multiple';
-      const low=options.map(o=>o.toLowerCase());
+      var low=options.map(function(o){return o.toLowerCase();});
       if(options.length===2&&
         (low[0].includes('ha')||low[0].includes('yes')||low[0].includes('true'))&&
-        (low[1].includes("yo'q")||low[1].includes('yoq')||low[1].includes('no')||low[1].includes('false')))
+        (low[1].includes("yo'q")||low[1].includes('no')||low[1].includes('false')))
         type='truefalse';
     }
-    const finalCorrect = type==='text' ? correctTxt : correctIdx;
-    const finalAccepted = type==='text' ? acceptedTxts : [];
-    results.push({_id:Date.now()+Math.random(),type,text:qText.trim(),options,correct:finalCorrect,accepted_answers:finalAccepted,explanation,points:1});
+    var finalCorrect=type==='text'?correctTxt:correctIdx;
+    var finalAccepted=type==='text'?acceptedTxts:[];
+    results.push({_id:Date.now()+Math.random(),type:type,text:qText.trim(),options:options,correct:finalCorrect,accepted_answers:finalAccepted,explanation:explanation,points:1});
   }
   return results;
 }
+
+/* ─────────────────────────────────────
+   HELPERS
+───────────────────────────────────── */
 function findQ(id){return questions.find(q=>String(q._id)===String(id));}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showAlert(msg,type){
