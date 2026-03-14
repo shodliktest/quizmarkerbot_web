@@ -592,30 +592,8 @@ let CU=null,UID='',_myTests=[],_allResults=[];
     pub.forEach(t=>{const k=t.category||t.subject||'other';if(!grps[k])grps[k]=[];grps[k].push(t);});
 
     pubWrap.innerHTML='';
-    Object.entries(grps).forEach(([subj,arr])=>{
-      const sub=getSubject(subj);
-      const icon=ICON[subj]||getIco(subj)||'📚';
-
-      const g=document.createElement('div');g.className='grp';
-
-      const hdr=document.createElement('div');hdr.className='grp-hdr';
-      hdr.innerHTML=`
-        <div class="grp-l">
-          <div class="grp-icon">${icon}</div>
-          <div>
-            <div class="grp-nm">${esc(sub.label)}</div>
-            <div class="grp-ct">${arr.length} ta test</div>
-          </div>
-        </div>
-        <button class="see-all">Barchasi →</button>`;
-      hdr.querySelector('.see-all').onclick=()=>showPubList(pubWrap,subj,arr,icon,sub,grps);
-      g.appendChild(hdr);
-
-      const scroll=document.createElement('div');scroll.className='scroll';
-      arr.forEach(t=>scroll.appendChild(buildCard(t,icon)));
-      g.appendChild(scroll);
-      pubWrap.appendChild(g);
-    });
+    window._pubGrps=grps;
+    renderPubGroups(pubWrap, grps);
   }catch(e){pubWrap.innerHTML=`<div class="err">❌ ${e.message}</div>`;}
 
 })();
@@ -625,23 +603,86 @@ function renderMyTests(showAll){
   const wrap=document.getElementById('my-tests');
   const btn=document.getElementById('my-see-all');
   if(showAll){
-    // Ro'yxat ko'rinish — barchasi
-    wrap.innerHTML='';
-    const back=document.createElement('button');
-    back.className='back-btn';back.innerHTML='← Orqaga';
-    back.onclick=()=>{renderMyTests(false);btn.textContent='Barchasi →';};
-    wrap.appendChild(back);
-    _myTests.forEach(t=>wrap.appendChild(buildMyListItem(t,!!(window._isAdmin))));
-    btn.textContent='← Yopish';
-    btn.onclick=()=>{renderMyTests(false);btn.textContent='Barchasi →';};
+    // Fanlar bo'yicha guruhlangan ko'rinish
+    showMyCats(wrap, btn);
   } else {
     // Scroll karta ko'rinish
     wrap.innerHTML='';
     const scroll=document.createElement('div');scroll.className='scroll';
     _myTests.forEach(t=>scroll.appendChild(buildMyCard(t,!!(window._isAdmin))));
     wrap.appendChild(scroll);
-    if(btn)btn.textContent='Barchasi →';
+    if(btn){btn.textContent='Barchasi →';btn.onclick=()=>renderMyTests(true);}
   }
+}
+
+/* ── Mening testlarim: fan kategoriyalari ── */
+function showMyCats(wrap, btn){
+  wrap.innerHTML='';
+  // Fanlar bo'yicha guruhlash
+  const grps={};
+  _myTests.forEach(t=>{
+    const k=t.category||t.subject||'other';
+    if(!grps[k])grps[k]=[];
+    grps[k].push(t);
+  });
+
+  Object.entries(grps).forEach(([cat,arr])=>{
+    const sub=getSubject(cat);
+    const icon=ICON[cat]||getIco(cat)||'📋';
+    const g=document.createElement('div');g.className='grp';
+
+    const hdr=document.createElement('div');hdr.className='grp-hdr';
+    hdr.innerHTML=`
+      <div class="grp-l">
+        <div class="grp-icon">${icon}</div>
+        <div>
+          <div class="grp-nm">${esc(sub.label||cat)}</div>
+          <div class="grp-ct">${arr.length} ta test</div>
+        </div>
+      </div>
+      <button class="see-all">Ko'rish →</button>`;
+    hdr.querySelector('.see-all').onclick=()=>showMyGroup(wrap, btn, cat, arr, icon, sub, grps);
+    g.appendChild(hdr);
+
+    const scroll=document.createElement('div');scroll.className='scroll';
+    arr.forEach(t=>scroll.appendChild(buildMyCard(t,!!(window._isAdmin))));
+    g.appendChild(scroll);
+    wrap.appendChild(g);
+  });
+
+  // Orqaga tugma — pastda
+  const back=document.createElement('button');
+  back.className='back-btn';back.style.marginTop='.5rem';
+  back.innerHTML='← Kartalar ko\'rinishi';
+  back.onclick=()=>renderMyTests(false);
+  wrap.appendChild(back);
+
+  if(btn){btn.textContent='← Yopish';btn.onclick=()=>renderMyTests(false);}
+}
+
+/* ── Mening testlarim: bitta fan testlari ro'yxati ── */
+function showMyGroup(wrap, btn, cat, arr, icon, sub, grps){
+  wrap.innerHTML='';
+
+  const hdr=document.createElement('div');hdr.className='grp-hdr';
+  hdr.innerHTML=`
+    <div class="grp-l">
+      <div class="grp-icon">${icon}</div>
+      <div>
+        <div class="grp-nm">${esc(sub.label||cat)}</div>
+        <div class="grp-ct">${arr.length} ta test</div>
+      </div>
+    </div>`;
+  wrap.appendChild(hdr);
+
+  arr.forEach(t=>wrap.appendChild(buildMyListItem(t,!!(window._isAdmin))));
+
+  // Orqaga tugma — pastda
+  const back=document.createElement('button');
+  back.className='back-btn';back.style.marginTop='.5rem';
+  back.innerHTML='← Barcha fanlar';
+  back.onclick=()=>showMyCats(wrap, btn);
+  wrap.appendChild(back);
 }
 
 /* ── Natijalar render ── */
@@ -650,12 +691,6 @@ function renderResults(showAll){
   const btn=document.getElementById('res-see-all');
   const list=showAll?_allResults:_allResults.slice(0,3);
   wrap.innerHTML='';
-  if(showAll){
-    const back=document.createElement('button');
-    back.className='back-btn';back.innerHTML='← Yopish';
-    back.onclick=()=>renderResults(false);
-    wrap.appendChild(back);
-  }
   list.forEach(r=>{
     const pct=Math.round(r.percentage||r.score||0);
     const cls=pct>=80?'sc-g':pct>=50?'sc-a':'sc-r';
@@ -670,6 +705,14 @@ function renderResults(showAll){
       <div class="ri-sc ${cls}">${pct}%</div>`;
     wrap.appendChild(el);
   });
+  // Orqaga — pastda (faqat barchasi ochiq bo'lganda)
+  if(showAll){
+    const back=document.createElement('button');
+    back.className='back-btn';back.style.marginTop='.5rem';
+    back.innerHTML='← Yopish';
+    back.onclick=()=>renderResults(false);
+    wrap.appendChild(back);
+  }
   if(btn){
     btn.textContent=showAll?'← Yopish':'Barchasi →';
     btn.onclick=()=>renderResults(!showAll);
@@ -677,32 +720,51 @@ function renderResults(showAll){
 }
 
 /* ── Ommaviy — fan ro'yxatini ko'rsatish ── */
+function renderPubGroups(container, grps){
+  container.innerHTML='';
+  Object.entries(grps).forEach(([s,a])=>{
+    const sb=getSubject(s);const ic=ICON[s]||getIco(s)||'📚';
+    const g=document.createElement('div');g.className='grp';
+    const h=document.createElement('div');h.className='grp-hdr';
+    h.innerHTML=`
+      <div class="grp-l">
+        <div class="grp-icon">${ic}</div>
+        <div>
+          <div class="grp-nm">${esc(sb.label)}</div>
+          <div class="grp-ct">${a.length} ta test</div>
+        </div>
+      </div>
+      <button class="see-all">Barchasi →</button>`;
+    h.querySelector('.see-all').onclick=()=>showPubList(container,s,a,ic,sb,grps);
+    g.appendChild(h);
+    const sc=document.createElement('div');sc.className='scroll';
+    a.forEach(t=>sc.appendChild(buildCard(t,ic)));g.appendChild(sc);
+    container.appendChild(g);
+  });
+}
+
 function showPubList(container, subj, arr, icon, sub, grps){
   container.innerHTML='';
-  const back=document.createElement('button');
-  back.className='back-btn';back.innerHTML='← Orqaga';
-  back.onclick=()=>{
-    // Qayta render
-    container.innerHTML='';
-    Object.entries(grps).forEach(([s,a])=>{
-      const sb=getSubject(s);const ic=ICON[s]||getIco(s)||'📚';
-      const g=document.createElement('div');g.className='grp';
-      const h=document.createElement('div');h.className='grp-hdr';
-      h.innerHTML=`<div class="grp-l"><div class="grp-icon">${ic}</div><div><div class="grp-nm">${esc(sb.label)}</div><div class="grp-ct">${a.length} ta test</div></div></div><button class="see-all">Barchasi →</button>`;
-      h.querySelector('.see-all').onclick=()=>showPubList(container,s,a,ic,sb,grps);
-      g.appendChild(h);
-      const sc=document.createElement('div');sc.className='scroll';
-      a.forEach(t=>sc.appendChild(buildCard(t,ic)));g.appendChild(sc);
-      container.appendChild(g);
-    });
-  };
-  container.appendChild(back);
 
   const hdr=document.createElement('div');hdr.className='grp-hdr';
-  hdr.innerHTML=`<div class="grp-l"><div class="grp-icon">${icon}</div><div><div class="grp-nm">${esc(sub.label)}</div><div class="grp-ct">${arr.length} ta test</div></div></div>`;
+  hdr.innerHTML=`
+    <div class="grp-l">
+      <div class="grp-icon">${icon}</div>
+      <div>
+        <div class="grp-nm">${esc(sub.label)}</div>
+        <div class="grp-ct">${arr.length} ta test</div>
+      </div>
+    </div>`;
   container.appendChild(hdr);
 
   arr.forEach(t=>container.appendChild(buildListItem(t,icon)));
+
+  // Orqaga tugma — pastda
+  const back=document.createElement('button');
+  back.className='back-btn';back.style.marginTop='.5rem';
+  back.innerHTML='← Orqaga';
+  back.onclick=()=>renderPubGroups(container,grps);
+  container.appendChild(back);
 }
 </script>
 </body>
