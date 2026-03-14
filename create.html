@@ -419,13 +419,13 @@ input:checked+.tog-s:before{transform:translateX(18px)}
         </div>
         <div class="fmt-pre" id="fmt-pre"></div>
         <div style="font-size:.72rem;color:var(--text3);margin-bottom:.65rem">
-          💡 <b>*</b> yoki <b>[+]</b> = to'g'ri javob &nbsp;·&nbsp; <b>Izoh:</b> = tushuntirish
+          💡 To'g'ri javob belgilari: <b>*C)</b> yoki <b>C) matn *</b> yoki <b>+C)</b> <b>-C)</b> <b>#C)</b> <b>==C)</b> &nbsp;·&nbsp; <b>Izoh:</b> = tushuntirish
         </div>
         <div class="fg">
           <div class="flbl">Savollarni kiriting:</div>
           <textarea class="finp" id="imp-ta" rows="9"
             style="font-family:monospace;font-size:.82rem;resize:vertical"
-            placeholder="1. Savol matni?&#10;A) Variant&#10;B) To'g'ri javob *&#10;C) Variant&#10;D) Variant&#10;Izoh: Tushuntirish..."></textarea>
+            placeholder="1. Choose the correct sentence.&#10;A) She kept to talk.&#10;B) She kept talk.&#10;*C) She kept talking.&#10;D) She kept talked.&#10;Izoh: Keep + V-ing ishlatiladi.&#10;&#10;2. Savol matni?&#10;+A) To'g'ri javob&#10;B) Variant&#10;C) Variant&#10;D) Variant"></textarea>
         </div>
         <div class="modal-foot">
           <button class="mbtn mbtn-g" onclick="closeImport()">Bekor</button>
@@ -566,7 +566,7 @@ window.addQ=(type='multiple')=>{
     type,
     text:'',
     options: type==='multiple'?['','','','']:type==='truefalse'?["Ha","Yo'q"]:[],
-    correct:0,explanation:'',points:1,
+    correct:type==='text'?'':0,explanation:'',points:1,accepted_answers:[],
     poll_time: +document.getElementById('t-poll')?.value || 30,
   });
   renderAll();
@@ -649,7 +649,23 @@ function renderCard(q,idx){
 }
 
 function buildOpts(q){
-  if(q.type==='text') return `<div class="opt-hint">✏️ Foydalanuvchi o'z javobini erkin yozadi</div>`;
+  if(q.type==='text') return `
+    <div class="fg" style="margin-top:.5rem">
+      <div class="flbl">✅ To'g'ri javob <span class="req">*</span></div>
+      <input type="text" class="finp q-correct-txt" data-id="${q._id}"
+        value="${escH(q.correct||'')}"
+        placeholder="Masalan: apple"
+        oninput="updCorrectTxt(this)"/>
+      <div class="ferr q-cerr" id="qc-${q._id}" style="display:none">❌ To'g'ri javob kiritilmagan!</div>
+    </div>
+    <div class="fg" style="margin-top:.35rem">
+      <div class="flbl" style="font-size:.76rem;color:var(--muted)">📝 Qabul qilinadigan javoblar <span style="font-weight:400">(ixtiyoriy, vergul bilan)</span></div>
+      <input type="text" class="finp q-accepted-txt" data-id="${q._id}"
+        value="${escH((q.accepted_answers||[]).join(', '))}"
+        placeholder="Masalan: Apple, APPLE"
+        oninput="updAccepted(this)"/>
+    </div>
+    <div class="opt-hint">✍️ Bot foydalanuvchidan aynan shu javobni yozishni so'raydi</div>`;
 
   const hint=`<div class="opt-hint">☝️ To'g'ri javobni belgilash uchun ○ radio tugmasini bosing</div>`;
   const addBtn=q.type==='multiple'
@@ -679,7 +695,9 @@ window.chType=(id,type)=>{
   const q=findQ(id);if(!q)return;
   q.type=type;
   q.options=type==='multiple'?['','','','']:type==='truefalse'?["Ha","Yo'q"]:[];
-  q.correct=0;renderAll();
+  q.correct=type==='text'?'':0;
+  if(type==='text')q.accepted_answers=q.accepted_answers||[];
+  renderAll();
 };
 window.delQ=id=>{
   if(!confirm("Bu savolni o'chirishni xohlaysizmi?"))return;
@@ -697,6 +715,16 @@ window.setCorr=(id,idx)=>{
 window.updOpt=inp=>{
   const q=findQ(inp.dataset.id);
   if(q){q.options[+inp.dataset.idx]=inp.value;inp.classList.remove('err');}
+};
+window.updCorrectTxt=inp=>{
+  const q=findQ(inp.dataset.id);
+  if(q){q.correct=inp.value;inp.classList.remove('err');}
+};
+window.updAccepted=inp=>{
+  const q=findQ(inp.dataset.id);
+  if(q){
+    q.accepted_answers=inp.value.split(',').map(s=>s.trim()).filter(Boolean);
+  }
 };
 window.addOpt=id=>{
   const q=findQ(id);if(!q||q.options.length>=8)return;
@@ -740,7 +768,16 @@ function validate(){
       if(card)card.classList.add('has-error');
       errors.push({label:`📝 ${i+1}-savol matni bo'sh`,el:ta||card});
     }
-    if(q.type!=='text'){
+    if(q.type==='text'){
+      if(!String(q.correct||'').trim()){
+        const ci=card?.querySelector('.q-correct-txt');
+        if(ci)ci.classList.add('err');
+        document.getElementById('qc-'+q._id)?.removeAttribute('style');
+        document.getElementById('qc-'+q._id)?.classList.add('show');
+        if(card)card.classList.add('has-error');
+        errors.push({label:`✅ ${i+1}-savol: to'g'ri javob kiritilmagan`,el:ci||card});
+      }
+    } else {
       q.options.forEach((o,oi)=>{
         if(!o.trim()){
           const inps=card?.querySelectorAll('.opt-v');
@@ -790,16 +827,30 @@ async function doSave(){
   const uid = String(_u.id || _u.uid || _u._tg_id || '');
   const name= [_u.first_name, _u.last_name].filter(Boolean).join(' ') || _u.name || 'Anonim';
 
-  // Web formatda saqlaymiz — proxy.js o'zi webToBot() bilan convert qiladi
-  const webQuestions = questions.map(({_id, ...q}) => ({
-    type:        q.type || 'multiple',   // 'multiple' | 'truefalse' | 'text'
-    text:        q.text || '',
-    options:     (q.options || []).map(String),
-    correct:     typeof q.correct === 'number' ? q.correct : 0,
-    explanation: q.explanation || '',
-    points:      q.points || 1,
-    poll_time:   q.poll_time || +document.getElementById('t-poll')?.value || 30,
-  }));
+  // Web formatda saqlaymiz — proxy.js o'zi normalizeForBot() bilan convert qiladi
+  const globalPoll = +document.getElementById('t-poll')?.value || 30;
+  const webQuestions = questions.map(({_id, ...q}) => {
+    if(q.type === 'text') {
+      // Matn savol — bot uchun to'g'ridan bot formatida
+      return {
+        type:             'open',
+        question:         q.text || '',
+        options:          [],
+        correct:          String(q.correct || '').trim(),
+        explanation:      q.explanation || '',
+        accepted_answers: (q.accepted_answers || []).filter(Boolean),
+        points:           q.points || 1,
+      };
+    }
+    return {
+      type:        q.type || 'multiple',
+      text:        q.text || '',
+      options:     (q.options || []).map(String),
+      correct:     typeof q.correct === 'number' ? q.correct : 0,
+      explanation: q.explanation || '',
+      points:      q.points || 1,
+    };
+  });
 
   const data = {
     creator_id:        parseInt(uid) || 0,
@@ -978,38 +1029,90 @@ dz.addEventListener('drop',e=>{
    TXT PARSER
 ───────────────────────────────────── */
 function parseTxt(raw){
+  // 
+ → 
+ normalizatsiya
+  raw = raw.replace(/
+/g,'\n').replace(/
+/g,'\n');
   const results=[];
-  const blocks=raw.split(/\n(?=\s*\d+[\.\)\:])/g);
+
+  // To'g'ri javob belgilari: oldin yoki keyin: * + - = # ==
+  // Boshida: *A) yoki +A) yoki -A) yoki #A) yoki ==A)
+  // Oxirida: A) matn * yoki A) matn [+] yoki A) matn ==
+
+  function isCorrectMark(s){
+    // Boshida belgili: *A) yoki +C) yoki -B) yoki #D) yoki ==C)
+    return /^(\*{1,2}|[+\-=#]{1,2})\s*[A-Ha-h][\)\.:]/i.test(s)||
+           // Oxirida belgili: matn * yoki matn + yoki matn == yoki [+] yoki (+)
+           /[\s](\*{1,2}|={1,2}|[+\-#])\s*$/.test(s)||
+           /\[\+\]/.test(s)||/\(\+\)/.test(s);
+  }
+
+  function stripMark(s){
+    // Boshidagi belgini olib tashlash
+    s=s.replace(/^(\*{1,2}|[+\-=#]{1,2})\s*/,'');
+    // Oxiridagi belgini olib tashlash
+    s=s.replace(/\s*(\*{1,2}|={1,2}|[+\-#])\s*$/,'');
+    s=s.replace(/\s*\[\+\]\s*/g,'').replace(/\s*\(\+\)\s*/g,'');
+    return s.trim();
+  }
+
+  // Bloklarga bo'lish: raqam+belgi bilan boshlangan qator yangi blok
+  const blocks=raw.split(/\n(?=\s*\d+\s*[.):]\ *\S)/g);
+
   for(const block of blocks){
     const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
     if(!lines.length)continue;
     let qText='',options=[],correctIdx=0,explanation='',hasOpts=false;
+
+    let correctTxt='', acceptedTxts=[];
     for(const line of lines){
-      if(/^izoh\s*:/i.test(line)){explanation=line.replace(/^izoh\s*:\s*/i,'').trim();continue;}
-      const optM=line.match(/^(?:[A-Da-d]\s*[\)\.\:]|\d+[\)\.\s])\s*(.+)/);
+      // Izoh
+      if(/^izoh\s*:/i.test(line)){
+        explanation=line.replace(/^izoh\s*:\s*/i,'').trim();continue;
+      }
+      // Javob: (matnli savol uchun)
+      if(/^javob\s*:/i.test(line)){
+        correctTxt=line.replace(/^javob\s*:\s*/i,'').trim();continue;
+      }
+      // Qabul: (alternativ javoblar)
+      if(/^qabul\s*:/i.test(line)){
+        acceptedTxts=line.replace(/^qabul\s*:\s*/i,'').split(',').map(s=>s.trim()).filter(Boolean);continue;
+      }
+
+      // Variant: A) B) C) D) yoki 1) 2) 3) — boshida belgi bo'lishi mumkin
+      // Pattern: ixtiyoriy belgi + harf/raqam + )/./: + matn
+      const optM=line.match(/^([*+\\-=#]{0,2})\\s*(?:([A-Ha-h])[\\).:] *|([1-9]\\d*)[\\):] *)(.+)/i);
       if(optM){
-        hasOpts=true;let content=optM[1].trim(),isCorr=false;
-        if(/\*\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\*\s*$/,'').trim();}
-        if(/\[\+\]/.test(content)){isCorr=true;content=content.replace(/\s*\[\+\]\s*/g,'').trim();}
-        if(/\(\+\)/.test(content)){isCorr=true;content=content.replace(/\s*\(\+\)\s*/g,'').trim();}
+        hasOpts=true;
+        const prefixMark=optM[1]; // boshidagi belgi
+        let content=(optM[4]||'').trim();  // 4-group: matn
+        const isCorr=prefixMark.length>0||isCorrectMark(content);
+        if(isCorr)content=stripMark(content);
         if(isCorr)correctIdx=options.length;
         options.push(content);continue;
       }
-      if(!hasOpts&&/^(ha|yes|true)\s*(\*|\[\+\])?$/i.test(line)){
+
+      // Ha/Yo'q savollari
+      if(!hasOpts&&/^(ha|yes|true)\s*$/i.test(stripMark(line))){
         hasOpts=true;
-        const isCorr=/(\*|\[\+\])/.test(line)||/^(ha|yes|true)$/i.test(line.split(/[\s\*\[\]]/)[0]);
+        const isCorr=isCorrectMark(line)||/^(ha|yes|true)$/i.test(line.trim());
         if(isCorr)correctIdx=options.length;
-        options.push(line.replace(/\s*[\*\[\]\+]+\s*$/,'').trim());continue;
+        options.push('Ha');continue;
       }
-      if(!hasOpts&&/^(yo'q|yoq|no|false)\s*(\*|\[\+\])?$/i.test(line)){
+      if(!hasOpts&&/^(yo'q|yoq|no|false)\s*$/i.test(stripMark(line))){
         hasOpts=true;
-        const isCorr=/(\*|\[\+\])/.test(line);
+        const isCorr=isCorrectMark(line);
         if(isCorr)correctIdx=options.length;
-        options.push(line.replace(/\s*[\*\[\]\+]+\s*$/,'').trim());continue;
+        options.push("Yo'q");continue;
       }
-      if(!hasOpts)qText+=(qText?' ':'')+line.replace(/^\d+[\.\)\:]\s*/,'');
+
+      // Savol matni
+      if(!hasOpts)qText+=(qText?' ':''))+line.replace(/^\d+[\s.):]\ */,'');
     }
-    if(!qText&&lines[0])qText=lines[0].replace(/^\d+[\.\)\:]\s*/,'');
+
+    if(!qText&&lines[0])qText=lines[0].replace(/^\d+[\s.):]\s*/,'');
     if(!qText)continue;
     let type='text';
     if(options.length>=2){
@@ -1017,17 +1120,17 @@ function parseTxt(raw){
       const low=options.map(o=>o.toLowerCase());
       if(options.length===2&&
         (low[0].includes('ha')||low[0].includes('yes')||low[0].includes('true'))&&
-        (low[1].includes("yo'q")||low[1].includes('no')||low[1].includes('false')))
+        (low[1].includes("yo'q")||low[1].includes('yoq')||low[1].includes('no')||low[1].includes('false')))
         type='truefalse';
     }
-    results.push({_id:Date.now()+Math.random(),type,text:qText.trim(),options,correct:correctIdx,explanation,points:1});
+    const finalCorrect = type==='text' ? correctTxt : correctIdx;
+    const finalAccepted = type==='text' ? acceptedTxts : [];
+    results.push({_id:Date.now()+Math.random(),type,text:qText.trim(),options,correct:finalCorrect,accepted_answers:finalAccepted,explanation,points:1});
   }
   return results;
 }
 
-/* ─────────────────────────────────────
-   HELPERS
-───────────────────────────────────── */
+
 function findQ(id){return questions.find(q=>String(q._id)===String(id));}
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showAlert(msg,type){
