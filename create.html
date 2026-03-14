@@ -413,19 +413,19 @@ input:checked+.tog-s:before{transform:translateX(18px)}
       <!-- TEXT -->
       <div id="imp-txt-body">
         <div class="fmt-btns">
-          <button class="fmtb on" onclick="showFmt(0,this)">A) * format</button>
-          <button class="fmtb" onclick="showFmt(1,this)">1) [+] format</button>
+          <button class="fmtb on" onclick="showFmt(0,this)">*A) format</button>
+          <button class="fmtb" onclick="showFmt(1,this)">+1) format</button>
           <button class="fmtb" onclick="showFmt(2,this)">Ha/Yo'q</button>
         </div>
         <div class="fmt-pre" id="fmt-pre"></div>
         <div style="font-size:.72rem;color:var(--text3);margin-bottom:.65rem">
-          💡 <b>*</b> yoki <b>[+]</b> = to'g'ri javob &nbsp;·&nbsp; <b>Izoh:</b> = tushuntirish
+          💡 Variant oldiga <b>*</b> <b>+</b> <b>-</b> <b>#</b> <b>=</b> = to'g'ri javob &nbsp;·&nbsp; Oxiriga ham <b>*</b> yoki <b>[+]</b> qo'ysa bo'ladi &nbsp;·&nbsp; <b>Izoh:</b> = tushuntirish
         </div>
         <div class="fg">
           <div class="flbl">Savollarni kiriting:</div>
           <textarea class="finp" id="imp-ta" rows="9"
             style="font-family:monospace;font-size:.82rem;resize:vertical"
-            placeholder="1. Savol matni?&#10;A) Variant&#10;B) To'g'ri javob *&#10;C) Variant&#10;D) Variant&#10;Izoh: Tushuntirish..."></textarea>
+            placeholder="1. Savol matni?&#10;A) Variant&#10;*B) To'g'ri javob&#10;C) Variant&#10;D) Variant&#10;Izoh: Tushuntirish..."></textarea>
         </div>
         <div class="modal-foot">
           <button class="mbtn mbtn-g" onclick="closeImport()">Bekor</button>
@@ -906,16 +906,16 @@ async function loadEdit(id){
 const FMT_EX=[
 `1. Savol matni?
 A) Variant A
-B) To'g'ri variant *
+*B) To'g'ri variant
 C) Variant C
 D) Variant D
 Izoh: Bu yerda tushuntirish.`,
 `1) Savol matni?
 1. Variant A
-2. To'g'ri [+]
++2. To'g'ri javob
 3. Variant C`,
 `1. Bu gap to'g'rimi?
-Ha *
+*Ha
 Yo'q
 Izoh: Ha, to'g'ri.`
 ];
@@ -986,19 +986,23 @@ function parseTxt(raw){
     let qText='',options=[],correctIdx=0,explanation='',hasOpts=false;
     for(const line of lines){
       if(/^izoh\s*:/i.test(line)){explanation=line.replace(/^izoh\s*:\s*/i,'').trim();continue;}
-      // Boshida belgi: *A) +B) -C) #D) =C) ==C)
-      const preM=line.match(/^[*+\-#=]{1,2}\s*([A-Da-d])\s*[\)\.\:]\s*(.+)/);
-      if(preM){hasOpts=true;correctIdx=options.length;options.push(preM[2].trim());continue;}
+      // Variant oldida to'g'ri javob belgisi bor-yo'qligini tekshir: *A) yoki * A) yoki +B) va h.k.
+      const prefixM=line.match(/^([*+\-#=]{1,2})\s*(?:[A-Da-d]\s*[\)\.\:]|\d+[\)\.\s])\s*(.+)/);
+      if(prefixM){
+        hasOpts=true;
+        const content=prefixM[2].trim();
+        correctIdx=options.length;
+        options.push(content);continue;
+      }
       const optM=line.match(/^(?:[A-Da-d]\s*[\)\.\:]|\d+[\)\.\s])\s*(.+)/);
-      if(optM&&(hasOpts||/^[A-Da-d]\s*[\)\.\:]/.test(line))){
+      if(optM){
         hasOpts=true;let content=optM[1].trim(),isCorr=false;
+        // Variant oxirida belgi: "Variant matni *" yoki "Variant matni [+]"
         if(/\*\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\*\s*$/,'').trim();}
-        if(/\+\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\+\s*$/,'').trim();}
-        if(/-\s*$/.test(content)){isCorr=true;content=content.replace(/\s*-\s*$/,'').trim();}
-        if(/#\s*$/.test(content)){isCorr=true;content=content.replace(/\s*#\s*$/,'').trim();}
-        if(/={1,2}\s*$/.test(content)){isCorr=true;content=content.replace(/\s*={1,2}\s*$/,'').trim();}
         if(/\[\+\]/.test(content)){isCorr=true;content=content.replace(/\s*\[\+\]\s*/g,'').trim();}
         if(/\(\+\)/.test(content)){isCorr=true;content=content.replace(/\s*\(\+\)\s*/g,'').trim();}
+        // Variant oldida belgi: variant matni ichidagi holatlar uchun qo'shimcha
+        if(/^\s*[*+\-#=]{1,2}\s/.test(content)){isCorr=true;content=content.replace(/^\s*[*+\-#=]{1,2}\s*/,'').trim();}
         if(isCorr)correctIdx=options.length;
         options.push(content);continue;
       }
