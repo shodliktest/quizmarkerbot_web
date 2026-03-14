@@ -18,16 +18,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
 /* NAV */
 .nav{position:fixed;top:0;left:0;right:0;height:54px;z-index:500;
   display:flex;align-items:center;justify-content:space-between;padding:0 1rem;
-  background:var(--bg);backdrop-filter:blur(20px);}
+  background:var(--bg);backdrop-filter:blur(20px)}
 .logo{font-family:'Unbounded',sans-serif;font-size:1.15rem;font-weight:900;cursor:pointer;
   background:linear-gradient(135deg,var(--acc),var(--acc2));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .nav-mid{display:flex;align-items:center;gap:.2rem}
 .ntab{padding:.4rem .82rem;border-radius:99px;font-size:.8rem;font-weight:700;
-  cursor:pointer;border:none;font-family:inherit;background:transparent;
-  color:var(--text2);transition:all .2s}
-.ntab.on{background:rgba(255,255,255,.9);color:var(--acc);
-  box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  cursor:pointer;border:none;font-family:inherit;background:transparent;color:var(--text2);transition:all .2s}
+.ntab.on{background:rgba(255,255,255,.9);color:var(--acc);box-shadow:0 2px 8px rgba(0,0,0,.08)}
 [data-theme=dark] .ntab.on{background:rgba(255,255,255,.1)}
 .nav-r{display:flex;align-items:center;gap:.4rem}
 .ibtn{width:34px;height:34px;border-radius:99px;border:none;cursor:pointer;font-size:.9rem;
@@ -41,21 +39,22 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
 /* PAGE */
 .page{padding:66px 0 3rem}
 
-/* SUBJECT GROUP */
+/* GROUP */
 .grp{margin-bottom:1.8rem}
 .grp-hdr{display:flex;align-items:center;justify-content:space-between;padding:0 1rem;margin-bottom:.75rem}
 .grp-l{display:flex;align-items:center;gap:.65rem}
-.grp-icon{width:46px;height:46px;border-radius:14px;
-  background:rgba(255,255,255,.9);
+.grp-icon{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.9);
   box-shadow:0 2px 10px rgba(0,0,0,.07);
   display:flex;align-items:center;justify-content:center;font-size:1.55rem;flex-shrink:0}
 [data-theme=dark] .grp-icon{background:rgba(255,255,255,.1)}
 .grp-nm{font-size:.94rem;font-weight:800;color:var(--text)}
 .grp-ct{font-size:.72rem;color:var(--text3);font-weight:600;margin-top:.05rem}
-.see-all{font-size:.78rem;font-weight:700;color:var(--acc);cursor:pointer;border:none;
-  background:none;font-family:inherit;white-space:nowrap}
+.see-all{font-size:.75rem;font-weight:700;color:var(--acc);cursor:pointer;border:none;
+  background:none;font-family:inherit;white-space:nowrap;padding:.28rem .7rem;
+  border-radius:99px;border:1.5px solid rgba(108,63,232,.25);transition:all .18s}
+.see-all:hover{background:rgba(108,63,232,.07)}
 
-/* SCROLL */
+/* SCROLL (card view) */
 .scroll{display:flex;gap:.75rem;overflow-x:auto;padding:0 1rem .5rem;
   scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .scroll::-webkit-scrollbar{display:none}
@@ -84,7 +83,29 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
   transition:all .2s;margin-top:auto}
 .card-btn:hover{box-shadow:0 4px 14px rgba(108,63,232,.35)}
 
-/* HERO (empty) */
+/* LIST VIEW (barchasi bosilganda) */
+.list-view{padding:0 1rem}
+.li{background:var(--card);border:1.5px solid var(--border);border-radius:14px;
+  padding:.75rem .9rem;margin-bottom:.42rem;
+  display:flex;align-items:center;gap:.6rem;cursor:pointer;transition:all .18s}
+.li:hover{border-color:rgba(108,63,232,.3);transform:translateX(2px);box-shadow:0 3px 12px rgba(108,63,232,.1)}
+.li-ico{width:38px;height:38px;border-radius:11px;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.li-info{flex:1;min-width:0}
+.li-nm{font-size:.84rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:.1rem}
+.li-meta{font-size:.67rem;color:var(--text3);display:flex;gap:.35rem;flex-wrap:wrap}
+.li-btn{padding:.32rem .75rem;border-radius:9px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;
+  font-family:inherit;font-size:.72rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+
+/* BACK BTN */
+.back-btn{display:flex;align-items:center;gap:.4rem;padding:.4rem .7rem;margin:0 1rem .8rem;
+  border-radius:10px;border:1.5px solid var(--border);background:var(--card);
+  cursor:pointer;font-size:.8rem;font-weight:700;color:var(--text2);
+  width:fit-content;transition:all .18s}
+.back-btn:hover{border-color:rgba(108,63,232,.3);color:var(--acc)}
+
+/* HERO */
 .hero{text-align:center;padding:3.5rem 1.5rem}
 .hero-h{font-family:'Unbounded',sans-serif;font-size:clamp(1.6rem,5vw,2.5rem);
   font-weight:900;line-height:1.1;margin-bottom:.85rem}
@@ -138,7 +159,6 @@ body{font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;background:var(
 
 <script src="js/api.js"></script>
 <script>
-/* Theme */
 const TH={
   get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
   set(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tp_theme',t);
@@ -152,15 +172,124 @@ AuthHelpers.getCurrentUser().then(u=>{
   if(u){const b=document.getElementById('auth-btn');b.textContent='Dashboard';b.onclick=()=>goTo('dashboard.html');}
 }).catch(()=>{});
 
-/* Icons */
 const ICON={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',math:'🧮',it:'💻',science:'🔬',religion:'📖',other:'📚'};
 
-/* Load */
+/* ── Karta qurish ── */
+function buildCard(t, icon){
+  const c=document.createElement('div');
+  c.className='card';
+  c.onclick=()=>goTo('test.html?id='+(t.test_id||t.id));
+  c.innerHTML=`
+    <div class="card-icon">${icon}</div>
+    <div class="card-title">${esc(t.title)}</div>
+    <div class="card-author">${esc(t.creator_name||t.authorName||'Anonim')}</div>
+    <div class="chips">
+      <span class="ch">📝 ${t.question_count||0}</span>
+      <span class="ch">👁 ${t.solve_count||0}</span>
+      ${t.time_limit?`<span class="ch">⏱ ${t.time_limit}daq</span>`:''}
+      ${t.avg_score?`<span class="ch">⭐${Math.round(t.avg_score)}%</span>`:''}
+    </div>
+    <button class="card-btn">Boshlash →</button>`;
+  return c;
+}
+
+/* ── Ro'yxat elementi qurish ── */
+function buildListItem(t, icon){
+  const el=document.createElement('div');
+  el.className='li';
+  el.onclick=()=>goTo('test.html?id='+(t.test_id||t.id));
+  el.innerHTML=`
+    <div class="li-ico">${icon}</div>
+    <div class="li-info">
+      <div class="li-nm">${esc(t.title)}</div>
+      <div class="li-meta">
+        <span>📝 ${t.question_count||0}</span>
+        <span>👁 ${t.solve_count||0}</span>
+        ${t.avg_score?`<span>⭐${Math.round(t.avg_score)}%</span>`:''}
+        <span>${esc(t.creator_name||'Anonim')}</span>
+      </div>
+    </div>
+    <button class="li-btn" onclick="event.stopPropagation();goTo('test.html?id='+(this.dataset.id))">▶️</button>`;
+  el.querySelector('.li-btn').dataset.id=t.test_id||t.id;
+  return el;
+}
+
+/* ── Guruh listini ko'rsatish (barchasi bosilganda) ── */
+function showGroupList(subj, arr, icon, sub){
+  const wrap=document.getElementById('content');
+  document.getElementById('cta').style.display='none';
+  wrap.innerHTML='';
+
+  const back=document.createElement('button');
+  back.className='back-btn';
+  back.innerHTML='← Orqaga';
+  back.onclick=()=>renderGroups(window._allPub);
+  wrap.appendChild(back);
+
+  const hdr=document.createElement('div');
+  hdr.className='grp-hdr';
+  hdr.innerHTML=`
+    <div class="grp-l">
+      <div class="grp-icon">${icon}</div>
+      <div>
+        <div class="grp-nm">${esc(sub.label)}</div>
+        <div class="grp-ct">${arr.length} ta test</div>
+      </div>
+    </div>`;
+  wrap.appendChild(hdr);
+
+  const list=document.createElement('div');
+  list.className='list-view';
+  arr.forEach(t=>list.appendChild(buildListItem(t,icon)));
+  wrap.appendChild(list);
+}
+
+/* ── Asosiy guruhlar ko'rinishi ── */
+function renderGroups(pub){
+  const wrap=document.getElementById('content');
+  wrap.innerHTML='';
+  document.getElementById('cta').style.display='block';
+
+  const grps={};
+  pub.forEach(t=>{const k=t.category||t.subject||'other';if(!grps[k])grps[k]=[];grps[k].push(t);});
+
+  Object.entries(grps).forEach(([subj,arr])=>{
+    const sub=getSubject(subj);
+    const icon=ICON[subj]||getIco(subj)||'📚';
+
+    const g=document.createElement('div');
+    g.className='grp';
+
+    const hdr=document.createElement('div');
+    hdr.className='grp-hdr';
+    hdr.innerHTML=`
+      <div class="grp-l">
+        <div class="grp-icon">${icon}</div>
+        <div>
+          <div class="grp-nm">${esc(sub.label)}</div>
+          <div class="grp-ct">${arr.length} ta test</div>
+        </div>
+      </div>
+      <button class="see-all">Barchasi →</button>`;
+    hdr.querySelector('.see-all').onclick=()=>showGroupList(subj,arr,icon,sub);
+    g.appendChild(hdr);
+
+    const scroll=document.createElement('div');
+    scroll.className='scroll';
+    arr.forEach(t=>scroll.appendChild(buildCard(t,icon)));
+    g.appendChild(scroll);
+
+    wrap.appendChild(g);
+  });
+}
+
+/* ── Load ── */
 (async()=>{
   const wrap=document.getElementById('content');
   try{
     const tests=await DB.getPublicTests();
-    const pub=tests.filter(t=>t.visibility==='public');
+    const pub=(tests||[]).filter(t=>t.visibility==='public');
+    window._allPub=pub;
 
     if(!pub.length){
       wrap.innerHTML=`<div class="hero">
@@ -170,56 +299,8 @@ const ICON={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹�
       </div>`;
       return;
     }
-
-    /* Group by subject */
-    const grps={};
-    pub.forEach(t=>{const k=t.category||t.subject||'other';if(!grps[k])grps[k]=[];grps[k].push(t);});
-
-    wrap.innerHTML='';
-    Object.entries(grps).forEach(([subj,arr])=>{
-      const sub=getSubject(subj);
-      const icon=ICON[subj]||getIco(subj)||'📚';
-
-      const g=document.createElement('div');
-      g.className='grp';
-      g.innerHTML=`
-        <div class="grp-hdr">
-          <div class="grp-l">
-            <div class="grp-icon">${icon}</div>
-            <div>
-              <div class="grp-nm">${esc(sub.label)}</div>
-              <div class="grp-ct">${arr.length} ta test</div>
-            </div>
-          </div>
-          <button class="see-all">Barchasini ko'rish →</button>
-        </div>
-        <div class="scroll" id="sc-${subj}"></div>`;
-
-      const scroll=g.querySelector(`#sc-${subj}`);
-      arr.forEach(t=>{
-        const c=document.createElement('div');
-        c.className='card';
-        c.onclick=()=>goTo('test.html?id='+(t.test_id||t.id));
-        c.innerHTML=`
-          <div class="card-icon">${icon}</div>
-          <div class="card-title">${esc(t.title)}</div>
-          <div class="card-author">${esc(t.creator_name||t.authorName||'Anonim')}</div>
-          <div class="chips">
-            <span class="ch">📝 ${t.question_count||0}</span>
-            <span class="ch">👁 ${t.solve_count||0}</span>
-            ${t.time_limit?`<span class="ch">⏱ ${t.time_limit}daq</span>`:''}
-            ${t.avg_score?`<span class="ch">⭐${Math.round(t.avg_score)}%</span>`:''}
-          </div>
-          <button class="card-btn">Boshlash →</button>`;
-        scroll.appendChild(c);
-      });
-      wrap.appendChild(g);
-    });
-
-    document.getElementById('cta').style.display='block';
-
+    renderGroups(pub);
   }catch(e){
-    console.error('Index load error:',e);
     wrap.innerHTML=`<div class="err">❌ Xatolik: ${e.message}</div>`;
   }
 })();
