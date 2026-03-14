@@ -978,24 +978,20 @@ dz.addEventListener('drop',e=>{
    TXT PARSER
 ───────────────────────────────────── */
 function parseTxt(raw){
-  raw=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const results=[];
   const blocks=raw.split(/\n(?=\s*\d+[\.\)\:])/g);
   for(const block of blocks){
     const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);
     if(!lines.length)continue;
-    let qText='',options=[],correctIdx=0,correctTxt='',acceptedTxts=[],explanation='',hasOpts=false;
-    for(var li=0;li<lines.length;li++){
-      var line=lines[li];
+    let qText='',options=[],correctIdx=0,explanation='',hasOpts=false;
+    for(const line of lines){
       if(/^izoh\s*:/i.test(line)){explanation=line.replace(/^izoh\s*:\s*/i,'').trim();continue;}
-      if(/^javob\s*:/i.test(line)){correctTxt=line.replace(/^javob\s*:\s*/i,'').trim();continue;}
-      if(/^qabul\s*:/i.test(line)){acceptedTxts=line.replace(/^qabul\s*:\s*/i,'').split(',').map(function(s){return s.trim();}).filter(Boolean);continue;}
-      if(li===0&&!hasOpts){qText=line.replace(/^\d+[\.\)\:]\s*/,'');continue;}
-      var prefM=line.match(/^([*+\-=#]{1,2})\s*([A-Da-d])\s*[\)\.\:]\s*(.+)/);
-      if(prefM){hasOpts=true;correctIdx=options.length;options.push(prefM[3].trim());continue;}
-      var optM=line.match(/^(?:[A-Da-d]\s*[\)\.\:]|\d+[\)\.\s])\s*(.+)/);
-      if(optM){
-        hasOpts=true;var content=optM[1].trim(),isCorr=false;
+      // Boshida belgi: *A) +B) -C) #D) =C) ==C)
+      const preM=line.match(/^[*+\-#=]{1,2}\s*([A-Da-d])\s*[\)\.\:]\s*(.+)/);
+      if(preM){hasOpts=true;correctIdx=options.length;options.push(preM[2].trim());continue;}
+      const optM=line.match(/^(?:[A-Da-d]\s*[\)\.\:]|\d+[\)\.\s])\s*(.+)/);
+      if(optM&&(hasOpts||/^[A-Da-d]\s*[\)\.\:]/.test(line))){
+        hasOpts=true;let content=optM[1].trim(),isCorr=false;
         if(/\*\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\*\s*$/,'').trim();}
         if(/\+\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\+\s*$/,'').trim();}
         if(/-\s*$/.test(content)){isCorr=true;content=content.replace(/\s*-\s*$/,'').trim();}
@@ -1008,32 +1004,30 @@ function parseTxt(raw){
       }
       if(!hasOpts&&/^(ha|yes|true)\s*(\*|\[\+\])?$/i.test(line)){
         hasOpts=true;
-        var isCorr2=/(\\*|\[\+\])/.test(line)||/^(ha|yes|true)$/i.test(line.split(/[\s\*\[\]]/)[0]);
-        if(isCorr2)correctIdx=options.length;
+        const isCorr=/(\*|\[\+\])/.test(line)||/^(ha|yes|true)$/i.test(line.split(/[\s\*\[\]]/)[0]);
+        if(isCorr)correctIdx=options.length;
         options.push(line.replace(/\s*[\*\[\]\+]+\s*$/,'').trim());continue;
       }
       if(!hasOpts&&/^(yo'q|yoq|no|false)\s*(\*|\[\+\])?$/i.test(line)){
         hasOpts=true;
-        var isCorr3=/(\*|\[\+\])/.test(line);
-        if(isCorr3)correctIdx=options.length;
+        const isCorr=/(\*|\[\+\])/.test(line);
+        if(isCorr)correctIdx=options.length;
         options.push(line.replace(/\s*[\*\[\]\+]+\s*$/,'').trim());continue;
       }
       if(!hasOpts)qText+=(qText?' ':'')+line.replace(/^\d+[\.\)\:]\s*/,'');
     }
     if(!qText&&lines[0])qText=lines[0].replace(/^\d+[\.\)\:]\s*/,'');
     if(!qText)continue;
-    var type='text';
+    let type='text';
     if(options.length>=2){
       type='multiple';
-      var low=options.map(function(o){return o.toLowerCase();});
+      const low=options.map(o=>o.toLowerCase());
       if(options.length===2&&
         (low[0].includes('ha')||low[0].includes('yes')||low[0].includes('true'))&&
         (low[1].includes("yo'q")||low[1].includes('no')||low[1].includes('false')))
         type='truefalse';
     }
-    var finalCorrect=type==='text'?correctTxt:correctIdx;
-    var finalAccepted=type==='text'?acceptedTxts:[];
-    results.push({_id:Date.now()+Math.random(),type:type,text:qText.trim(),options:options,correct:finalCorrect,accepted_answers:finalAccepted,explanation:explanation,points:1});
+    results.push({_id:Date.now()+Math.random(),type,text:qText.trim(),options,correct:correctIdx,explanation,points:1});
   }
   return results;
 }
