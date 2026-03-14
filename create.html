@@ -978,6 +978,7 @@ dz.addEventListener('drop',e=>{
    TXT PARSER
 ───────────────────────────────────── */
 function parseTxt(raw){
+  raw=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const results=[];
   const blocks=raw.split(/\n(?=\s*\d+[\.\)\:])/g);
   for(const block of blocks){
@@ -986,10 +987,18 @@ function parseTxt(raw){
     let qText='',options=[],correctIdx=0,explanation='',hasOpts=false;
     for(const line of lines){
       if(/^izoh\s*:/i.test(line)){explanation=line.replace(/^izoh\s*:\s*/i,'').trim();continue;}
-      const optM=line.match(/^(?:[A-Da-d]\s*[\)\.\:]|\d+[\)\.\s])\s*(.+)/);
+      // Boshida belgi: *A) +B) -C) #D) =C) ==C)
+      const preM=line.match(/^[*+\-#=]{1,2}\s*([A-Da-d])\s*[\)\.\:]\s*(.+)/);
+      if(preM){hasOpts=true;correctIdx=options.length;options.push(preM[2].trim());continue;}
+      // Oddiy variant — faqat A-D harf bilan boshlanadi (raqam emas!)
+      const optM=line.match(/^([A-Da-d])\s*[\)\.\:]\s*(.+)/);
       if(optM){
-        hasOpts=true;let content=optM[1].trim(),isCorr=false;
+        hasOpts=true;let content=optM[2].trim(),isCorr=false;
         if(/\*\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\*\s*$/,'').trim();}
+        if(/\+\s*$/.test(content)){isCorr=true;content=content.replace(/\s*\+\s*$/,'').trim();}
+        if(/-\s*$/.test(content)){isCorr=true;content=content.replace(/\s*-\s*$/,'').trim();}
+        if(/#\s*$/.test(content)){isCorr=true;content=content.replace(/\s*#\s*$/,'').trim();}
+        if(/={1,2}\s*$/.test(content)){isCorr=true;content=content.replace(/\s*={1,2}\s*$/,'').trim();}
         if(/\[\+\]/.test(content)){isCorr=true;content=content.replace(/\s*\[\+\]\s*/g,'').trim();}
         if(/\(\+\)/.test(content)){isCorr=true;content=content.replace(/\s*\(\+\)\s*/g,'').trim();}
         if(isCorr)correctIdx=options.length;
