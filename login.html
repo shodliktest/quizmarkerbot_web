@@ -192,27 +192,49 @@ if(typeof goTo==='undefined'){const _B=(()=>{const p=window.location.pathname;co
 /* ── Telegram Web App — avtomatik login ── */
 (function(){
   const tg = window.Telegram?.WebApp;
-  if (!tg || !tg.initDataUnsafe?.user) return;
+  if (tg && tg.initDataUnsafe?.user) {
+    const u = tg.initDataUnsafe.user;
+    tg.ready();
+    tg.expand();
+    TGAuth.save({
+      id:         u.id,
+      first_name: u.first_name || '',
+      last_name:  u.last_name  || '',
+      username:   u.username   || '',
+      name:       [u.first_name, u.last_name].filter(Boolean).join(' ') || `User${u.id}`,
+      is_admin:   false,
+      _tg_id:     u.id,
+      _via_webapp: true
+    });
+    const next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
+    window.location.href = next;
+    return;
+  }
 
-  const u = tg.initDataUnsafe.user;
-  tg.ready();
-  tg.expand();
+  // ── URL parametrlardan avtomatik login (botdan brauzerda ochilganda) ──
+  const p    = new URLSearchParams(location.search);
+  const uid  = p.get('uid');
+  const name = p.get('name');
+  const auto = p.get('auto');
 
-  // Mini App ichida — avtomatik login
-  TGAuth.save({
-    id:         u.id,
-    first_name: u.first_name || '',
-    last_name:  u.last_name  || '',
-    username:   u.username   || '',
-    name:       [u.first_name, u.last_name].filter(Boolean).join(' ') || `User${u.id}`,
-    is_admin:   false,
-    _tg_id:     u.id,
-    _via_webapp: true
-  });
-
-  // Admin tekshirish kerak — parol so'ramasdan faqat admin panel uchun
-  const next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
-  window.location.href = next;
+  if (uid && name && auto === '1') {
+    // Bot yuborgan URL — avtomatik kirish (faqat birinchi marta yoki kirish yo'q bo'lsa)
+    const existing = TGAuth.get();
+    if (!existing || String(existing.id) !== String(uid)) {
+      TGAuth.save({
+        id:         parseInt(uid),
+        first_name: name,
+        username:   p.get('uname') || '',
+        name:       name,
+        is_admin:   false,
+        _tg_id:     parseInt(uid),
+        _via_url:   true
+      });
+    }
+    const next = p.get('next') || 'dashboard.html';
+    window.location.href = next;
+    return;
+  }
 })();
 
 /* ── Theme ── */
@@ -250,9 +272,13 @@ if(U){
   document.getElementById('logged').style.display='block';
   const nm=[U.first_name,U.last_name].filter(Boolean).join(' ')||U.name||'Foydalanuvchi';
   document.getElementById('u-nm').textContent=nm;
-  document.getElementById('u-sb').textContent=U.username?'@'+U.username:'Telegram foydalanuvchi';
+  document.getElementById('u-sb').textContent=U.username?'@'+U.username:'ID: '+U.id;
   const av=document.getElementById('u-av');
-  av.textContent=(nm[0]||'?').toUpperCase();
+  if(U.photo_url){
+    av.innerHTML=`<img src="${U.photo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>`;
+  } else {
+    av.textContent=(nm[0]||'?').toUpperCase();
+  }
   document.getElementById('dash-btn').onclick=goToDash;
   document.getElementById('out-btn').onclick=()=>{
     TGAuth.clear();
