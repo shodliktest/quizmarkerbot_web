@@ -14,111 +14,91 @@ body{font-family:'Plus Jakarta Sans',sans-serif;
   display:flex;align-items:center;justify-content:center;padding:1.5rem}
 [data-theme=dark] body{background:linear-gradient(135deg,#0d0820 0%,#160a28 50%,#08101a 100%)}
 
-.card{
-  background:#fff;border-radius:28px;padding:2.75rem 2.25rem 2.25rem;
-  width:100%;max-width:400px;
+.card{background:#fff;border-radius:28px;padding:2.75rem 2.25rem 2.25rem;
+  width:100%;max-width:380px;
   box-shadow:0 24px 72px rgba(108,63,232,.13),0 4px 16px rgba(108,63,232,.06);
-  text-align:center
-}
+  text-align:center}
 [data-theme=dark] .card{background:#13102a;box-shadow:0 24px 72px rgba(0,0,0,.45)}
 
-.logo{
-  font-family:'Unbounded',sans-serif;font-size:1.55rem;font-weight:900;
+.logo{font-family:'Unbounded',sans-serif;font-size:1.55rem;font-weight:900;
   background:linear-gradient(135deg,#6C3FE8,#C040C8);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  margin-bottom:.35rem
-}
+  margin-bottom:.35rem}
 .tagline{font-size:.8rem;color:#9ca3af;margin-bottom:2rem;line-height:1.5}
 
-/* ID input area */
-.input-area{margin-bottom:1.5rem;text-align:left}
-.input-label{font-size:.78rem;font-weight:700;color:#6C3FE8;margin-bottom:.5rem;display:block}
-.input-wrap{position:relative}
-.id-input{
-  width:100%;padding:.9rem 1rem;border-radius:14px;
-  border:1.5px solid rgba(108,63,232,.25);
-  font-size:1.1rem;font-family:inherit;font-weight:700;
-  background:rgba(108,63,232,.04);color:#1f2937;
-  outline:none;transition:border-color .2s;letter-spacing:2px;text-align:center
-}
-.id-input:focus{border-color:#6C3FE8;background:rgba(108,63,232,.07)}
-[data-theme=dark] .id-input{background:rgba(108,63,232,.1);color:#f3f4f6;border-color:rgba(108,63,232,.3)}
-.id-input::placeholder{letter-spacing:0;font-size:.9rem;font-weight:400;color:#9ca3af}
-
-.btn{
-  width:100%;padding:.88rem;border-radius:14px;border:none;cursor:pointer;
-  background:linear-gradient(135deg,#6C3FE8,#C040C8);color:#fff;
-  font-weight:800;font-size:.9rem;font-family:inherit;transition:all .22s;
-  margin-bottom:.5rem
-}
-.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,63,232,.38)}
-.btn:disabled{opacity:.6;transform:none;cursor:not-allowed}
-
-/* How to get ID */
-.how{
-  border-radius:14px;padding:.95rem 1rem;text-align:left;
-  background:rgba(108,63,232,.05);border:1px solid rgba(108,63,232,.1);
-  margin-bottom:1.5rem
-}
-[data-theme=dark] .how{background:rgba(108,63,232,.1);border-color:rgba(108,63,232,.2)}
-.how-title{font-size:.78rem;font-weight:800;color:#6C3FE8;margin-bottom:.5rem}
-.how-row{display:flex;gap:.6rem;font-size:.78rem;color:#6b7280;line-height:1.55;padding:.18rem 0;align-items:flex-start}
-.how-row b{color:#6C3FE8;font-weight:800}
-[data-theme=dark] .how-row{color:#9ca3af}
-
-/* User preview */
-.preview{
-  display:none;border-radius:16px;padding:1rem;margin-bottom:1rem;
-  background:rgba(34,197,94,.06);border:1.5px solid rgba(34,197,94,.2);
-  text-align:left
-}
-.preview.show{display:block}
-.prev-name{font-size:.95rem;font-weight:800;color:#16a34a;margin-bottom:.2rem}
-.prev-sub{font-size:.75rem;color:#9ca3af}
-[data-theme=dark] .prev-name{color:#4ade80}
+/* Loading */
+.loading{padding:2rem 0;display:none}
+.spinner{width:48px;height:48px;border:4px solid rgba(108,63,232,.15);
+  border-top-color:#6C3FE8;border-radius:50%;
+  animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-txt{font-size:.85rem;color:#9ca3af}
 
 /* Already logged */
 .logged{display:none}
-.av{
-  width:76px;height:76px;border-radius:50%;
+.av{width:80px;height:80px;border-radius:50%;
   background:linear-gradient(135deg,#6C3FE8,#C040C8);
-  margin:0 auto .95rem;display:flex;align-items:center;justify-content:center;
-  font-size:1.9rem;color:#fff;font-weight:900;font-family:'Unbounded',sans-serif
-}
-.uname{font-size:1.08rem;font-weight:800;margin-bottom:.2rem}
+  margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;
+  font-size:2rem;color:#fff;font-weight:900;font-family:'Unbounded',sans-serif;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.uname{font-size:1.1rem;font-weight:800;margin-bottom:.25rem}
 [data-theme=dark] .uname{color:#f3f4f6}
 .usub{font-size:.77rem;color:#9ca3af;margin-bottom:1.6rem}
+
+.btn{width:100%;padding:.88rem;border-radius:14px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#6C3FE8,#C040C8);color:#fff;
+  font-weight:800;font-size:.9rem;font-family:inherit;transition:all .22s;
+  margin-bottom:.6rem}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,63,232,.38)}
+.btn:disabled{opacity:.6;transform:none;cursor:not-allowed}
 .btn-out{background:none;color:#ef4444;border:1.5px solid rgba(239,68,68,.25)}
 .btn-out:hover{background:rgba(239,68,68,.07);transform:none;box-shadow:none}
 
-.bot-btn{
-  display:flex;align-items:center;justify-content:center;gap:.5rem;
-  margin-top:.85rem;padding:.75rem 1rem;border-radius:12px;
-  background:linear-gradient(135deg,#229ED9,#1a7fc4);color:#fff;
-  font-weight:800;font-size:.85rem;text-decoration:none;
-  transition:all .2s;
-}
-.bot-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(34,158,217,.4)}
+/* Admin parol */
+.admin-block{display:none;text-align:left;margin-bottom:1.2rem}
+.admin-badge{display:inline-flex;align-items:center;gap:.4rem;
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);
+  color:#d97706;border-radius:10px;padding:.4rem .8rem;font-size:.78rem;
+  font-weight:700;margin-bottom:1rem}
+[data-theme=dark] .admin-badge{color:#fbbf24}
+.input-label{font-size:.78rem;font-weight:700;color:#6C3FE8;margin-bottom:.5rem;display:block}
+.pass-input{width:100%;padding:.9rem 1rem;border-radius:14px;
+  border:1.5px solid rgba(108,63,232,.25);
+  font-size:1rem;font-family:inherit;font-weight:600;
+  background:rgba(108,63,232,.04);color:#1f2937;
+  outline:none;transition:border-color .2s}
+.pass-input:focus{border-color:#6C3FE8;background:rgba(108,63,232,.07)}
+[data-theme=dark] .pass-input{background:rgba(108,63,232,.1);color:#f3f4f6;border-color:rgba(108,63,232,.3)}
 
 .err{color:#ef4444;font-size:.8rem;padding:.6rem;margin-bottom:.8rem;
-  background:rgba(239,68,68,.07);border-radius:10px;border:1px solid rgba(239,68,68,.18);display:none}
+  background:rgba(239,68,68,.07);border-radius:10px;
+  border:1px solid rgba(239,68,68,.18);display:none}
 .err.show{display:block}
 
-.back{margin-top:1.3rem;font-size:.77rem;color:#9ca3af}
-.back a{color:#6C3FE8;font-weight:700;text-decoration:none}
-.back a:hover{text-decoration:underline}
+/* Telegram orqali kirish (fallback) */
+.tg-fallback{display:none;border-radius:16px;padding:1.2rem;
+  background:rgba(108,63,232,.05);border:1px solid rgba(108,63,232,.12);margin-bottom:1.2rem}
+.tg-fallback-title{font-size:.85rem;font-weight:700;margin-bottom:.8rem;color:#6C3FE8}
+.tg-fallback-desc{font-size:.77rem;color:#6b7280;margin-bottom:1rem;line-height:1.6}
+[data-theme=dark] .tg-fallback-desc{color:#9ca3af}
+.bot-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;
+  padding:.75rem 1rem;border-radius:12px;
+  background:linear-gradient(135deg,#229ED9,#1a7fc4);color:#fff;
+  font-weight:800;font-size:.85rem;text-decoration:none;transition:all .2s;border:none;
+  cursor:pointer;width:100%}
+.bot-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(34,158,217,.4)}
 
-.tbtn{
-  position:fixed;top:.9rem;right:.9rem;width:36px;height:36px;
+.tbtn{position:fixed;top:.9rem;right:.9rem;width:36px;height:36px;
   border-radius:10px;border:1.5px solid rgba(0,0,0,.1);
   background:rgba(255,255,255,.9);cursor:pointer;font-size:.9rem;
-  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)
-}
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
 [data-theme=dark] .tbtn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:#fff}
 
 .sp{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
-  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;
+  vertical-align:middle;margin-right:6px}
+.back{margin-top:1.3rem;font-size:.77rem;color:#9ca3af}
+.back a{color:#6C3FE8;font-weight:700;text-decoration:none}
 </style>
 </head>
 <body>
@@ -128,7 +108,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;
   <div class="logo">TestPro</div>
   <div class="tagline">Bilimingizni sinang va o'stiring 🚀</div>
 
-  <!-- === Allaqachon kirgan === -->
+  <!-- Yuklash -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-txt">Yuklanmoqda...</div>
+  </div>
+
+  <!-- Allaqachon kirgan -->
   <div class="logged" id="logged">
     <div class="av" id="u-av"></div>
     <div class="uname" id="u-nm"></div>
@@ -137,43 +123,26 @@ body{font-family:'Plus Jakarta Sans',sans-serif;
     <button class="btn btn-out" id="out-btn">Chiqish</button>
   </div>
 
-  <!-- === Kirish === -->
-  <div id="login-sec">
-
-    <div class="how">
-      <div class="how-title">📲 Qanday kirish kerak?</div>
-      <div class="how-row">1️⃣ <span>Quyidagi tugmani bosing</span></div>
-      <div class="how-row">2️⃣ <span>Bot <b>ID ingizni</b> yuboradi</span></div>
-      <div class="how-row">3️⃣ <span>Chiqgan <b>raqamni</b> quyida kiriting</span></div>
-      <a id="bot-link" href="#" target="_blank" class="bot-btn">
-        <span>✈️ Botdan ID olish</span>
-      </a>
-    </div>
-
-    <div class="input-area">
-      <label class="input-label" for="id-input">🆔 Telegram ID</label>
-      <div class="input-wrap">
-        <input class="id-input" id="id-input" type="number"
-               placeholder="Masalan: 123456789" autocomplete="off"/>
-      </div>
-    </div>
-
-    <div class="preview" id="preview">
-      <div class="prev-name" id="prev-name"></div>
-      <div class="prev-sub"  id="prev-sub"></div>
-    </div>
-
-    <!-- Admin parol (faqat admin uchun) -->
-    <div class="input-area" id="admin-area" style="display:none">
+  <!-- Admin parol -->
+  <div id="admin-sec" style="display:none">
+    <div class="admin-block" id="admin-block">
+      <div class="admin-badge">👑 Admin hisobi</div>
       <label class="input-label" for="pass-input">🔐 Admin paroli</label>
-      <input class="id-input" id="pass-input" type="password"
-             placeholder="Parolni kiriting" autocomplete="off"
-             style="letter-spacing:0;font-size:1rem"/>
+      <input class="pass-input" id="pass-input" type="password"
+             placeholder="Parolni kiriting" autocomplete="off"/>
     </div>
-
     <div class="err" id="err-msg"></div>
+    <button class="btn" id="login-btn">Kirish</button>
+  </div>
 
-    <button class="btn" id="login-btn" disabled>Kirish</button>
+  <!-- Fallback: Telegram orqali kiring (Telegram WebApp da emas bo'lsa) -->
+  <div class="tg-fallback" id="tg-fallback">
+    <div class="tg-fallback-title">📲 Telegram orqali kirish</div>
+    <div class="tg-fallback-desc">
+      Saytga kirish uchun botni oching.<br>
+      Bot sizni avtomatik saytga yo'naltiradi.
+    </div>
+    <a id="bot-link" href="#" class="bot-btn">✈️ Botni ochish</a>
   </div>
 
   <div class="back"><a href="index.html">← Bosh sahifaga qaytish</a></div>
@@ -181,215 +150,170 @@ body{font-family:'Plus Jakarta Sans',sans-serif;
 
 <script src="js/api.js"></script>
 <script>
-if(typeof normalizeQ==='undefined'){window.normalizeQ=function(arr){return(arr||[]).map(q=>{const type=q.type==='multiple_choice'?'multiple':q.type==='true_false'?'truefalse':q.type||'multiple';const text=q.text||q.question||q.q||'';const options=(q.options||[]).map(o=>String(o));let correct=0;if(typeof q.correct==='number'){correct=q.correct;}else if(typeof q.correct==='string'){const idx=options.findIndex(o=>o===q.correct||o.trim()===q.correct.trim());correct=idx>=0?idx:0;}return{...q,type,text,options,correct,explanation:q.explanation||'',points:q.points||1};});};}
-if(typeof esc==='undefined'){window.esc=function(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;};}
-if(typeof fmtTime==='undefined'){window.fmtTime=function(s){s=s||0;return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};}
-if(typeof fmtDate==='undefined'){window.fmtDate=function(ts){if(!ts)return'—';try{const ms=(typeof ts==='number'&&ts<1e12)?ts*1000:ts;return new Date(ms).toLocaleDateString('uz-UZ',{day:'numeric',month:'short',year:'numeric'});}catch{return'—';}}}
-if(typeof getSubject==='undefined'){const _S={english:{label:'English',emoji:'🇬🇧'},arabic:{label:'Arabcha',emoji:'🕌'},russian:{label:'Ruscha',emoji:'🇷🇺'},turkish:{label:'Turkcha',emoji:'🇹🇷'},uzbek:{label:"O'zbekcha",emoji:'🇺🇿'},math:{label:'Matematika',emoji:'🧮'},it:{label:'IT/CS',emoji:'💻'},science:{label:'Fanlar',emoji:'🔬'},religion:{label:'Din',emoji:'📖'},history:{label:'Tarix',emoji:'🏛️'},biology:{label:'Biologiya',emoji:'🧬'},chemistry:{label:'Kimyo',emoji:'⚗️'},physics:{label:'Fizika',emoji:'⚡'},literature:{label:'Adabiyot',emoji:'✍️'},sport:{label:'Sport',emoji:'⚽'},other:{label:'Boshqa',emoji:'📚'}};window.getSubject=function(k){if(!k)return _S.other;const l=k.toLowerCase().replace(/[\s\-_]/g,'');if(_S[l])return _S[l];const f=Object.entries(_S).find(([x])=>l.includes(x));return f?f[1]:{label:k,emoji:'📚'};};window.getIco=function(s){if(!s)return'📚';const k=(s||'').toLowerCase().replace(/[\s\-_]/g,'');const I={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',uzbek:'🇺🇿',math:'🧮',it:'💻',science:'🔬',religion:'📖',history:'🏛️',biology:'🧬',chemistry:'⚗️',physics:'⚡',literature:'✍️',sport:'⚽',other:'📚'};return I[k]||Object.entries(I).find(([x])=>k.includes(x))?.[1]||'📚';};}
+/* ── Fallback helpers ── */
 if(typeof goTo==='undefined'){const _B=(()=>{const p=window.location.pathname;const i=p.lastIndexOf('/');return i>0?p.slice(0,i+1):'/'})();window.goTo=function(page){window.location.href=_B+page;};}
-</script>
-<script>
-/* ── Telegram Web App — avtomatik login ── */
-(function(){
-  const tg = window.Telegram?.WebApp;
-  if (tg && tg.initDataUnsafe?.user) {
-    const u = tg.initDataUnsafe.user;
-    tg.ready();
-    tg.expand();
-    TGAuth.save({
-      id:         u.id,
-      first_name: u.first_name || '',
-      last_name:  u.last_name  || '',
-      username:   u.username   || '',
-      name:       [u.first_name, u.last_name].filter(Boolean).join(' ') || `User${u.id}`,
-      is_admin:   false,
-      _tg_id:     u.id,
-      _via_webapp: true
-    });
-    const next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
-    window.location.href = next;
-    return;
-  }
-
-  // ── URL parametrlardan avtomatik login (botdan brauzerda ochilganda) ──
-  const p    = new URLSearchParams(location.search);
-  const uid  = p.get('uid');
-  const name = p.get('name');
-  const auto = p.get('auto');
-
-  if (uid && name && auto === '1') {
-    // Bot yuborgan URL — avtomatik kirish (faqat birinchi marta yoki kirish yo'q bo'lsa)
-    const existing = TGAuth.get();
-    if (!existing || String(existing.id) !== String(uid)) {
-      TGAuth.save({
-        id:         parseInt(uid),
-        first_name: name,
-        username:   p.get('uname') || '',
-        name:       name,
-        is_admin:   false,
-        _tg_id:     parseInt(uid),
-        _via_url:   true
-      });
-    }
-    const next = p.get('next') || 'dashboard.html';
-    window.location.href = next;
-    return;
-  }
-})();
+if(typeof TGAuth==='undefined'){window.TGAuth={_k:'tp_tg_user',save(u){localStorage.setItem(this._k,JSON.stringify({...u,_at:Date.now()}))},get(){try{const u=JSON.parse(localStorage.getItem(this._k));if(!u)return null;if(Date.now()-u._at>30*86400_000){this.clear();return null;}return u;}catch{return null;}},uid(){const u=this.get();return u?String(u.id||u.uid||u._tg_id||''):'';},clear(){localStorage.removeItem(this._k);}};}
+if(typeof API_URL==='undefined'){window.API_URL='/api/proxy';}
+if(typeof BOT_USERNAME==='undefined'){window.BOT_USERNAME='Quizmarkerbot';}
 
 /* ── Theme ── */
 const TH={
   get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
-  set(t){
-    document.documentElement.setAttribute('data-theme',t);
-    localStorage.setItem('tp_theme',t);
-    document.getElementById('tbtn').textContent=t==='dark'?'☀️':'🌙';
-  },
+  set(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tp_theme',t);document.getElementById('tbtn').textContent=t==='dark'?'☀️':'🌙';},
   toggle(){this.set(this.get()==='dark'?'light':'dark')}
 };
 TH.set(TH.get());
 document.getElementById('tbtn').onclick=()=>TH.toggle();
 
-/* ── Bot deep link ── */
-document.getElementById('bot-link').href = 'https://t.me/' + BOT_USERNAME + '?start=getid';
+/* ── Manzil ── */
+const _next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
+function goToDash(){ goTo(_next); }
 
-/* ── Bot name ── */
-document.querySelector('.how-row b[style]') // skip
-document.querySelectorAll('.how-row b').forEach(el=>{
-  if(el.textContent==='@BOT_NAME') el.textContent='@'+BOT_USERNAME;
-});
-
-/* ── Redirect ── */
-function goToDash(){
-  const next=new URLSearchParams(location.search).get('next')||'dashboard.html';
-  goTo(next);
-}
-
-/* ── Allaqachon kirgani bormi? ── */
-const U=TGAuth.get();
-if(U){
-  document.getElementById('login-sec').style.display='none';
+/* ── Kirgan user ko'rsatish ── */
+function showLogged(u){
+  document.getElementById('loading').style.display='none';
   document.getElementById('logged').style.display='block';
-  const nm=[U.first_name,U.last_name].filter(Boolean).join(' ')||U.name||'Foydalanuvchi';
+  const nm=[u.first_name,u.last_name].filter(Boolean).join(' ')||u.name||'Foydalanuvchi';
   document.getElementById('u-nm').textContent=nm;
-  document.getElementById('u-sb').textContent=U.username?'@'+U.username:'ID: '+U.id;
+  document.getElementById('u-sb').textContent=u.username?'@'+u.username:'ID: '+u.id;
   const av=document.getElementById('u-av');
-  if(U.photo_url){
-    av.innerHTML=`<img src="${U.photo_url}" style="width:100%;height:100%;border-radius:50%;object-fit:cover"/>`;
-  } else {
-    av.textContent=(nm[0]||'?').toUpperCase();
-  }
+  if(u.photo_url){av.innerHTML=`<img src="${u.photo_url}"/>`;}
+  else{av.textContent=(nm[0]||'?').toUpperCase();}
   document.getElementById('dash-btn').onclick=goToDash;
-  document.getElementById('out-btn').onclick=()=>{
-    TGAuth.clear();
-    location.reload();
-  };
+  document.getElementById('out-btn').onclick=()=>{TGAuth.clear();location.reload();};
 }
 
-/* ── ID Login ── */
-const inp    = document.getElementById('id-input');
-const btn    = document.getElementById('login-btn');
-const errEl  = document.getElementById('err-msg');
-const prevEl = document.getElementById('preview');
-let   lookupTimer = null;
+/* ── Admin parol ── */
+function showAdminPass(u){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('admin-sec').style.display='block';
+  document.getElementById('admin-block').style.display='block';
 
-function showErr(msg){ errEl.textContent=msg; errEl.classList.add('show'); }
-function hideErr()   { errEl.classList.remove('show'); }
-function showPrev(name, sub, isAdmin) {
-  document.getElementById('prev-name').textContent = (isAdmin ? '👑 ' : '✅ ') + name;
-  document.getElementById('prev-sub').textContent  = sub || '';
-  prevEl.classList.add('show');
+  const errEl=document.getElementById('err-msg');
+  const passEl=document.getElementById('pass-input');
+  const btnEl=document.getElementById('login-btn');
 
-  // Admin bo'lsa parol maydoni ko'rinsin
-  document.getElementById('admin-area').style.display = isAdmin ? 'block' : 'none';
-  window._isAdmin = isAdmin || false;
-}
-function hidePrev(){ prevEl.classList.remove('show'); }
+  passEl.focus();
+  passEl.addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin();});
+  btnEl.onclick=doAdminLogin;
 
-inp.addEventListener('input', ()=>{
-  const val = inp.value.trim();
-  hideErr(); hidePrev();
-  btn.disabled = val.length < 5;
-
-  clearTimeout(lookupTimer);
-  if(val.length >= 5){
-    lookupTimer = setTimeout(()=> lookupUser(val), 600);
-  }
-});
-
-async function lookupUser(uid) {
-  try {
-    const res  = await fetch(`${API_URL}?endpoint=user/${uid}`);
-    const data = await res.json();
-    if (data && data.name) {
-      const uname = data.username ? '@' + data.username : 'Telegram foydalanuvchi';
-      showPrev(data.name, uname, data.is_admin || false);
-      hideErr();
-    }
-  } catch(e) { /* silent */ }
-}
-
-inp.addEventListener('keydown', e=>{ if(e.key==='Enter' && !btn.disabled) doLogin(); });
-btn.onclick = doLogin;
-
-async function doLogin() {
-  const uid = inp.value.trim();
-  if (!uid) { showErr('ID ni kiriting'); return; }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="sp"></span>Tekshirilmoqda...';
-  hideErr();
-
-  try {
-    const res  = await fetch(`${API_URL}?endpoint=user/${uid}`);
-    const data = await res.json();
-
-    if (data && data.name) {
-      // Admin bo'lsa parol tekshir
-      if (data.is_admin) {
-        const pass = document.getElementById('pass-input').value.trim();
-        if (!pass) {
-          showErr('👑 Admin hisobi — parolni kiriting');
-          document.getElementById('admin-area').style.display = 'block';
-          document.getElementById('pass-input').focus();
-          btn.disabled = false;
-          btn.textContent = 'Kirish';
-          return;
-        }
-        const authRes  = await fetch(`${API_URL}?endpoint=admin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uid: parseInt(uid), password: pass })
-        });
-        const authData = await authRes.json();
-        if (!authData.ok) {
-          showErr('❌ ' + (authData.error || "Parol noto'g'ri"));
-          btn.disabled = false;
-          btn.textContent = 'Kirish';
-          return;
-        }
-      }
-
-      TGAuth.save({
-        id:         parseInt(uid),
-        first_name: data.name,
-        username:   data.username || '',
-        name:       data.name,
-        is_admin:   data.is_admin || false,
-        _tg_id:     parseInt(uid)
+  async function doAdminLogin(){
+    const pass=passEl.value.trim();
+    if(!pass){errEl.textContent='Parolni kiriting';errEl.classList.add('show');return;}
+    btnEl.disabled=true;
+    btnEl.innerHTML='<span class="sp"></span>Tekshirilmoqda...';
+    errEl.classList.remove('show');
+    try{
+      const res=await fetch(`${API_URL}?endpoint=admin/login`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({uid:u.id,password:pass})
       });
-      goToDash();
-    } else {
-      showErr("❌ Bu ID topilmadi. Botda /id buyrug'ini yuboring.");
-      btn.disabled = false;
-      btn.textContent = 'Kirish';
+      const d=await res.json();
+      if(d.ok){
+        TGAuth.save({...u,is_admin:true});
+        goToDash();
+      } else {
+        errEl.textContent='❌ '+(d.error||"Parol noto'g'ri");
+        errEl.classList.add('show');
+        btnEl.disabled=false;
+        btnEl.textContent='Kirish';
+      }
+    } catch {
+      errEl.textContent='⚠️ Xato. Keyinroq urinib ko\'ring.';
+      errEl.classList.add('show');
+      btnEl.disabled=false;
+      btnEl.textContent='Kirish';
     }
-  } catch(e) {
-    showErr('⚠️ Server bilan bog\'lanishda xato. Keyinroq urinib ko\'ring.');
-    btn.disabled = false;
-    btn.textContent = 'Kirish';
   }
 }
+
+/* ── Fallback: bot linki ── */
+function showFallback(){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('tg-fallback').style.display='block';
+  document.getElementById('bot-link').href=
+    'https://t.me/'+BOT_USERNAME+'?start=webapp';
+}
+
+/* ══════════════════════════════════════════════════
+   ASOSIY KIRISH LOGIKASI
+   ══════════════════════════════════════════════════ */
+(async function(){
+  // Yuklash animatsiyasini ko'rsat
+  document.getElementById('loading').style.display='block';
+
+  /* 1. Allaqachon kirgan — dashboard ga yuborish */
+  const existing=TGAuth.get();
+  if(existing && !existing.is_admin){
+    // Admin bo'lmagan — to'g'ridan dashboard
+    goToDash(); return;
+  }
+  if(existing && existing.is_admin){
+    // Admin allaqachon kirgan
+    showLogged(existing); return;
+  }
+
+  /* 2. Telegram WebApp ichida — avtomatik login */
+  const tg=window.Telegram?.WebApp;
+  if(tg && tg.initDataUnsafe?.user){
+    const u=tg.initDataUnsafe.user;
+    tg.ready(); tg.expand();
+    const userData={
+      id:         u.id,
+      first_name: u.first_name||'',
+      last_name:  u.last_name||'',
+      username:   u.username||'',
+      name:       [u.first_name,u.last_name].filter(Boolean).join(' ')||`User${u.id}`,
+      photo_url:  u.photo_url||'',
+      is_admin:   false,
+      _via_webapp:true
+    };
+    // Admin ekanligini API dan tekshir
+    try{
+      const r=await fetch(`${API_URL}?endpoint=user/${u.id}`);
+      const d=await r.json();
+      if(d?.is_admin){
+        userData.is_admin=true;
+        showAdminPass(userData);
+        return;
+      }
+    } catch{}
+    TGAuth.save(userData);
+    goToDash(); return;
+  }
+
+  /* 3. URL parametrlardan — botdan yuborilgan link */
+  const p=new URLSearchParams(location.search);
+  const uid=p.get('uid');
+  const name=p.get('name');
+  const auto=p.get('auto');
+
+  if(uid && auto==='1'){
+    const userData={
+      id:        parseInt(uid),
+      first_name:name||`User${uid}`,
+      username:  p.get('uname')||'',
+      name:      name||`User${uid}`,
+      is_admin:  false,
+      _via_url:  true
+    };
+    // Admin ekanligini tekshir
+    try{
+      const r=await fetch(`${API_URL}?endpoint=user/${uid}`);
+      const d=await r.json();
+      if(d?.is_admin){
+        userData.is_admin=true;
+        showAdminPass(userData);
+        return;
+      }
+    } catch{}
+    TGAuth.save(userData);
+    goToDash(); return;
+  }
+
+  /* 4. Hech narsa yo'q — bot linkini ko'rsat */
+  showFallback();
+})();
 </script>
 </body>
 </html>
