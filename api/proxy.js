@@ -1,14 +1,13 @@
 /**
  * TestPro — Vercel Edge Proxy (Hybrid)
  *
- * Meta so'rovlar  → TG kanal (tez, cache 5 daqiqa)
- * test/{id}/full  → Streamlit API (savollar RAM da)
+ * Meta so'rovlar  → TG kanal (tez, cache 60 soniya)
+ * test/{id}/full  → TG kanaldan yuklab olish
  * result/save     → TG kanalga yuboradi
  *
  * Vercel env vars:
  *   BOT_TOKEN          = "123:ABC..."
  *   STORAGE_CHANNEL_ID = "-1001234567890"
- *   STREAMLIT_URL      = "https://webapiquizmarkerbot.streamlit.app"
  *   ADMIN_IDS          = "123456789"
  *   ADMIN_PASSWORD     = "parol"
  */
@@ -44,24 +43,19 @@ async function tgPost(method, body) {
 
 
 // ══ FORMAT KONVERTATSIYA ═══════════════════════════════════════
-// Web format  → Bot format (saqlashda)
 function webToBot(q) {
   const opts   = (q.options || []).map(String);
   const labels = ['A','B','C','D','E','F','G','H'];
-  // Optionlarga A) B) prefix yo'q bo'lsa qo'shamiz
   const fmtOpts = opts.map((o, i) => {
     const lbl = labels[i] || String.fromCharCode(65 + i);
     return /^[A-H]\s*[).]/.test(o) ? o : `${lbl}) ${o}`;
   });
-  // correct: index → "B) She works..."
   let correctStr = '';
   if (typeof q.correct === 'number') {
     correctStr = fmtOpts[q.correct] || fmtOpts[0] || '';
   } else if (typeof q.correct === 'string') {
-    // Allaqachon string (bot format)
     correctStr = q.correct;
   }
-  // type: multiple → multiple_choice
   const typeMap = { multiple: 'multiple_choice', truefalse: 'true_false', 'true_false': 'true_false', multiple_choice: 'multiple_choice' };
   return {
     type:        typeMap[q.type] || q.type || 'multiple_choice',
@@ -74,11 +68,9 @@ function webToBot(q) {
   };
 }
 
-// Bot format → Web format (o'qishda)
 function botToWeb(q, idx) {
   const opts = (q.options || []).map(String);
   const typeMap = { multiple_choice: 'multiple', true_false: 'truefalse', truefalse: 'truefalse', multiple: 'multiple' };
-  // correct: "B) She works..." → index 1
   let correctIdx = 0;
   if (typeof q.correct === 'number') {
     correctIdx = q.correct;
@@ -87,7 +79,6 @@ function botToWeb(q, idx) {
     if (m) {
       correctIdx = m[1].toUpperCase().charCodeAt(0) - 65;
     } else {
-      // To'liq matn bilan moslashtirish
       const ci = opts.findIndex(o => o === q.correct || o.includes(q.correct) || q.correct.includes(o.replace(/^[A-H][).] */, '')));
       correctIdx = ci >= 0 ? ci : 0;
     }
@@ -103,7 +94,7 @@ function botToWeb(q, idx) {
     poll_time:   q.poll_time || 30,
   };
 }
-// ═══════════════════════════════════════════════════════════════
+
 function normMeta(t) {
   const out = { ...t };
   delete out.questions;
@@ -113,13 +104,24 @@ function normMeta(t) {
   out.subject      = out.subject  || out.category || 'other';
   out.category     = out.category || out.subject  || 'other';
   out.creator_name = out.creator_name || out.authorName || '';
-  out.is_active    = out.is_active !== false;   // default: true
-  out.is_paused    = out.is_paused || false;     // default: false
+  out.is_active    = out.is_active !== false;
+  out.is_paused    = out.is_paused || false;
   out.question_count = out.question_count || out.questionCount || 0;
   return out;
 }
 
-// ── Index cache (5 daqiqa) ──────────────────────────────────────
+// ── File o'qish yordamchilari ───────────────────────────────────
+async function readFileId(fileId) {
+  try {
+    const f = await tgPost('getFile', { file_id: fileId });
+    const p = f?.result?.file_path;
+    if (!p) return null;
+    const raw = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${p}`);
+    return raw.json();
+  } catch { return null; }
+}
+
+// ── Index cache (60 soniya) ────────────────────────────────────
 let _idx = null, _idxTs = 0;
 
 async function getIndex() {
@@ -128,18 +130,63 @@ async function getIndex() {
     const chat = await tgPost('getChat', { chat_id: CHANNEL_ID });
     const pin  = chat?.result?.pinned_message;
     if (!pin?.document) return null;
-    const f = await tgPost('getFile', { file_id: pin.document.file_id });
-    const p = f?.result?.file_path;
-    if (!p) return null;
-    const raw  = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${p}`);
-    const data = await raw.json();
-    if (data?.tests_meta) { _idx = data; _idxTs = Date.now(); }
+
+    const fname   = pin.document.file_name || '';
+    const pinData = await readFileId(pin.document.file_id);
+    if (!pinData) return null;
+
+    // ── YANGI FORMAT: index_meta.json (chunked) ──────────────────
+    // Pinned fayl "index_chunks" ro'yxatini o'z ichiga oladi.
+    // Har bir chunk alohida JSON fayl — tests_meta[] va test_{tid} msg_id lar.
+    if (pinData.index_chunks || fname.includes('index_meta')) {
+      const chunks = pinData.index_chunks || [];
+      const merged = { tests_meta: [] };
+
+      for (const ch of chunks) {
+        let chData = null;
+
+        // 1. fid (file_id cache) orqali tez o'qish
+        if (ch.fid) {
+          chData = await readFileId(ch.fid);
+        }
+
+        // 2. fid ishlamasa msg_id orqali forward qilib o'qish
+        if (!chData && ch.msg_id) {
+          chData = await tgGetFull(ch.msg_id);
+        }
+
+        if (!chData) continue;
+
+        // Chunk ichidagi tests_meta ni birlashtirish
+        for (const m of (chData.tests_meta || [])) {
+          if (!merged.tests_meta.find(x => x.test_id === m.test_id)) {
+            merged.tests_meta.push(m);
+          }
+        }
+        // test_{tid} va fid_{msg_id} kalitlarini ko'chirish
+        for (const [k, v] of Object.entries(chData)) {
+          if (k.startsWith('test_') || k.startsWith('fid_')) {
+            merged[k] = v;
+          }
+        }
+      }
+
+      if (merged.tests_meta.length > 0) {
+        _idx = merged; _idxTs = Date.now();
+        return _idx;
+      }
+      return null;
+    }
+
+    // ── ESKI FORMAT: index.json (tests_meta to'g'ridan bor) ──────
+    if (pinData.tests_meta) {
+      _idx = pinData; _idxTs = Date.now();
+    }
     return _idx;
   } catch { return null; }
 }
 
-// ── Streamlit dan test/full olish ──────────────────────────────
-// ── TG dan test fayl yuklab olish (fallback) ───────────────────
+// ── TG dan test fayl yuklab olish ──────────────────────────────
 async function tgGetFull(msgId) {
   try {
     const fwd = await tgPost('forwardMessage', {
@@ -148,11 +195,7 @@ async function tgGetFull(msgId) {
     const doc = fwd?.result?.document;
     if (!doc) return null;
     tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: fwd.result.message_id });
-    const f = await tgPost('getFile', { file_id: doc.file_id });
-    const p = f?.result?.file_path;
-    if (!p) return null;
-    const raw = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${p}`);
-    return raw.json();
+    return readFileId(doc.file_id);
   } catch { return null; }
 }
 
@@ -197,18 +240,23 @@ export default async function handler(request) {
   if (ep === 'debug') {
     const chat = await tgPost('getChat', { chat_id: CHANNEL_ID });
     const pin  = chat?.result?.pinned_message;
+    const pinData = pin?.document ? await readFileId(pin.document.file_id) : null;
     return jsonResp({
-      bot_token_set: !!BOT_TOKEN,
-      channel_id:    CHANNEL_ID,
-      chat_ok:       chat?.ok,
-      chat_error:    chat?.error_code,
-      chat_desc:     chat?.description,
-      has_pin:       !!pin,
-      pin_has_doc:   !!pin?.document,
-      pin_file:      pin?.document?.file_name || null,
+      bot_token_set:   !!BOT_TOKEN,
+      channel_id:      CHANNEL_ID,
+      chat_ok:         chat?.ok,
+      chat_error:      chat?.error_code,
+      chat_desc:       chat?.description,
+      has_pin:         !!pin,
+      pin_has_doc:     !!pin?.document,
+      pin_file:        pin?.document?.file_name || null,
+      pin_format:      pinData?.index_chunks ? 'YANGI (chunked)' : pinData?.tests_meta ? 'ESKI (flat)' : 'NOMA\'LUM',
+      chunks_count:    pinData?.index_chunks?.length || 0,
+      index_tests:     (await getIndex())?.tests_meta?.length || 0,
     });
   }
-  let body  = null;
+
+  let body = null;
   if (request.method === 'POST') {
     try { body = await request.json(); } catch {}
   }
@@ -220,14 +268,6 @@ export default async function handler(request) {
     const meta = (index.tests_meta || [])
       .filter(t => t.visibility === 'public' && t.is_active !== false && !t.is_paused)
       .map(({ questions, ...t }) => normMeta(t));
-    await Promise.all(meta.map(async t => {
-      if (t.creator_id && !t.creator_name) {
-        try {
-          const r = await tgPost('getChat', { chat_id: t.creator_id });
-          if (r?.ok) t.creator_name = [r.result.first_name, r.result.last_name].filter(Boolean).join(' ') || r.result.username || '';
-        } catch {}
-      }
-    }));
     return jsonResp(meta.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''))));
   }
 
@@ -242,7 +282,7 @@ export default async function handler(request) {
     return jsonResp(mine);
   }
 
-  // ── test/{id}/full — TG kanaldan yuklab olish ────────────────────
+  // ── test/{id}/full ────────────────────────────────────────────
   if (ep.startsWith('test/') && ep.endsWith('/full')) {
     const tid   = ep.split('/')[1];
     const index = await getIndex();
@@ -251,10 +291,19 @@ export default async function handler(request) {
     const meta  = (index.tests_meta || []).find(t => t.test_id === tid);
     if (!meta) return jsonResp({ error: 'Test topilmadi' }, 404);
 
+    // Avval fid_* cache dan qidirish
     const msgId = index[`test_${tid}`];
     if (!msgId) return jsonResp({ error: 'Test fayli topilmadi' }, 404);
 
-    const full = await tgGetFull(msgId);
+    // fid cache bor bo'lsa tezroq o'qish
+    const fidKey = `fid_${msgId}`;
+    let full = null;
+    if (index[fidKey]) {
+      full = await readFileId(index[fidKey]);
+    }
+    if (!full?.questions?.length) {
+      full = await tgGetFull(msgId);
+    }
     if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
 
     const t = normMeta({ ...meta, ...full });
@@ -262,7 +311,6 @@ export default async function handler(request) {
     t.test_id = t.test_id || tid;
     t.authorId= t.authorId|| String(t.creator_id || '');
     t.subject = t.subject || t.category || 'other';
-    // Bot → Web format konvertatsiya (correct: "B)..." → index 1)
     const webQs = (full.questions || []).map((q, i) => botToWeb(q, i));
     return jsonResp({ testData: t, questions: webQs, total: webQs.length });
   }
@@ -327,10 +375,10 @@ export default async function handler(request) {
     return jsonResp(webQs2);
   }
 
-  // ── test/{id}/questions POST (savollarni yangilash) ──────────
-  if (ep.match(/^\/api\/test\/[^\/]+\/questions$|^test\/[^\/]+\/questions$/) && request.method === 'POST') {
-    const tid2  = ep.split('/')[1];  // test/{id}/questions
-    const qs2   = (body?.questions || []).map(q => webToBot(q));
+  // ── test/{id}/questions POST ──────────────────────────────────
+  if (ep.match(/^test\/[^/]+\/questions$/) && request.method === 'POST') {
+    const tid2   = ep.split('/')[1];
+    const qs2    = (body?.questions || []).map(q => webToBot(q));
     const index2 = await getIndex();
     if (!index2) return jsonResp({ error: 'Index topilmadi' }, 500);
     const msgId2 = index2?.[`test_${tid2}`];
@@ -480,7 +528,6 @@ export default async function handler(request) {
       source: 'web',
     };
     sendDoc(`result_${rid}.json`, doc, `📊 RESULT | ${userName||userId} | ${testId} | ${Math.round(percentage||0)}%`).catch(()=>{});
-    // Index da stats yangilash
     const index = await getIndex();
     if (index) {
       const meta = (index.tests_meta||[]).find(t=>t.test_id===testId);
