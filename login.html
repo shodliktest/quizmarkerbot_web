@@ -1,319 +1,141 @@
 <!DOCTYPE html>
 <html lang="uz" data-theme="light">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>TestPro — Kirish</title>
+<link rel="stylesheet" href="css/style.css">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet"/>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;min-height:100vh}
-body{font-family:'Plus Jakarta Sans',sans-serif;
-  background:linear-gradient(135deg,#f0ebff 0%,#fce7f3 50%,#ebf0ff 100%);
-  display:flex;align-items:center;justify-content:center;padding:1.5rem}
-[data-theme=dark] body{background:linear-gradient(135deg,#0d0820 0%,#160a28 50%,#08101a 100%)}
-
-.card{background:#fff;border-radius:28px;padding:2.75rem 2.25rem 2.25rem;
-  width:100%;max-width:380px;
-  box-shadow:0 24px 72px rgba(108,63,232,.13),0 4px 16px rgba(108,63,232,.06);
-  text-align:center}
-[data-theme=dark] .card{background:#13102a;box-shadow:0 24px 72px rgba(0,0,0,.45)}
-
-.logo{font-family:'Unbounded',sans-serif;font-size:1.55rem;font-weight:900;
-  background:linear-gradient(135deg,#6C3FE8,#C040C8);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  margin-bottom:.35rem}
-.tagline{font-size:.8rem;color:#9ca3af;margin-bottom:2rem;line-height:1.5}
-
-/* Loading */
-.loading{padding:2rem 0;display:none}
-.spinner{width:48px;height:48px;border:4px solid rgba(108,63,232,.15);
-  border-top-color:#6C3FE8;border-radius:50%;
-  animation:spin .8s linear infinite;margin:0 auto 1rem}
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1.5rem}
+.login-card{background:var(--bg-card);border:1px solid var(--border-2);border-radius:var(--radius-lg);
+  padding:2.5rem 2rem;width:100%;max-width:380px;text-align:center;box-shadow:var(--shadow)}
+.login-logo{font-family:'Unbounded',sans-serif;font-size:1.6rem;font-weight:900;
+  background:var(--grad-main);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-bottom:.4rem}
+.login-sub{font-size:.82rem;color:var(--text-3);margin-bottom:2rem;line-height:1.6}
+.login-av{width:72px;height:72px;border-radius:50%;
+  background:var(--grad-main);margin:0 auto 1rem;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;font-weight:900;color:#fff;font-family:'Unbounded',sans-serif}
+.login-name{font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:.25rem}
+.login-id{font-size:.78rem;color:var(--text-3);margin-bottom:1.5rem}
+.bot-box{background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius);
+  padding:1.25rem;margin-bottom:1.25rem}
+.bot-box-title{font-size:.85rem;font-weight:700;color:var(--accent);margin-bottom:.6rem}
+.bot-box-desc{font-size:.78rem;color:var(--text-3);line-height:1.6;margin-bottom:1rem}
+.spinner{width:36px;height:36px;border:3px solid var(--border-2);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin .8s linear infinite;margin:1.5rem auto}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-txt{font-size:.85rem;color:#9ca3af}
-
-/* Already logged */
-.logged{display:none}
-.av{width:80px;height:80px;border-radius:50%;
-  background:linear-gradient(135deg,#6C3FE8,#C040C8);
-  margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;
-  font-size:2rem;color:#fff;font-weight:900;font-family:'Unbounded',sans-serif;overflow:hidden}
-.av img{width:100%;height:100%;object-fit:cover}
-.uname{font-size:1.1rem;font-weight:800;margin-bottom:.25rem}
-[data-theme=dark] .uname{color:#f3f4f6}
-.usub{font-size:.77rem;color:#9ca3af;margin-bottom:1.6rem}
-
-.btn{width:100%;padding:.88rem;border-radius:14px;border:none;cursor:pointer;
-  background:linear-gradient(135deg,#6C3FE8,#C040C8);color:#fff;
-  font-weight:800;font-size:.9rem;font-family:inherit;transition:all .22s;
-  margin-bottom:.6rem}
-.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,63,232,.38)}
-.btn:disabled{opacity:.6;transform:none;cursor:not-allowed}
-.btn-out{background:none;color:#ef4444;border:1.5px solid rgba(239,68,68,.25)}
-.btn-out:hover{background:rgba(239,68,68,.07);transform:none;box-shadow:none}
-
-/* Admin parol */
-.admin-block{display:none;text-align:left;margin-bottom:1.2rem}
-.admin-badge{display:inline-flex;align-items:center;gap:.4rem;
-  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);
-  color:#d97706;border-radius:10px;padding:.4rem .8rem;font-size:.78rem;
-  font-weight:700;margin-bottom:1rem}
-[data-theme=dark] .admin-badge{color:#fbbf24}
-.input-label{font-size:.78rem;font-weight:700;color:#6C3FE8;margin-bottom:.5rem;display:block}
-.pass-input{width:100%;padding:.9rem 1rem;border-radius:14px;
-  border:1.5px solid rgba(108,63,232,.25);
-  font-size:1rem;font-family:inherit;font-weight:600;
-  background:rgba(108,63,232,.04);color:#1f2937;
-  outline:none;transition:border-color .2s}
-.pass-input:focus{border-color:#6C3FE8;background:rgba(108,63,232,.07)}
-[data-theme=dark] .pass-input{background:rgba(108,63,232,.1);color:#f3f4f6;border-color:rgba(108,63,232,.3)}
-
-.err{color:#ef4444;font-size:.8rem;padding:.6rem;margin-bottom:.8rem;
-  background:rgba(239,68,68,.07);border-radius:10px;
-  border:1px solid rgba(239,68,68,.18);display:none}
-.err.show{display:block}
-
-/* Telegram orqali kirish (fallback) */
-.tg-fallback{display:none;border-radius:16px;padding:1.2rem;
-  background:rgba(108,63,232,.05);border:1px solid rgba(108,63,232,.12);margin-bottom:1.2rem}
-.tg-fallback-title{font-size:.85rem;font-weight:700;margin-bottom:.8rem;color:#6C3FE8}
-.tg-fallback-desc{font-size:.77rem;color:#6b7280;margin-bottom:1rem;line-height:1.6}
-[data-theme=dark] .tg-fallback-desc{color:#9ca3af}
-.bot-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;
-  padding:.75rem 1rem;border-radius:12px;
-  background:linear-gradient(135deg,#229ED9,#1a7fc4);color:#fff;
-  font-weight:800;font-size:.85rem;text-decoration:none;transition:all .2s;border:none;
-  cursor:pointer;width:100%}
-.bot-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(34,158,217,.4)}
-
-.tbtn{position:fixed;top:.9rem;right:.9rem;width:36px;height:36px;
-  border-radius:10px;border:1.5px solid rgba(0,0,0,.1);
-  background:rgba(255,255,255,.9);cursor:pointer;font-size:.9rem;
-  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
-[data-theme=dark] .tbtn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:#fff}
-
-.sp{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
-  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;
-  vertical-align:middle;margin-right:6px}
-.back{margin-top:1.3rem;font-size:.77rem;color:#9ca3af}
-.back a{color:#6C3FE8;font-weight:700;text-decoration:none}
+.status{font-size:.82rem;color:var(--text-3);margin-top:.5rem}
 </style>
 </head>
 <body>
-<button class="tbtn" id="tbtn" aria-label="Tema"></button>
-
-<div class="card">
-  <div class="logo">TestPro</div>
-  <div class="tagline">Bilimingizni sinang va o'stiring 🚀</div>
+<div class="login-card">
+  <div class="login-logo">TestPro</div>
+  <div class="login-sub">Bilimingizni sinang va o'stiring 🚀</div>
 
   <!-- Yuklash -->
-  <div class="loading" id="loading">
+  <div id="loading">
     <div class="spinner"></div>
-    <div class="loading-txt">Yuklanmoqda...</div>
+    <div class="status">Tekshirilmoqda...</div>
   </div>
 
-  <!-- Allaqachon kirgan -->
-  <div class="logged" id="logged">
-    <div class="av" id="u-av"></div>
-    <div class="uname" id="u-nm"></div>
-    <div class="usub"  id="u-sb"></div>
-    <button class="btn" id="dash-btn">🚀 Dashboardga o'tish</button>
-    <button class="btn btn-out" id="out-btn">Chiqish</button>
+  <!-- Kirgan user -->
+  <div id="logged" style="display:none">
+    <div class="login-av" id="av"></div>
+    <div class="login-name" id="uname"></div>
+    <div class="login-id" id="uid-txt"></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:.6rem" id="go-btn">
+      🚀 Davom etish
+    </button>
+    <button class="btn btn-secondary" style="width:100%" onclick="TGAuth.clear();location.reload()">
+      Chiqish
+    </button>
   </div>
 
-  <!-- Admin parol -->
-  <div id="admin-sec" style="display:none">
-    <div class="admin-block" id="admin-block">
-      <div class="admin-badge">👑 Admin hisobi</div>
-      <label class="input-label" for="pass-input">🔐 Admin paroli</label>
-      <input class="pass-input" id="pass-input" type="password"
-             placeholder="Parolni kiriting" autocomplete="off"/>
+  <!-- Bot orqali kirish -->
+  <div id="bot-box" style="display:none">
+    <div class="bot-box">
+      <div class="bot-box-title">📲 Telegram orqali kirish</div>
+      <div class="bot-box-desc">
+        Saytga kirish uchun botni oching.<br>
+        Bot sizni avtomatik yo'naltiradi.
+      </div>
+      <a id="bot-link" href="https://t.me/Quizmarkerbot?start=webapp" class="btn btn-primary" 
+         style="display:block;text-decoration:none">✈️ Botni ochish</a>
     </div>
-    <div class="err" id="err-msg"></div>
-    <button class="btn" id="login-btn">Kirish</button>
+    <a href="index.html" style="font-size:.78rem;color:var(--text-3)">← Bosh sahifaga qaytish</a>
   </div>
-
-  <!-- Fallback: Telegram orqali kiring (Telegram WebApp da emas bo'lsa) -->
-  <div class="tg-fallback" id="tg-fallback">
-    <div class="tg-fallback-title">📲 Telegram orqali kirish</div>
-    <div class="tg-fallback-desc">
-      Saytga kirish uchun botni oching.<br>
-      Bot sizni avtomatik saytga yo'naltiradi.
-    </div>
-    <a id="bot-link" href="#" class="bot-btn">✈️ Botni ochish</a>
-  </div>
-
-  <div class="back"><a href="index.html">← Bosh sahifaga qaytish</a></div>
 </div>
 
 <script src="js/api.js"></script>
 <script>
-/* ── Fallback helpers ── */
-if(typeof goTo==='undefined'){const _B=(()=>{const p=window.location.pathname;const i=p.lastIndexOf('/');return i>0?p.slice(0,i+1):'/'})();window.goTo=function(page){window.location.href=_B+page;};}
-if(typeof TGAuth==='undefined'){window.TGAuth={_k:'tp_tg_user',save(u){localStorage.setItem(this._k,JSON.stringify({...u,_at:Date.now()}))},get(){try{const u=JSON.parse(localStorage.getItem(this._k));if(!u)return null;if(Date.now()-u._at>30*86400_000){this.clear();return null;}return u;}catch{return null;}},uid(){const u=this.get();return u?String(u.id||u.uid||u._tg_id||''):'';},clear(){localStorage.removeItem(this._k);}};}
-if(typeof API_URL==='undefined'){window.API_URL='/api/proxy';}
-if(typeof BOT_USERNAME==='undefined'){window.BOT_USERNAME='Quizmarkerbot';}
+const _next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
 
-/* ── Theme ── */
-const TH={
-  get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')},
-  set(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tp_theme',t);document.getElementById('tbtn').textContent=t==='dark'?'☀️':'🌙';},
-  toggle(){this.set(this.get()==='dark'?'light':'dark')}
+// Theme
+const TH = {
+  get(){ return localStorage.getItem('tp_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'); },
+  set(t){ document.documentElement.setAttribute('data-theme',t); localStorage.setItem('tp_theme',t); }
 };
 TH.set(TH.get());
-document.getElementById('tbtn').onclick=()=>TH.toggle();
 
-/* ── Manzil ── */
-const _next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
-function goToDash(){ goTo(_next); }
-
-/* ── Kirgan user ko'rsatish ── */
-function showLogged(u){
-  document.getElementById('loading').style.display='none';
-  document.getElementById('logged').style.display='block';
-  const nm=[u.first_name,u.last_name].filter(Boolean).join(' ')||u.name||'Foydalanuvchi';
-  document.getElementById('u-nm').textContent=nm;
-  document.getElementById('u-sb').textContent=u.username?'@'+u.username:'ID: '+u.id;
-  const av=document.getElementById('u-av');
-  if(u.photo_url){av.innerHTML=`<img src="${u.photo_url}"/>`;}
-  else{av.textContent=(nm[0]||'?').toUpperCase();}
-  document.getElementById('dash-btn').onclick=goToDash;
-  document.getElementById('out-btn').onclick=()=>{TGAuth.clear();location.reload();};
+function showLogged(u) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('logged').style.display  = 'block';
+  const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.name || 'Foydalanuvchi';
+  document.getElementById('av').textContent    = (name[0]||'?').toUpperCase();
+  document.getElementById('uname').textContent = name;
+  document.getElementById('uid-txt').textContent = 'ID: ' + (u.id||u.uid||'');
+  document.getElementById('go-btn').onclick = () => { window.location.href = _next; };
 }
 
-/* ── Admin parol ── */
-function showAdminPass(u){
-  document.getElementById('loading').style.display='none';
-  document.getElementById('admin-sec').style.display='block';
-  document.getElementById('admin-block').style.display='block';
-
-  const errEl=document.getElementById('err-msg');
-  const passEl=document.getElementById('pass-input');
-  const btnEl=document.getElementById('login-btn');
-
-  passEl.focus();
-  passEl.addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin();});
-  btnEl.onclick=doAdminLogin;
-
-  async function doAdminLogin(){
-    const pass=passEl.value.trim();
-    if(!pass){errEl.textContent='Parolni kiriting';errEl.classList.add('show');return;}
-    btnEl.disabled=true;
-    btnEl.innerHTML='<span class="sp"></span>Tekshirilmoqda...';
-    errEl.classList.remove('show');
-    try{
-      const res=await fetch(`${API_URL}?endpoint=admin/login`,{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({uid:u.id,password:pass})
-      });
-      const d=await res.json();
-      if(d.ok){
-        TGAuth.save({...u,is_admin:true});
-        goToDash();
-      } else {
-        errEl.textContent='❌ '+(d.error||"Parol noto'g'ri");
-        errEl.classList.add('show');
-        btnEl.disabled=false;
-        btnEl.textContent='Kirish';
-      }
-    } catch {
-      errEl.textContent='⚠️ Xato. Keyinroq urinib ko\'ring.';
-      errEl.classList.add('show');
-      btnEl.disabled=false;
-      btnEl.textContent='Kirish';
-    }
-  }
+function showBotBox() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('bot-box').style.display  = 'block';
 }
 
-/* ── Fallback: bot linki ── */
-function showFallback(){
-  document.getElementById('loading').style.display='none';
-  document.getElementById('tg-fallback').style.display='block';
-  document.getElementById('bot-link').href=
-    'https://t.me/'+BOT_USERNAME+'?start=webapp';
-}
-
-/* ══════════════════════════════════════════════════
-   ASOSIY KIRISH LOGIKASI
-   ══════════════════════════════════════════════════ */
-(async function(){
-  // Yuklash animatsiyasini ko'rsat
-  document.getElementById('loading').style.display='block';
-
-  /* 1. Allaqachon kirgan — dashboard ga yuborish */
-  const existing=TGAuth.get();
-  if(existing && !existing.is_admin){
-    // Admin bo'lmagan — to'g'ridan dashboard
-    goToDash(); return;
-  }
-  if(existing && existing.is_admin){
-    // Admin allaqachon kirgan
-    showLogged(existing); return;
-  }
-
-  /* 2. URL parametrlardan — botdan yuborilgan link (WebApp ichida ham shunday keladi) */
-  const p   = new URLSearchParams(location.search);
-  const uid  = p.get('uid');
-  const name = p.get('name');
-  const auto = p.get('auto');
-
-  if(uid && auto==='1'){
-    // Telegram WebApp bo'lsa expand qilamiz
-    const tg = window.Telegram?.WebApp;
-    if(tg){ tg.ready(); tg.expand(); }
-
-    const userData={
-      id:         parseInt(uid),
-      first_name: name||`User${uid}`,
-      username:   p.get('uname')||'',
-      name:       name||`User${uid}`,
-      photo_url:  '',
-      is_admin:   false,
-      _via_url:   true
-    };
-
-    // Admin ekanligini tekshir
-    try{
-      const r = await fetch(`${API_URL}?endpoint=user/${uid}`);
-      const d = await r.json();
-      if(d?.is_admin){
-        userData.is_admin = true;
-        showAdminPass(userData);
-        return;
-      }
-    } catch{}
-    TGAuth.save(userData);
-    goToDash(); return;
-  }
-
-  /* 3. Telegram WebApp bor lekin URL parametr yo'q — initDataUnsafe dan olamiz */
+(async () => {
+  // 1. Telegram WebApp ichida — user ma'lumotlari to'g'ridan keladi
   const tg = window.Telegram?.WebApp;
-  if(tg && tg.initDataUnsafe?.user){
-    const u = tg.initDataUnsafe.user;
+  if (tg?.initDataUnsafe?.user) {
     tg.ready(); tg.expand();
-    const userData={
-      id:         u.id,
-      first_name: u.first_name||'',
-      last_name:  u.last_name||'',
-      username:   u.username||'',
-      name:       [u.first_name,u.last_name].filter(Boolean).join(' ')||`User${u.id}`,
-      photo_url:  u.photo_url||'',
-      is_admin:   false,
-      _via_webapp:true
+    const u = tg.initDataUnsafe.user;
+    const userData = {
+      id: u.id, first_name: u.first_name||'', last_name: u.last_name||'',
+      username: u.username||'', name: [u.first_name,u.last_name].filter(Boolean).join(' ')||`User${u.id}`,
     };
-    try{
-      const r = await fetch(`${API_URL}?endpoint=user/${u.id}`);
-      const d = await r.json();
-      if(d?.is_admin){ userData.is_admin=true; showAdminPass(userData); return; }
-    } catch{}
     TGAuth.save(userData);
-    goToDash(); return;
+    window.location.href = _next;
+    return;
   }
 
-  /* 4. Hech narsa yo'q — bot linkini ko'rsat */
-  showFallback();
+  // 2. URL da ?uid=...&auto=1 — botdan yuborilgan havola
+  const p    = new URLSearchParams(location.search);
+  const uid  = p.get('uid');
+  const auto = p.get('auto');
+  if (uid && auto === '1') {
+    const userData = {
+      id: parseInt(uid), uid: parseInt(uid),
+      first_name: p.get('name') || `User${uid}`,
+      username:   p.get('uname') || '',
+      name:       p.get('name') || `User${uid}`,
+    };
+    TGAuth.save(userData);
+    window.location.href = _next;
+    return;
+  }
+
+  // 3. LocalStorage da session bor
+  const existing = TGAuth.get();
+  if (existing) {
+    showLogged(existing);
+    return;
+  }
+
+  // 4. Hech narsa yo'q — bot linkini ko'rsat
+  showBotBox();
 })();
 </script>
 </body>

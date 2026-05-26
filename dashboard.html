@@ -525,7 +525,7 @@ function buildMyCard(t, isAdmin_){
 let CU=null,UID='',_myTests=[],_allResults=[];
 
 (async()=>{
-  CU=await AuthHelpers.requireAuth();
+  CU=await AuthHelpers.requireAuth('login.html');
   if(!CU)return;
   UID=String(CU.id||CU.uid||CU._tg_id||'');
   const name=[CU.first_name,CU.last_name].filter(Boolean).join(' ')||CU.name||'Foydalanuvchi';
