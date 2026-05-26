@@ -381,20 +381,65 @@ export default async function handler(request) {
     const qs2    = (body?.questions || []).map(q => webToBot(q));
     const index2 = await getIndex();
     if (!index2) return jsonResp({ error: 'Index topilmadi' }, 500);
-    const msgId2 = index2?.[`test_${tid2}`];
+
+    // Eski TG xabarni o'qib meta olamiz
+    const oldMsgId2 = index2[`test_${tid2}`];
     let oldDoc2 = {};
-    if (msgId2) { const old2 = await tgGetFull(msgId2); if (old2) oldDoc2 = old2; }
-    const meta2 = (index2.tests_meta || []).find(t => t.test_id === tid2) || {};
-    const newDoc2 = { ...oldDoc2, ...meta2, test_id: tid2, questions: qs2, question_count: qs2.length };
+    if (oldMsgId2) {
+      const old2 = await tgGetFull(oldMsgId2);
+      if (old2) oldDoc2 = old2;
+      // Eski xabarni kanaldan o'chirish — bot RAMdan tozalab yangi yuklasin
+      try {
+        await tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: parseInt(oldMsgId2) });
+      } catch {}
+      // fid cache ni tozalash
+      delete index2[`fid_${oldMsgId2}`];
+    }
+
+    const meta2   = (index2.tests_meta || []).find(t => t.test_id === tid2) || {};
+    const newDoc2 = {
+      ...oldDoc2, ...meta2,
+      test_id:        tid2,
+      questions:      qs2,
+      question_count: qs2.length,
+      updated_at:     new Date().toISOString(),
+    };
     delete newDoc2._id;
-    const tgData2 = await sendDoc(`test_${tid2}.json`, newDoc2, `📝 TEST | ${meta2.title || tid2} | ${tid2}`);
+
+    // Yangi fayl TG kanalga
+    const tgData2 = await sendDoc(
+      `test_${tid2}.json`, newDoc2,
+      `📝 TEST | ${meta2.title || tid2} | ${tid2} | ✏️ tahrirlandi`
+    );
     if (!tgData2?.ok) return jsonResp({ error: 'Kanalga yuborishda xato' }, 500);
-    index2[`test_${tid2}`] = tgData2.result.message_id;
+
+    // Index yangilash — yangi msg_id
+    const newMsgId2 = tgData2.result.message_id;
+    index2[`test_${tid2}`] = newMsgId2;
+
+    // fid cache — bot tez yuklasin uchun
+    try {
+      if (tgData2.result.document?.file_id) {
+        index2[`fid_${newMsgId2}`] = tgData2.result.document.file_id;
+      }
+    } catch {}
+
     const m2 = (index2.tests_meta || []).find(t => t.test_id === tid2);
-    if (m2) m2.question_count = qs2.length;
+    if (m2) {
+      m2.question_count = qs2.length;
+      m2.updated_at     = newDoc2.updated_at;
+    }
+
+    // Yangilangan indexni kanalga saqlash
     await saveIndex(index2);
+
+    // Proxy cache tozalash — keyingi so'rovda yangi index yuklansin
+    _idx   = null;
+    _idxTs = 0;
+
     return jsonResp({ ok: true, count: qs2.length });
   }
+
 
   // ── test/{id}/update ──────────────────────────────────────────
   if (ep.match(/^test\/[^/]+\/update$/) && request.method === 'POST') {
