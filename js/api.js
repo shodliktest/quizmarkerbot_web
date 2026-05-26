@@ -117,57 +117,18 @@ const TGAuth = {
 const AuthHelpers = {
   getCurrentUser() { return Promise.resolve(TGAuth.get()); },
   async requireAuth(fallback = 'login.html') {
-    // 1. LocalStorage da session bor
-    let u = TGAuth.get();
+    // 1. URL da ?uid=...&auto=1 bor — botdan kelgan link, darhol saqlash
+    const fromUrl = TGAuth.tryFromUrl();
+    if (fromUrl) return fromUrl;
+    // 2. LocalStorage da session bor
+    const u = TGAuth.get();
     if (u) return u;
-    // 2. URL da ?uid=...&auto=1 bor (botdan kelgan link)
-    u = TGAuth.tryFromUrl();
-    if (u) return u;
-    // 3. Hech narsa yo'q — login.html ga yubormasdan bot linkini ko'rsat
-    // (login.html ni olib tashladik — faqat bot orqali kirish)
-    _showNoAuthBanner();
+    // 3. Yo'q — login.html ga yuborish
+    goTo(fallback + '?next=' + encodeURIComponent(location.href));
     return null;
   }
 };
 
-function _showNoAuthBanner() {
-  // index.html da chaqirilmaydi (u requireAuth ishlatmaydi)
-  // dashboard/create/profile da — login yo'q bo'lsa banner
-  const BOT = typeof BOT_USERNAME !== 'undefined' ? BOT_USERNAME : 'Quizmarkerbot';
-  // Sahifa yuklanib ulgurmagan bo'lsa kuting
-  const render = () => {
-  document.body.innerHTML = \`
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(135deg,#f0ebff,#fce7f3);padding:1.5rem;font-family:'Segoe UI',sans-serif">
-      <div style="background:#fff;border-radius:24px;padding:2.5rem 2rem;text-align:center;
-        max-width:360px;width:100%;box-shadow:0 20px 60px rgba(108,63,232,.12)">
-        <div style="font-size:3rem;margin-bottom:.75rem">🔐</div>
-        <div style="font-family:sans-serif;font-size:1.4rem;font-weight:900;
-          background:linear-gradient(135deg,#6C3FE8,#C040C8);
-          -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-          margin-bottom:.4rem">TestPro</div>
-        <p style="color:#6b7280;font-size:.88rem;margin-bottom:1.5rem;line-height:1.6">
-          Saytga kirish uchun Telegram botni oching.<br>
-          Bot sizni avtomatik yo'naltiradi.
-        </p>
-        <a href="https://t.me/\${BOT}?start=webapp"
-          style="display:block;padding:.9rem;border-radius:14px;
-          background:linear-gradient(135deg,#6C3FE8,#C040C8);color:#fff;
-          font-weight:800;text-decoration:none;font-size:.95rem;margin-bottom:.75rem">
-          ✈️ Botni ochish
-        </a>
-        <a href="index.html" style="color:#9ca3af;font-size:.8rem;text-decoration:none">
-          ← Bosh sahifaga qaytish
-        </a>
-      </div>
-    </div>\`;
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', render);
-  } else {
-    render();
-  }
-}
 
 const auth = {
   signOut() { TGAuth.clear(); goTo('index.html'); return Promise.resolve(); },
