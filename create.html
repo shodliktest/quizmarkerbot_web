@@ -475,7 +475,7 @@ TH.set(TH.get());
 document.getElementById('tbtn').onclick=()=>TH.toggle();
 
 (async()=>{
-  currentUser=await AuthHelpers.requireAuth('login.html');
+  currentUser=await AuthHelpers.requireAuth();
   if(!currentUser) return;
   buildSubjGrid();
   initFmtPreviews();

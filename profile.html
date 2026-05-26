@@ -132,7 +132,7 @@ let _tt;
 function toast(m,d=2500){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),d);}
 
 (async()=>{
-  const u=await AuthHelpers.requireAuth('login.html');
+  const u=await AuthHelpers.requireAuth();
   if(!u)return;
 
   const uid=String(u.id||u.uid||u._tg_id||'');
@@ -190,7 +190,7 @@ function clearHist(){
 function doLogout(){
   if(!confirm('Hisobdan chiqmoqchimisiz?'))return;
   TGAuth.clear();
-  goTo('login.html');
+  _showNoAuthBanner();
 }
 </script>
 </body>
