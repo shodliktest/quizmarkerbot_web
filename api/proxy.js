@@ -541,6 +541,94 @@ export default async function handler(request) {
     return jsonResp({ ok: true, result_id: rid });
   }
 
+  // ── test/{id}/split ──────────────────────────────────────────
+  // Bo'lish: {parts:[{from,to},...]} → {ok, created:[{tid,title,count,link}]}
+  if (ep.match(/^test\/[^\/]+\/split$/) && request.method === 'POST') {
+    const tid   = ep.split('/')[1];
+    const index = await getIndex();
+    if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
+
+    const meta = (index.tests_meta || []).find(t => t.test_id === tid);
+    if (!meta) return jsonResp({ error: 'Test topilmadi' }, 404);
+
+    // To'liq testni yuklash
+    const msgId = index[`test_${tid}`];
+    if (!msgId) return jsonResp({ error: 'Test fayli topilmadi' }, 404);
+
+    let full = null;
+    const fidKey = `fid_${msgId}`;
+    if (index[fidKey]) { full = await readFileId(index[fidKey]); }
+    if (!full?.questions?.length) { full = await tgGetFull(msgId); }
+    if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
+
+    const { parts } = body || {};
+    if (!parts || !parts.length) return jsonResp({ error: 'parts kerak' }, 400);
+
+    // Raqamni emoji ga aylantirish
+    const D = {'0':'0️⃣','1':'1️⃣','2':'2️⃣','3':'3️⃣','4':'4️⃣',
+               '5':'5️⃣','6':'6️⃣','7':'7️⃣','8':'8️⃣','9':'9️⃣'};
+    function numEmoji(n) {
+      if (n === 10) return '🔟';
+      if (n === 100) return '💯';
+      return String(n).split('').map(c => D[c] || c).join('');
+    }
+
+    const baseTitle   = meta.title || 'Test';
+    const baseVis     = meta.visibility || 'public';
+    const created     = [];
+
+    for (const p of parts) {
+      const chunk   = full.questions.slice(p.from - 1, p.to);
+      if (!chunk.length) continue;
+
+      const partTitle = `${baseTitle} ${numEmoji(p.from)}➖${numEmoji(p.to)}`;
+      const newTid    = Array.from(crypto.getRandomValues(new Uint8Array(4)))
+        .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+      const newDoc = {
+        test_id:          newTid,
+        creator_id:       meta.creator_id || 0,
+        creator_name:     meta.creator_name || '',
+        creator_username: meta.creator_username || '',
+        title:            partTitle,
+        category:         meta.category || meta.subject || 'Boshqa',
+        difficulty:       meta.difficulty || 'medium',
+        visibility:       baseVis,
+        time_limit:       meta.time_limit || 0,
+        poll_time:        meta.poll_time || 30,
+        passing_score:    meta.passing_score || 60,
+        max_attempts:     meta.max_attempts || 0,
+        questions:        chunk,
+        question_count:   chunk.length,
+        solve_count:      0,
+        avg_score:        0.0,
+        is_active:        true,
+        is_paused:        false,
+        created_at:       new Date().toISOString(),
+        source:           'web_split',
+      };
+
+      const tgData = await sendDoc(
+        `test_${newTid}.json`, newDoc,
+        `📝 TEST | ${partTitle} | ${newTid}`
+      );
+      if (!tgData?.ok) continue;
+
+      // Indexga qo'shish
+      const newMeta = { ...newDoc }; delete newMeta.questions;
+      (index.tests_meta = index.tests_meta || []).unshift(newMeta);
+      index[`test_${newTid}`] = tgData.result.message_id;
+
+      created.push({ tid: newTid, title: partTitle, count: chunk.length });
+    }
+
+    if (!created.length) return jsonResp({ error: 'Hech qaysi qism saqlanmadi' }, 500);
+
+    // Yangilangan indexni saqlash
+    await saveIndex(index);
+    return jsonResp({ ok: true, created });
+  }
+
   // ── results/{uid} ─────────────────────────────────────────────
   if (ep.match(/^results\/\d+/)) return jsonResp([]);
 
