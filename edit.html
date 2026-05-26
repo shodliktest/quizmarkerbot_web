@@ -576,8 +576,11 @@ window.addEventListener('storage', e => {
 });
 
 // ─── CONFIG ──────────────────────────────────────────────────
-const API_PROXY = '/api/proxy';
-const LBL = ['A','B','C','D','E','F','G','H'];
+const API_PROXY    = '/api/proxy';
+const LBL          = ['A','B','C','D','E','F','G','H'];
+// Streamlit URL — Vercel environment variable orqali yoki js/api.js dan
+const STREAMLIT_URL = (typeof window._STREAMLIT_URL !== 'undefined')
+  ? window._STREAMLIT_URL : '';
 
 // ─── STATE ───────────────────────────────────────────────────
 let qs=[], testMeta=null, splitMode='count', expFmt='numbered';
@@ -588,7 +591,14 @@ const P   = new URLSearchParams(location.search);
 const TID = (P.get('id')||P.get('test_id')||'').trim().toUpperCase();
 
 // ─── INIT ────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', loadTest);
+// STREAMLIT_URL ni proxy config dan yuklaymiz
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const cfg = await fetch(API_PROXY + '?endpoint=config').then(r=>r.json());
+    if (cfg?.streamlit_url) window._STREAMLIT_URL = cfg.streamlit_url;
+  } catch {}
+  loadTest();
+});
 
 async function apiCall(endpoint, opts={}){
   const url = API_PROXY + '?endpoint=' + endpoint;
@@ -949,6 +959,39 @@ async function execSplit(){
 
     // Natija modali
     const created = r.created || [];
+
+    // Streamlit RAMga shu zahoti yuborish (agar STREAMLIT_URL mavjud bo'lsa)
+    if(created.length && typeof STREAMLIT_URL !== 'undefined' && STREAMLIT_URL){
+      try{
+        // Har bir bo'lak uchun to'liq savollar bilan Streamlit ga yuborish
+        const parts2 = created.map((cr,i)=>{
+          const p   = calcSplits()[i] || {};
+          const chunk = qs.slice((p.from||1)-1, p.to||cr.count);
+          return {
+            test_id:        cr.tid,
+            title:          cr.title,
+            question_count: cr.count,
+            questions:      chunk.map(q=>({
+              type:'multiple_choice', question:q.q, text:q.q,
+              options:q.options.map((o,oi)=>`${LBL[oi]}) ${o}`),
+              correct:`${LBL[q.correct]}) ${q.options[q.correct]||''}`,
+              explanation:q.explanation||'',
+            })),
+            category:    testMeta?.category||'',
+            visibility:  testMeta?.visibility||'public',
+            creator_id:  testMeta?.creator_id||0,
+            source:      'web_split',
+          };
+        });
+        const uid = localStorage.getItem('tp_tg_user')
+          ? JSON.parse(localStorage.getItem('tp_tg_user'))?.id || 0 : 0;
+        const stUrl = STREAMLIT_URL.replace(/\/?$/,'') +
+          '/?api=ram_split&creator_id='+uid+
+          '&parts='+encodeURIComponent(JSON.stringify(parts2));
+        fetch(stUrl).catch(()=>{});
+      } catch(_e){}
+    }
+
     let html = `<div style="margin-bottom:.75rem;font-size:.82rem;color:var(--text-3)">`+
       `✂️ <b style="color:var(--text)">${created.length} ta yangi test</b> yaratildi</div>`;
 
@@ -1026,9 +1069,21 @@ async function doSaveQuestions(){
     explanation: q.explanation||'', image: q.image||null, points:1,
   }));
   try{
+    const oldQc = testMeta?.question_count || 0;
     const r = await apiCall('test/'+TID+'/questions',{method:'POST',body:JSON.stringify({questions})});
-    if(r&&r.ok){ toast('✅ '+(r.count||questions.length)+' ta savol saqlandi','ok'); }
-    else { toast('❌ '+(r?.error||'Saqlanmadi'),'err'); }
+    if(r&&r.ok){
+      toast('✅ '+(r.count||questions.length)+' ta savol saqlandi','ok');
+      // Streamlit RAMga shu zahoti yuborish
+      if(typeof STREAMLIT_URL !== 'undefined' && STREAMLIT_URL){
+        try{
+          const stUrl = STREAMLIT_URL.replace(/\/?$/,'') +
+            '/?api=ram_update&tid='+TID+
+            '&old_qc='+oldQc+
+            '&questions='+encodeURIComponent(JSON.stringify(questions));
+          fetch(stUrl).catch(()=>{});
+        }catch(_e){}
+      }
+    } else { toast('❌ '+(r?.error||'Saqlanmadi'),'err'); }
   } catch(e){ toast('❌ Ulanish xatosi: '+e.message,'err'); }
   finally { document.getElementById('savingOv').classList.remove('on'); }
 }
