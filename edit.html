@@ -925,19 +925,71 @@ function calcSplits(){
     return parts;
   }
 }
-function execSplit(){
+async function execSplit(){
   const parts=calcSplits();
   if(!parts.length){ toast('❌ Noto\'g\'ri qiymat','err'); return; }
-  parts.forEach((p,i)=>{
-    const chunk=qs.slice(p.from-1,p.to);
-    const title=(testMeta?.title||'Test')+' — '+(i+1)+'-qism';
-    const lines=[`Test: ${title}`,'='.repeat(50),''];
-    chunk.forEach((q,qi)=>{ lines.push(`${qi+1}. ${q.q}`); q.options.forEach((o,oi)=>lines.push(`${oi===q.correct?'*':' '}${LBL[oi]}) ${o}`)); if(q.explanation)lines.push(`   Izoh: ${q.explanation}`); lines.push(''); });
-    const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=title+'.txt'; a.click();
-  });
+  if(!TID){ toast('❌ Test ID topilmadi','err'); return; }
+
   closeSheet('splitSheet');
-  toast(`✅ ${parts.length} ta fayl yuklab olindi`,'ok');
+  document.getElementById('savingOv').classList.add('on');
+  document.querySelector('.saving-ov p').textContent = 'Bo\'linmoqda...';
+
+  try{
+    const r = await apiCall('test/'+TID+'/split', {
+      method: 'POST',
+      body: JSON.stringify({ parts })
+    });
+
+    document.getElementById('savingOv').classList.remove('on');
+    document.querySelector('.saving-ov p').textContent = 'Saqlanmoqda...';
+
+    if(!r || !r.ok){
+      toast('❌ '+(r?.error||'Xato'),'err'); return;
+    }
+
+    // Natija modali
+    const created = r.created || [];
+    let html = `<div style="margin-bottom:.75rem;font-size:.82rem;color:var(--text-3)">`+
+      `✂️ <b style="color:var(--text)">${created.length} ta yangi test</b> yaratildi</div>`;
+
+    created.forEach(c=>{
+      html += `<div style="background:var(--bg-2);border:1px solid var(--border-2);`+
+        `border-radius:var(--radius-sm);padding:.75rem;margin-bottom:.5rem">` +
+        `<div style="font-weight:700;font-size:.88rem;margin-bottom:.3rem">${esc(c.title)}</div>`+
+        `<div style="font-size:.78rem;color:var(--text-3)">🆔 <code style="background:var(--bg);padding:1px 5px;border-radius:4px">${c.tid}</code>`+
+        ` &nbsp;📋 ${c.count} ta savol</div></div>`;
+    });
+
+    // Result sheet ko'rsatish
+    let resSheet = document.getElementById('splitResultSheet');
+    if(!resSheet){
+      resSheet = document.createElement('div');
+      resSheet.id = 'splitResultSheet';
+      resSheet.className = 'modal-sheet';
+      resSheet.innerHTML = `<div class="modal modal-sm">
+        <div class="modal-header">
+          <div class="modal-title">✅ Bo\'lish muvaffaqiyatli</div>
+          <button class="modal-close" onclick="this.closest('.modal-sheet').classList.remove('show')">✕</button>
+        </div>
+        <div id="splitResultBody"></div>
+        <div style="margin-top:1rem;display:flex;gap:.6rem">
+          <button class="btn btn-secondary" style="flex:1"
+            onclick="document.getElementById('splitResultSheet').classList.remove('show')">Yopish</button>
+          <button class="btn btn-primary" style="flex:1"
+            onclick="document.getElementById('splitResultSheet').classList.remove('show');history.back()">Mening testlarim</button>
+        </div>
+      </div>`;
+      resSheet.addEventListener('click', e=>{ if(e.target===resSheet) resSheet.classList.remove('show'); });
+      document.body.appendChild(resSheet);
+    }
+    document.getElementById('splitResultBody').innerHTML = html;
+    resSheet.classList.add('show');
+
+  } catch(e){
+    document.getElementById('savingOv').classList.remove('on');
+    document.querySelector('.saving-ov p').textContent = 'Saqlanmoqda...';
+    toast('❌ Xato: '+e.message,'err');
+  }
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────
