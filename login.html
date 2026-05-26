@@ -253,10 +253,45 @@ function showFallback(){
     showLogged(existing); return;
   }
 
-  /* 2. Telegram WebApp ichida — avtomatik login */
-  const tg=window.Telegram?.WebApp;
+  /* 2. URL parametrlardan — botdan yuborilgan link (WebApp ichida ham shunday keladi) */
+  const p   = new URLSearchParams(location.search);
+  const uid  = p.get('uid');
+  const name = p.get('name');
+  const auto = p.get('auto');
+
+  if(uid && auto==='1'){
+    // Telegram WebApp bo'lsa expand qilamiz
+    const tg = window.Telegram?.WebApp;
+    if(tg){ tg.ready(); tg.expand(); }
+
+    const userData={
+      id:         parseInt(uid),
+      first_name: name||`User${uid}`,
+      username:   p.get('uname')||'',
+      name:       name||`User${uid}`,
+      photo_url:  '',
+      is_admin:   false,
+      _via_url:   true
+    };
+
+    // Admin ekanligini tekshir
+    try{
+      const r = await fetch(`${API_URL}?endpoint=user/${uid}`);
+      const d = await r.json();
+      if(d?.is_admin){
+        userData.is_admin = true;
+        showAdminPass(userData);
+        return;
+      }
+    } catch{}
+    TGAuth.save(userData);
+    goToDash(); return;
+  }
+
+  /* 3. Telegram WebApp bor lekin URL parametr yo'q — initDataUnsafe dan olamiz */
+  const tg = window.Telegram?.WebApp;
   if(tg && tg.initDataUnsafe?.user){
-    const u=tg.initDataUnsafe.user;
+    const u = tg.initDataUnsafe.user;
     tg.ready(); tg.expand();
     const userData={
       id:         u.id,
@@ -268,44 +303,10 @@ function showFallback(){
       is_admin:   false,
       _via_webapp:true
     };
-    // Admin ekanligini API dan tekshir
     try{
-      const r=await fetch(`${API_URL}?endpoint=user/${u.id}`);
-      const d=await r.json();
-      if(d?.is_admin){
-        userData.is_admin=true;
-        showAdminPass(userData);
-        return;
-      }
-    } catch{}
-    TGAuth.save(userData);
-    goToDash(); return;
-  }
-
-  /* 3. URL parametrlardan — botdan yuborilgan link */
-  const p=new URLSearchParams(location.search);
-  const uid=p.get('uid');
-  const name=p.get('name');
-  const auto=p.get('auto');
-
-  if(uid && auto==='1'){
-    const userData={
-      id:        parseInt(uid),
-      first_name:name||`User${uid}`,
-      username:  p.get('uname')||'',
-      name:      name||`User${uid}`,
-      is_admin:  false,
-      _via_url:  true
-    };
-    // Admin ekanligini tekshir
-    try{
-      const r=await fetch(`${API_URL}?endpoint=user/${uid}`);
-      const d=await r.json();
-      if(d?.is_admin){
-        userData.is_admin=true;
-        showAdminPass(userData);
-        return;
-      }
+      const r = await fetch(`${API_URL}?endpoint=user/${u.id}`);
+      const d = await r.json();
+      if(d?.is_admin){ userData.is_admin=true; showAdminPass(userData); return; }
     } catch{}
     TGAuth.save(userData);
     goToDash(); return;
