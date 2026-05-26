@@ -93,17 +93,72 @@ const TGAuth = {
     TGAuth.save(user);
     const next = new URLSearchParams(location.search).get('next') || 'dashboard.html';
     goTo(next);
+  },
+  // URL parametrlardan avtomatik olish (bot yuborgan link: ?uid=...&name=...&auto=1)
+  tryFromUrl() {
+    const p    = new URLSearchParams(location.search);
+    const uid  = p.get('uid');
+    const auto = p.get('auto');
+    if (!uid || auto !== '1') return null;
+    const user = {
+      id:         parseInt(uid),
+      uid:        parseInt(uid),
+      first_name: p.get('name') || ('User' + uid),
+      username:   p.get('uname') || '',
+      name:       p.get('name') || ('User' + uid),
+      is_admin:   false,
+      _via_url:   true,
+    };
+    this.save(user);
+    return user;
   }
 };
 
 const AuthHelpers = {
   getCurrentUser() { return Promise.resolve(TGAuth.get()); },
   async requireAuth(fallback = 'login.html') {
-    const u = TGAuth.get();
-    if (!u) { goTo(fallback + '?next=' + encodeURIComponent(location.href)); return null; }
-    return u;
+    // 1. LocalStorage da session bor
+    let u = TGAuth.get();
+    if (u) return u;
+    // 2. URL da ?uid=...&auto=1 bor (botdan kelgan link)
+    u = TGAuth.tryFromUrl();
+    if (u) return u;
+    // 3. Hech narsa yo'q — login.html ga yubormasdan bot linkini ko'rsat
+    // (login.html ni olib tashladik — faqat bot orqali kirish)
+    _showNoAuthBanner();
+    return null;
   }
 };
+
+function _showNoAuthBanner() {
+  // Foydalanuvchi to'g'ridan brauzerdan kirgan — bot linkini ko'rsat
+  const BOT = typeof BOT_USERNAME !== 'undefined' ? BOT_USERNAME : 'Quizmarkerbot';
+  document.body.innerHTML = \`
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,#f0ebff,#fce7f3);padding:1.5rem;font-family:'Segoe UI',sans-serif">
+      <div style="background:#fff;border-radius:24px;padding:2.5rem 2rem;text-align:center;
+        max-width:360px;width:100%;box-shadow:0 20px 60px rgba(108,63,232,.12)">
+        <div style="font-size:3rem;margin-bottom:.75rem">🔐</div>
+        <div style="font-family:sans-serif;font-size:1.4rem;font-weight:900;
+          background:linear-gradient(135deg,#6C3FE8,#C040C8);
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+          margin-bottom:.4rem">TestPro</div>
+        <p style="color:#6b7280;font-size:.88rem;margin-bottom:1.5rem;line-height:1.6">
+          Saytga kirish uchun Telegram botni oching.<br>
+          Bot sizni avtomatik yo'naltiradi.
+        </p>
+        <a href="https://t.me/\${BOT}?start=webapp"
+          style="display:block;padding:.9rem;border-radius:14px;
+          background:linear-gradient(135deg,#6C3FE8,#C040C8);color:#fff;
+          font-weight:800;text-decoration:none;font-size:.95rem;margin-bottom:.75rem">
+          ✈️ Botni ochish
+        </a>
+        <a href="index.html" style="color:#9ca3af;font-size:.8rem;text-decoration:none">
+          ← Bosh sahifaga qaytish
+        </a>
+      </div>
+    </div>\`;
+}
 
 const auth = {
   signOut() { TGAuth.clear(); goTo('index.html'); return Promise.resolve(); },
