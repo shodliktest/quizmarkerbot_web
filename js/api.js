@@ -131,8 +131,11 @@ const AuthHelpers = {
 };
 
 function _showNoAuthBanner() {
-  // Foydalanuvchi to'g'ridan brauzerdan kirgan — bot linkini ko'rsat
+  // index.html da chaqirilmaydi (u requireAuth ishlatmaydi)
+  // dashboard/create/profile da — login yo'q bo'lsa banner
   const BOT = typeof BOT_USERNAME !== 'undefined' ? BOT_USERNAME : 'Quizmarkerbot';
+  // Sahifa yuklanib ulgurmagan bo'lsa kuting
+  const render = () => {
   document.body.innerHTML = \`
     <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;
       background:linear-gradient(135deg,#f0ebff,#fce7f3);padding:1.5rem;font-family:'Segoe UI',sans-serif">
@@ -158,6 +161,12 @@ function _showNoAuthBanner() {
         </a>
       </div>
     </div>\`;
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
 }
 
 const auth = {
