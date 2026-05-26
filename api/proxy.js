@@ -14,7 +14,8 @@
 
 export const config = { runtime: 'edge' };
 
-const BOT_TOKEN   = process.env.BOT_TOKEN          || '';
+const BOT_TOKEN      = process.env.BOT_TOKEN          || '';
+const STREAMLIT_URL  = process.env.STREAMLIT_URL      || '';
 const CHANNEL_ID  = process.env.STORAGE_CHANNEL_ID || '';
 const ADMIN_IDS   = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const ADMIN_PASS  = process.env.ADMIN_PASSWORD     || 'admin123';
@@ -108,6 +109,31 @@ function normMeta(t) {
   out.is_paused    = out.is_paused || false;
   out.question_count = out.question_count || out.questionCount || 0;
   return out;
+}
+
+// ── Streamlit RAM API ─────────────────────────────────────────
+async function streamlitAPI(params) {
+  if (!STREAMLIT_URL) return null;
+  try {
+    const base = STREAMLIT_URL.replace(/\/?$/, '');
+    const qs   = new URLSearchParams(params).toString();
+    const url  = `${base}/?${qs}`;
+    const res  = await fetch(url, {
+      headers: { 'Accept': 'text/html,application/json' },
+      // Streamlit session cookie kerak emas — query_params API sessiyasiz ishlaydi
+    });
+    const txt = await res.text();
+    // Streamlit <pre> tegi ichidagi JSON ni olish
+    const pre = txt.match(/<pre[^>]*>(\{[\s\S]*?\})<\/pre>/i);
+    if (pre) return JSON.parse(pre[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'));
+    // Fallback: to'g'ridan JSON topish
+    const raw = txt.match(/\{"ok"[\s\S]*?\}/);
+    if (raw) return JSON.parse(raw[0]);
+    return null;
+  } catch (e) {
+    console.warn('streamlitAPI error:', e);
+    return null;
+  }
 }
 
 // ── File o'qish yordamchilari ───────────────────────────────────
@@ -235,6 +261,13 @@ export default async function handler(request) {
 
   const url = new URL(request.url);
   const ep  = url.searchParams.get('endpoint') || '';
+
+  // ── config — frontend uchun env vars ─────────────────────────
+  if (ep === 'config') {
+    return jsonResp({
+      streamlit_url: STREAMLIT_URL || '',
+    });
+  }
 
   // ── DEBUG ──────────────────────────────────────────────────────
   if (ep === 'debug') {
@@ -433,9 +466,20 @@ export default async function handler(request) {
     // Yangilangan indexni kanalga saqlash
     await saveIndex(index2);
 
-    // Proxy cache tozalash — keyingi so'rovda yangi index yuklansin
+    // Proxy cache tozalash
     _idx   = null;
     _idxTs = 0;
+
+    // Streamlit RAM ni shu zahoti yangilash
+    if (STREAMLIT_URL) {
+      const oldQc = meta2.question_count || 0;
+      streamlitAPI({
+        api:        'ram_update',
+        tid:        tid2,
+        questions:  JSON.stringify(qs2),
+        old_qc:     String(oldQc),
+      }).catch(() => {});
+    }
 
     return jsonResp({ ok: true, count: qs2.length });
   }
@@ -671,6 +715,24 @@ export default async function handler(request) {
 
     // Yangilangan indexni saqlash
     await saveIndex(index);
+
+    // Streamlit RAMga shu zahoti yuborish
+    if (STREAMLIT_URL) {
+      const creatorId = (index.tests_meta || []).find(
+        t => created.some(c => c.tid === t.test_id)
+      )?.creator_id || 0;
+
+      streamlitAPI({
+        api:        'ram_split',
+        parts:      JSON.stringify(created.map(cr => {
+          const m = (index.tests_meta || []).find(t => t.test_id === cr.tid) || {};
+          return { ...m, test_id: cr.tid, title: cr.title,
+                   questions: full.questions.slice(0, cr.count) }; // placeholder
+        })),
+        creator_id: String(creatorId),
+      }).catch(() => {});
+    }
+
     return jsonResp({ ok: true, created });
   }
 
