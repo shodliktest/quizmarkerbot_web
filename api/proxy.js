@@ -493,16 +493,15 @@ export default async function handler(request) {
     _idx   = null;
     _idxTs = 0;
 
-    // Bot RAM ni zahoti yangilash + creator ga xabar
-    if (BOT_INTERNAL_URL || STREAMLIT_URL) {
-      const oldQc = meta2.question_count || 0;
-      const newQc = qs2.length;
-      // 1. Bot internal API — zahoti cache tozalash va xabar
-      botAPI({
-        action: 'notify_update',
-        tid:    tid2,
-        old_qc: String(oldQc),
-        new_qc: String(newQc),
+    // Bot ga TG orqali buyruq — zahoti RAM tozalash va xabar
+    const oldQc2   = meta2.question_count || 0;
+    const creatorId2 = meta2.creator_id || 0;
+    if (creatorId2) {
+      // Kanalga WEB_CMD xabari — bot ushlab oladi, zahoti ishlaydi
+      tgPost('sendMessage', {
+        chat_id:              CHANNEL_ID,
+        text:                 `WEB_CMD:UPDATE:${tid2}:${creatorId2}:${oldQc2}:${qs2.length}`,
+        disable_notification: true,
       }).catch(() => {});
     }
 
@@ -741,21 +740,23 @@ export default async function handler(request) {
     // Yangilangan indexni saqlash
     await saveIndex(index);
 
-    // Streamlit RAMga shu zahoti yuborish
-    if (STREAMLIT_URL) {
-      const creatorId = (index.tests_meta || []).find(
-        t => created.some(c => c.tid === t.test_id)
-      )?.creator_id || 0;
-
-      streamlitAPI({
-        api:        'ram_split',
-        parts:      JSON.stringify(created.map(cr => {
-          const m = (index.tests_meta || []).find(t => t.test_id === cr.tid) || {};
-          return { ...m, test_id: cr.tid, title: cr.title,
-                   questions: full.questions.slice(0, cr.count) }; // placeholder
-        })),
-        creator_id: String(creatorId),
-      }).catch(() => {});
+    // Bot ga TG orqali buyruq — split xabarlari zahoti keladi
+    {
+      const origMeta  = (index.tests_meta || []).find(t =>
+        created.some(cr => cr.tid === t.test_id)
+      ) || {};
+      const creatorId = origMeta.creator_id || 0;
+      if (creatorId && created.length) {
+        // WEB_CMD:SPLIT:{creator_id}:{tid}:{title}:{qc}|{tid}:{title}:{qc}
+        const partsStr = created
+          .map(cr => `${cr.tid}:${cr.title.replace(/[:|]/g, ' ')}:${cr.count}`)
+          .join('|');
+        tgPost('sendMessage', {
+          chat_id:              CHANNEL_ID,
+          text:                 `WEB_CMD:SPLIT:${creatorId}:${partsStr}`,
+          disable_notification: true,
+        }).catch(() => {});
+      }
     }
 
     return jsonResp({ ok: true, created });
