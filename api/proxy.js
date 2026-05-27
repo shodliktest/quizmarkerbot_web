@@ -470,7 +470,7 @@ export default async function handler(request) {
     _idx   = null;
     _idxTs = 0;
 
-    // Streamlit RAM ni shu zahoti yangilash
+    // Streamlit RAM ni shu zahoti yangilash (fire & forget)
     if (STREAMLIT_URL) {
       const oldQc = meta2.question_count || 0;
       streamlitAPI({
@@ -478,6 +478,7 @@ export default async function handler(request) {
         tid:        tid2,
         questions:  JSON.stringify(qs2),
         old_qc:     String(oldQc),
+        new_msg_id: String(newMsgId2),
       }).catch(() => {});
     }
 
