@@ -318,12 +318,26 @@ const DB = {
     if (userId) {
       mine = all.filter(r => {
         const rid = String(r.userId || r.user_id || '');
-        return rid === String(userId) || rid === '';  // uid yo'q eskilar ham
+        return rid === String(userId) || rid === '';
       });
     } else {
       mine = all;
     }
     return limit ? mine.slice(0, limit) : mine;
+  },
+
+  // Testni kim yechganini olish
+  async getTestSolvers(testId) {
+    try {
+      return await GET('/api/test/' + testId + '/solvers');
+    } catch { return { ok: false, solvers: [] }; }
+  },
+
+  // Test natijalari (sayt + bot)
+  async getTestResults(testId) {
+    try {
+      return await GET('/api/test/' + testId + '/results');
+    } catch { return { ok: false, results: [] }; }
   },
 
   /* ── ADMIN ── */
