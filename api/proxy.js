@@ -15,7 +15,8 @@
 export const config = { runtime: 'edge' };
 
 const BOT_TOKEN      = process.env.BOT_TOKEN          || '';
-const STREAMLIT_URL  = process.env.STREAMLIT_URL      || '';
+const STREAMLIT_URL      = process.env.STREAMLIT_URL      || '';
+const BOT_INTERNAL_URL   = process.env.BOT_INTERNAL_URL   || '';  // http://bot-host:8080
 const CHANNEL_ID  = process.env.STORAGE_CHANNEL_ID || '';
 const ADMIN_IDS   = (process.env.ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const ADMIN_PASS  = process.env.ADMIN_PASSWORD     || 'admin123';
@@ -109,6 +110,28 @@ function normMeta(t) {
   out.is_paused    = out.is_paused || false;
   out.question_count = out.question_count || out.questionCount || 0;
   return out;
+}
+
+// ── Bot Internal API — zahoti RAM yangilash ───────────────────
+async function botAPI(params) {
+  // Bot ichidagi HTTP server ga murojaat (port 8080)
+  // Streamlit API ham zaxira sifatida ishlaydi
+  const url  = BOT_INTERNAL_URL || STREAMLIT_URL;
+  if (!url) return null;
+
+  try {
+    if (BOT_INTERNAL_URL) {
+      // Bot HTTP server — to'g'ridan murojaat
+      const res = await fetch(
+        BOT_INTERNAL_URL.replace(/\/?$/, '') + '/internal?' + new URLSearchParams(params),
+        { method: 'POST' }
+      );
+      return res.json();
+    } else {
+      // Streamlit fallback
+      return await streamlitAPI(params);
+    }
+  } catch { return null; }
 }
 
 // ── Streamlit RAM API ─────────────────────────────────────────
@@ -470,15 +493,16 @@ export default async function handler(request) {
     _idx   = null;
     _idxTs = 0;
 
-    // Streamlit RAM ni shu zahoti yangilash (fire & forget)
-    if (STREAMLIT_URL) {
+    // Bot RAM ni zahoti yangilash + creator ga xabar
+    if (BOT_INTERNAL_URL || STREAMLIT_URL) {
       const oldQc = meta2.question_count || 0;
-      streamlitAPI({
-        api:        'ram_update',
-        tid:        tid2,
-        questions:  JSON.stringify(qs2),
-        old_qc:     String(oldQc),
-        new_msg_id: String(newMsgId2),
+      const newQc = qs2.length;
+      // 1. Bot internal API — zahoti cache tozalash va xabar
+      botAPI({
+        action: 'notify_update',
+        tid:    tid2,
+        old_qc: String(oldQc),
+        new_qc: String(newQc),
       }).catch(() => {});
     }
 
