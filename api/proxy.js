@@ -59,7 +59,8 @@ function webToBot(q) {
     correctStr = q.correct;
   }
   const typeMap = { multiple: 'multiple_choice', truefalse: 'true_false', 'true_false': 'true_false', multiple_choice: 'multiple_choice' };
-  return {
+  const photoId = q.photo || q.image || null;
+  const result = {
     type:        typeMap[q.type] || q.type || 'multiple_choice',
     question:    q.question || q.text || '',
     options:     fmtOpts,
@@ -68,6 +69,11 @@ function webToBot(q) {
     points:      q.points || 1,
     poll_time:   q.poll_time || 30,
   };
+  // photo field — bot test yechganda rasmni ko'rsatadi
+  if (photoId && !photoId.startsWith('data:')) {
+    result.photo = photoId;
+  }
+  return result;
 }
 
 function botToWeb(q, idx) {
@@ -94,6 +100,8 @@ function botToWeb(q, idx) {
     explanation: q.explanation || '',
     points:      q.points || 1,
     poll_time:   q.poll_time || 30,
+    photo:       q.photo || null,   // TG file_id
+    image:       q.image || null,   // base64 preview
   };
 }
 
