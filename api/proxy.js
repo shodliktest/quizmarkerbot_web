@@ -765,6 +765,86 @@ export default async function handler(request) {
   // ── results/{uid} ─────────────────────────────────────────────
   if (ep.match(/^results\/\d+/)) return jsonResp([]);
 
+  // ── photo/upload — rasmni TG ga yuborib file_id qaytaradi ────
+  if (ep === 'photo/upload' && request.method === 'POST') {
+    try {
+      const { image_b64, filename } = body || {};
+      if (!image_b64) return jsonResp({ error: 'image_b64 kerak' }, 400);
+
+      // Base64 dan binary ga
+      const b64    = image_b64.replace(/^data:image\/\w+;base64,/, '');
+      const binary = atob(b64);
+      const bytes  = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      // Mime type aniqlash
+      const mime = image_b64.startsWith('data:image/png') ? 'image/png'
+                 : image_b64.startsWith('data:image/gif') ? 'image/gif'
+                 : 'image/jpeg';
+      const ext  = mime.split('/')[1];
+      const name = filename || `photo_${Date.now()}.${ext}`;
+
+      // Multipart bilan TG ga yuborish
+      const boundary = '----TGUpload' + Math.random().toString(36).slice(2);
+      const parts = [
+        `--${boundary}
+Content-Disposition: form-data; name="chat_id"
+
+${CHANNEL_ID}`,
+        `--${boundary}
+Content-Disposition: form-data; name="disable_notification"
+
+true`,
+        `--${boundary}
+Content-Disposition: form-data; name="photo"; filename="${name}"
+Content-Type: ${mime}
+
+`,
+      ];
+
+      const partBytes  = parts.map(p => new TextEncoder().encode(p));
+      const endBytes   = new TextEncoder().encode(`
+--${boundary}--`);
+      const sepBytes   = new TextEncoder().encode('
+');
+
+      // Umumiy hajm
+      let totalLen = 0;
+      partBytes.forEach(p => totalLen += p.length);
+      totalLen += bytes.length + sepBytes.length + endBytes.length;
+
+      // Birlashtiramiz
+      const combined = new Uint8Array(totalLen);
+      let offset = 0;
+      partBytes.forEach(p => { combined.set(p, offset); offset += p.length; });
+      combined.set(bytes, offset); offset += bytes.length;
+      combined.set(sepBytes, offset); offset += sepBytes.length;
+      combined.set(endBytes, offset);
+
+      const res = await fetch(`${TG}/sendPhoto`, {
+        method: 'POST',
+        headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+        body: combined,
+      });
+      const data = await res.json();
+
+      if (!data?.ok) {
+        return jsonResp({ error: 'TG ga yuborishda xato: ' + (data?.description || '') }, 500);
+      }
+
+      // Eng katta o'lchamdagi photo ni olamiz
+      const photos  = data.result.photo || [];
+      const biggest = photos[photos.length - 1];
+      const file_id = biggest?.file_id || '';
+
+      return jsonResp({ ok: true, file_id, message_id: data.result.message_id });
+    } catch (e) {
+      return jsonResp({ error: String(e) }, 500);
+    }
+  }
+
   // ── otp/verify ────────────────────────────────────────────────
   if (ep === 'otp/verify') {
     const code = (body?.code || '').toUpperCase().trim();
