@@ -637,10 +637,12 @@ function showErr(msg){
 
 function initData(questions){
   qs = questions.map((q,i)=>({
-    i, q: q.text||q.question||q.q||'',
-    options: normalizeOpts(q.options||['','','','']),
-    correct: resolveCorrect(q),
-    image:   q.image||null,
+    i,
+    q:           q.text||q.question||q.q||'',
+    options:     normalizeOpts(q.options||['','','','']),
+    correct:     resolveCorrect(q),
+    photo:       q.photo||null,      // TG file_id
+    image:       q.image||null,      // base64 preview (lokal)
     explanation: q.explanation||''
   }));
   document.getElementById('loadEl').style.display='none';
@@ -745,9 +747,16 @@ function render(){
 }
 
 function mkCard(q,i){
-  const imgHtml = q.image
+  // photo = TG file_id, image = base64 preview
+  const hasImg  = q.photo || q.image;
+  const imgSrc  = q.image || '';   // preview faqat base64 dan
+  const imgHtml = hasImg
     ? `<div class="img-zone has" onclick="openSheet('imgSheet',${i})">
-        <img src="${q.image}"><button class="img-del" onclick="event.stopPropagation();rmImg(${i})">✕ O'chir</button>
+        ${imgSrc
+          ? `<img src="${imgSrc}">`
+          : `<div style="padding:12px;text-align:center;color:var(--accent);font-size:.82rem">✅ Rasm TG ga yuklangan<br><small style="color:var(--text-3)">${(q.photo||'').slice(0,30)}...</small></div>`
+        }
+        <button class="img-del" onclick="event.stopPropagation();rmImg(${i})">✕ O'chir</button>
        </div>`
     : `<div class="img-zone" onclick="openSheet('imgSheet',${i})">🖼️ Rasm qo'shish</div>`;
 
@@ -894,8 +903,32 @@ function onImgFile(e){
   r.onload=ev=>{ imgB64=ev.target.result; document.getElementById('imgPrevEl').src=imgB64; document.getElementById('imgPrevWrap').style.display='block'; };
   r.readAsDataURL(f);
 }
-function applyImg(){ if(!imgB64){toast('❌ Rasm tanlanmagan','err');return;} qs[imgTargetI].image=imgB64; closeSheet('imgSheet'); render(); toast('🖼️ Rasm qo\'shildi','ok'); }
-function rmImg(i){ qs[i].image=null; render(); toast('🗑 Rasm o\'chirildi',''); }
+
+async function applyImg(){
+  if(!imgB64){ toast('❌ Rasm tanlanmagan','err'); return; }
+  const btn=document.querySelector('#imgSheet .btn-primary');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Yuklanmoqda...'; }
+  try{
+    const r=await fetch(API_PROXY+'?endpoint=photo/upload',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({image_b64:imgB64,filename:'photo_'+Date.now()+'.jpg'})
+    });
+    const d=await r.json();
+    if(d.ok && d.file_id){
+      qs[imgTargetI].photo = d.file_id;   // bot ishlatadigan field
+      qs[imgTargetI].image = imgB64;       // preview uchun (local)
+      closeSheet('imgSheet'); render();
+      toast('🖼️ Rasm TG ga yuklandi','ok');
+    } else { toast('❌ '+(d.error||'Yuklanmadi'),'err'); }
+  } catch(ex){
+    toast('❌ Ulanish xatosi','err');
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='✅ Qo\'llash'; }
+    imgB64=null;
+  }
+}
+
+function rmImg(i){ qs[i].image=null; qs[i].photo=null; render(); toast('🗑 Rasm o\'chirildi',''); }
 
 // ─── SPLIT ───────────────────────────────────────────────────
 function openSplit(){ updateSpPrev(); openSheet('splitSheet'); }
@@ -1063,10 +1096,14 @@ async function doSaveQuestions(){
   document.getElementById('savingOv').classList.add('on');
   const questions = qs.map(q=>({
     type:'multiple_choice', question:q.q, text:q.q,
-    options: q.options.map((o,i)=>`${LBL[i]}) ${o}`),
-    correct: `${LBL[q.correct]}) ${q.options[q.correct]||''}`,
+    options:      q.options.map((o,i)=>`${LBL[i]}) ${o}`),
+    correct:      `${LBL[q.correct]}) ${q.options[q.correct]||''}`,
     correct_index: q.correct,
-    explanation: q.explanation||'', image: q.image||null, points:1,
+    explanation:  q.explanation||'',
+    // Rasm: TG file_id birinchi, keyin base64 fallback
+    photo:        q.photo||null,
+    image:        q.photo ? null : (q.image||null),
+    points:       1,
   }));
   try{
     const oldQc = testMeta?.question_count || 0;
