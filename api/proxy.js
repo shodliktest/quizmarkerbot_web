@@ -634,40 +634,68 @@ export default async function handler(request) {
 
   // ── result/save ───────────────────────────────────────────────
   if (ep === 'result/save' && request.method === 'POST') {
-    const { userId, testId, userName, userUsername,
-            score, total, percentage, passing_score, detailed_results, completedAt } = body || {};
-    if (!userId || !testId) return jsonResp({ error: 'userId va testId kerak' });
-    const rid = `${userId}_${testId}_${Date.now()}`;
-    const doc = {
-      result_id: rid, user_id: String(userId), user_name: userName || '',
-      user_username: userUsername || '', test_id: testId,
-      score: score || 0, total: total || 0, percentage: parseFloat(percentage) || 0,
-      passing_score: passing_score || 60,
-      passed: (parseFloat(percentage) || 0) >= (passing_score || 60),
-      detailed_results: detailed_results || [],
-      completed_at: completedAt ? new Date(completedAt).toISOString() : new Date().toISOString(),
-      source: 'web',
-    };
-    const tgResult = await sendDoc(`result_${rid}.json`, doc, `📊 RESULT | ${userName||userId} | ${testId} | ${Math.round(percentage||0)}%`);
-    const index = await getIndex();
-    if (index) {
-      const meta = (index.tests_meta||[]).find(t=>t.test_id===testId);
-      if (meta) {
-        const sc=(meta.solve_count||0)+1;
-        meta.solve_count=sc;
-        meta.avg_score=Math.round(((meta.avg_score||0)*(sc-1)+(parseFloat(percentage)||0))/sc*10)/10;
-      }
-      // result msg_id ni indexga saqlash — solvers uchun
-      if (tgResult?.ok) {
-        const rmid = tgResult.result.message_id;
-        const rfid = tgResult.result.document?.file_id;
-        index[`result_${testId}_${rid}`] = rmid;
-        if (rfid) index[`rfid_${rmid}`] = rfid;
-      }
-      saveIndex(index).catch(()=>{});
+    const {
+      userId, user_id, testId, testTitle, subject,
+      userName, user_name, userUsername, user_username,
+      score, correct, total, percentage, passing_score, passed,
+      elapsed, detailed_results, userAnswers, completedAt, source
+    } = body || {};
+
+    const finalUid   = String(userId || user_id || '0');
+    const finalName  = userName || user_name || ('User' + finalUid);
+    const finalUname = userUsername || user_username || '';
+    if (!finalUid || finalUid==='0' || !testId) {
+      return jsonResp({ error: 'userId va testId kerak' });
     }
+
+    const rid = `${finalUid}_${testId}_${Date.now()}`;
+    const doc = {
+      result_id:      rid,
+      user_id:        finalUid,
+      user_name:      finalName,
+      user_username:  finalUname,
+      test_id:        testId,
+      test_title:     testTitle || testId,
+      subject:        subject || '',
+      source:         source || 'web',
+      score:          parseFloat(score||percentage||0),
+      correct:        parseInt(correct||0),
+      total:          parseInt(total||0),
+      percentage:     parseFloat(percentage||score||0),
+      passing_score:  parseFloat(passing_score||60),
+      passed:         passed || (parseFloat(percentage||0) >= parseFloat(passing_score||60)),
+      elapsed:        parseInt(elapsed||0),
+      detailed_results: detailed_results || userAnswers || [],
+      completedAt:    completedAt || new Date().toISOString(),
+    };
+
+    // TG kanalga saqlash
+    const tgRes = await sendDoc(
+      `result_${rid}.json`, doc,
+      `📊 RESULT | ${finalName} | ${testId} | ${Math.round(parseFloat(percentage||0))}%`
+    );
+
+    // Index yangilash
+    const idx2 = await getIndex();
+    if (idx2) {
+      const meta2 = (idx2.tests_meta || []).find(t => t.test_id === testId);
+      if (meta2) {
+        const sc = (meta2.solve_count || 0) + 1;
+        meta2.solve_count = sc;
+        meta2.avg_score   = Math.round(((meta2.avg_score||0)*(sc-1) + parseFloat(percentage||0))/sc * 10)/10;
+      }
+      if (tgRes?.ok) {
+        const rmid = tgRes.result.message_id;
+        const rfid = tgRes.result.document?.file_id;
+        idx2[`result_${testId}_${rid}`] = rmid;
+        if (rfid) idx2[`rfid_${rmid}`] = rfid;
+      }
+      saveIndex(idx2).catch(()=>{});
+    }
+
     return jsonResp({ ok: true, result_id: rid });
   }
+
 
   // ── test/{id}/split ──────────────────────────────────────────
   // Bo'lish: {parts:[{from,to},...]} → {ok, created:[{tid,title,count,link}]}
@@ -775,64 +803,6 @@ export default async function handler(request) {
     }
 
     return jsonResp({ ok: true, created });
-  }
-
-  // ── test/{id}/solvers — kim yechgan (proxy format) ──────────
-  if (ep.match(/^test\/[^\/]+\/solvers$/)) {
-    const tid    = ep.split('/')[1];
-    const index  = await getIndex();
-    if (!index) return jsonResp([]);
-    // result_ fayllaridan solvers yig'amiz
-    const solvers = {};
-    // index da saqlangan result msg_id lar
-    const resultKeys = Object.keys(index).filter(k => k.startsWith('result_' + tid + '_'));
-    for (const rk of resultKeys.slice(0, 200)) {
-      const rmid = index[rk];
-      if (!rmid) continue;
-      try {
-        let rd = null;
-        const rfid = index['rfid_' + rmid];
-        if (rfid) rd = await readFileId(rfid);
-        if (!rd && rmid) rd = await tgGetFull(rmid);
-        if (!rd) continue;
-        const uid  = String(rd.user_id || rd.userId || '');
-        const name = rd.user_name || rd.userName || ('User ' + uid);
-        if (!uid) continue;
-        if (!solvers[uid]) {
-          solvers[uid] = { uid, name, username: rd.user_username || '', attempts: 0, best_score: 0, avg_score: 0, all_pcts: [], last_at: '' };
-        }
-        const pct = parseFloat(rd.percentage || 0);
-        solvers[uid].attempts++;
-        solvers[uid].all_pcts.push(pct);
-        if (pct > solvers[uid].best_score) solvers[uid].best_score = pct;
-        solvers[uid].avg_score = Math.round(solvers[uid].all_pcts.reduce((a,b)=>a+b,0) / solvers[uid].all_pcts.length);
-        solvers[uid].last_at = rd.completedAt || rd.completed_at || '';
-      } catch {}
-    }
-    const arr = Object.values(solvers).sort((a,b) => b.best_score - a.best_score);
-    return jsonResp({ ok: true, solvers: arr, total: arr.length });
-  }
-
-  // ── test/{id}/results — test natijalari (sayt) ───────────────
-  if (ep.match(/^test\/[^\/]+\/results$/)) {
-    const tid2   = ep.split('/')[1];
-    const index2 = await getIndex();
-    if (!index2) return jsonResp({ ok: true, results: [] });
-    const resultKeys2 = Object.keys(index2).filter(k => k.startsWith('result_' + tid2 + '_'));
-    const results2 = [];
-    for (const rk of resultKeys2.slice(0, 100)) {
-      const rmid2 = index2[rk];
-      if (!rmid2) continue;
-      try {
-        let rd2 = null;
-        const rfid2 = index2['rfid_' + rmid2];
-        if (rfid2) rd2 = await readFileId(rfid2);
-        if (!rd2) rd2 = await tgGetFull(rmid2);
-        if (rd2) results2.push(rd2);
-      } catch {}
-    }
-    results2.sort((a,b) => (b.completedAt||0) - (a.completedAt||0));
-    return jsonResp({ ok: true, results: results2 });
   }
 
   // ── results/{uid} ─────────────────────────────────────────────
