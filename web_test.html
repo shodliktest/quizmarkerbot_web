@@ -313,6 +313,59 @@
 @keyframes _sp{to{transform:rotate(360deg)}}
 .load-txt{font-size:.95rem;color:rgba(44,74,122,.7);font-weight:500}
 
+/* ── Pastki statistika ── */
+#bottom-stats {
+  width: calc(100% - 32px);
+  max-width: 480px;
+  margin: 14px auto 20px;
+}
+.bstats-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1.5px solid rgba(74,144,217,0.22);
+  border-radius: 18px;
+  padding: 14px 10px;
+  box-shadow: 0 4px 24px rgba(74,144,217,0.12);
+}
+.bstat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.bstat-icon {
+  font-size: 1.1rem;
+}
+.bstat-label {
+  font-size: .6rem;
+  font-weight: 700;
+  color: rgba(44,74,122,0.5);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.bstat-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #2c6db5;
+  font-family: Inter, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.bstat-val.correct { color: #059669; }
+.bstat-val.wrong   { color: #dc2626; }
+.bstat-val.pct     { color: #7c3aed; }
+.bstat-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(74,144,217,0.18);
+  flex-shrink: 0;
+}
+
 /* ── Qo'shimcha statistika stillari ── */
 #saveStatus {
   transition: all .3s ease;
@@ -356,7 +409,7 @@
     <div class="stat-row">
       <span class="stat-icon">👤</span>
       <span>Savol</span>
-      <span class="stat-val" id="qStatText">1 / 10</span>
+      <span class="stat-val" id="qStatText">1 / 0</span>
     </div>
     <div class="stat-row">
       <span class="stat-icon">◔</span>
@@ -364,6 +417,7 @@
       <span class="stat-val" id="pctStat">0%</span>
     </div>
   </div>
+
 </div>
 
 <!-- SUBJECT TITLE -->
@@ -383,6 +437,36 @@
     <button class="nav-btn finish" id="finishBtn" onclick="finishQuiz()">✓ Tugatish</button>
     <button class="nav-btn" id="nextBtn" onclick="nextQ()">Keyingi →</button>
   </div>
+
+  <!-- PASTKI STATISTIKA -->
+  <div id="bottom-stats" style="display:none">
+    <div class="bstats-inner">
+      <div class="bstat-item">
+        <span class="bstat-icon">🎯</span>
+        <span class="bstat-label">Urinish</span>
+        <span class="bstat-val" id="bAtt">0</span>
+      </div>
+      <div class="bstat-divider"></div>
+      <div class="bstat-item">
+        <span class="bstat-icon">✅</span>
+        <span class="bstat-label">To'g'ri</span>
+        <span class="bstat-val correct" id="bCor">0</span>
+      </div>
+      <div class="bstat-divider"></div>
+      <div class="bstat-item">
+        <span class="bstat-icon">❌</span>
+        <span class="bstat-label">Xato</span>
+        <span class="bstat-val wrong" id="bWrg">0</span>
+      </div>
+      <div class="bstat-divider"></div>
+      <div class="bstat-item">
+        <span class="bstat-icon">📊</span>
+        <span class="bstat-label">Foiz</span>
+        <span class="bstat-val pct" id="bPct">0%</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- RESULT SCREEN -->
@@ -576,6 +660,7 @@ async function boot(){
 }
 
 function showErr(msg){
+    const _bs=document.getElementById("bottom-stats");if(_bs)_bs.style.display="block";
   $('scr-load').innerHTML=`<div style="text-align:center;padding:2rem"><div style="font-size:2.5rem;margin-bottom:12px">⚠️</div><p style="color:rgba(44,74,122,.7);font-size:.9rem;margin-bottom:14px">${msg}</p><button onclick="history.back()" style="padding:11px 26px;border-radius:14px;background:linear-gradient(135deg,#4a90d9,#6bb0f0);border:none;color:#fff;font-family:inherit;font-weight:600;cursor:pointer">← Orqaga</button></div>`;
 }
 
@@ -621,6 +706,12 @@ function renderQ(){
   }).join('');
 
   updateHeader();
+
+  /* Pastki statistika yangilash */
+  const bA=document.getElementById("bAtt");if(bA)bA.textContent=att;
+  const bC=document.getElementById("bCor");if(bC)bC.textContent=cor;
+  const bW=document.getElementById("bWrg");if(bW)bW.textContent=att-cor;
+  const bP=document.getElementById("bPct");if(bP)bP.textContent=att>0?Math.round(cor/att*100)+"%":"0%";
 }
 
 function pick(i){
@@ -652,6 +743,7 @@ async function finish(){
 
   /* Result screen */
   $('quizArea').style.display='none';
+  const _bsh=document.getElementById('bottom-stats');if(_bsh)_bsh.style.display='none';
   $('resultScreen').style.display='flex';
   $('resultScreen').style.flexDirection='column';
   $('resultScreen').style.alignItems='center';
@@ -706,6 +798,7 @@ function retryTest(){
   if(timeSec>0){let rem=timeSec;const upd=()=>{if($('timerText'))$('timerText').textContent=fmt(rem)};upd();tmr=setInterval(()=>{rem--;upd();if(rem<=0){clearInterval(tmr);finish()}},1000)}
   $('resultScreen').style.display='none';
   $('quizArea').style.display='flex';
+  const _bsr=document.getElementById('bottom-stats');if(_bsr)_bsr.style.display='block';
   $('quizArea').style.flexDirection='column';
   $('quizArea').style.alignItems='center';
   renderQ();
