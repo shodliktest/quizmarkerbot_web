@@ -384,7 +384,7 @@
 </div>
 
 <!-- QUIZ AREA -->
-<div id="quizArea" style="width:100%;display:none;flex-direction:column;align-items:center;">
+<div id="quizArea" style="width:100%;display:none;flex-direction:column;align-items:center;gap:0;">
   <div class="question-card">
     <div class="q-number" id="qNumber">SAVOL 01</div>
     <div class="question-text" id="qText"></div>
@@ -451,7 +451,7 @@ function showErr(msg) {
   $('err-msg').textContent = msg; show('scr-err');
 }
 function show(id){ const e=$(id); if(e){ e.style.display='flex'; e.style.flexDirection='column'; } }
-function showFlex(id){ const e=$(id); if(e){ e.style.display='flex'; } }
+function showFlex(id){ const e=$(id); if(e){ e.style.display='flex'; e.style.flexDirection='column'; e.style.alignItems='center'; } }
 function hide(id){ const e=$(id); if(e) e.style.display='none'; }
 function showBlock(id){ const e=$(id); if(e) e.style.display='block'; }
 
@@ -482,13 +482,16 @@ async function boot() {
   try {
     const resp = await apiGet(`test/${TID}/full`);
     if(!resp || resp.error) { showErr('Test topilmadi: ' + TID); return; }
-    meta = resp;
 
-    let questions = norm(resp.questions||[]);
+    // proxy.js qaytaradi: { testData:{...}, questions:[...] }
+    meta = resp.testData || resp;
+    const rawQs = resp.questions || resp.testData?.questions || meta.questions || [];
+
+    let questions = norm(rawQs);
     if(!questions.length) { showErr("Bu testda savollar yo'q"); return; }
 
     // Shuffle
-    if(resp.shuffle_questions || resp.shuffleQuestions) questions.sort(()=>Math.random()-.5);
+    if(meta.shuffle_questions || meta.shuffleQuestions) questions.sort(()=>Math.random()-.5);
     // Variantlarni aralashtirish
     questions = questions.map(q => {
       const o = [...q.opts]; const ct = o[q.correct];
@@ -502,13 +505,13 @@ async function boot() {
     answers = new Array(qs.length).fill(null);
 
     // UI
-    $('subjectTitle').textContent = resp.title || TID;
+    $('subjectTitle').textContent = meta.title || meta.test_id || TID;
     if(DEMO) { $('demo-label').innerHTML = '<span class="demo-badge">🔍 DEMO — ' + DEMOMAX + ' ta savol</span>'; }
     showBlock('subject-card');
 
     // Timer
     t0 = Date.now();
-    const timeSec = (resp.time_limit || resp.timeLimit || 0) * 60;
+    const timeSec = (meta.time_limit || meta.timeLimit || 0) * 60;
     if(timeSec > 0) {
       let rem = timeSec;
       showBlock('timer-box');
@@ -522,7 +525,9 @@ async function boot() {
     }
 
     hide('scr-load');
-    showFlex('quizArea');
+    $('quizArea').style.display = 'flex';
+    $('quizArea').style.flexDirection = 'column';
+    $('quizArea').style.alignItems = 'center';
     renderQuestion();
   } catch(e) {
     console.error(e); showErr('Yuklashda xato: ' + e.message);
