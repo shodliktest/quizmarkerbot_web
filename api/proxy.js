@@ -168,6 +168,17 @@ async function streamlitAPI(params) {
 }
 
 // ── File o'qish yordamchilari ───────────────────────────────────
+async function getPhotoUrl(fileId) {
+  // TG file_id dan to'g'ridan URL yaratish
+  if (!fileId || typeof fileId !== 'string') return null;
+  try {
+    const f = await tgPost('getFile', { file_id: fileId });
+    const p = f?.result?.file_path;
+    if (!p) return null;
+    return `https://api.telegram.org/file/bot${BOT_TOKEN}/${p}`;
+  } catch { return null; }
+}
+
 async function readFileId(fileId) {
   try {
     const f = await tgPost('getFile', { file_id: fileId });
@@ -375,7 +386,19 @@ export default async function handler(request) {
     t.test_id = t.test_id || tid;
     t.authorId= t.authorId|| String(t.creator_id || '');
     t.subject = t.subject || t.category || 'other';
-    const webQs = (full.questions || []).map((q, i) => botToWeb(q, i));
+    // Har bir savolning rasm URL sini olish (parallel)
+    const rawQsList = full.questions || [];
+    const webQs = await Promise.all(rawQsList.map(async (q, i) => {
+      const wq = botToWeb(q, i);
+      // photo file_id → URL
+      if (wq.photo && !wq.photo.startsWith('http') && !wq.photo.startsWith('data:')) {
+        try {
+          const url = await getPhotoUrl(wq.photo);
+          if (url) wq.photo_url = url;
+        } catch {}
+      }
+      return wq;
+    }));
     return jsonResp({ testData: t, questions: webQs, total: webQs.length });
   }
 
