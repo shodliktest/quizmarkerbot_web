@@ -477,11 +477,64 @@ function norm(raw) {
   }).filter(q => q.txt && q.opts.length >= 2);
 }
 
+
+/* ── Test Cache (localStorage) ── */
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 soat
+
+function cacheKey(tid) { return `tp_test_${tid}`; }
+
+function saveTestCache(tid, data) {
+  try {
+    localStorage.setItem(cacheKey(tid), JSON.stringify({
+      data, ts: Date.now()
+    }));
+  } catch(e) {
+    // localStorage to'lib ketgan bo'lishi mumkin — eski cache larni tozalaymiz
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('tp_test_'))
+        .sort()
+        .slice(0, 3)
+        .forEach(k => localStorage.removeItem(k));
+      localStorage.setItem(cacheKey(tid), JSON.stringify({ data, ts: Date.now() }));
+    } catch {}
+  }
+}
+
+function loadTestCache(tid) {
+  try {
+    const raw = localStorage.getItem(cacheKey(tid));
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    // Cache muddati o'tmagan bo'lsa
+    if (Date.now() - ts < CACHE_TTL) return data;
+    // Muddati o'tgan — o'chiramiz
+    localStorage.removeItem(cacheKey(tid));
+    return null;
+  } catch { return null; }
+}
+
+function clearTestCache(tid) {
+  try { localStorage.removeItem(cacheKey(tid)); } catch {}
+}
+
 async function boot() {
   if(!TID) { showErr("URL da test ID yo'q (?id=...)"); return; }
   try {
-    const resp = await apiGet(`test/${TID}/full`);
-    if(!resp || resp.error) { showErr('Test topilmadi: ' + TID); return; }
+    // Avval localStorage cache dan tekshirish
+    let cachedData = loadTestCache(TID);
+    let resp;
+
+    if (cachedData) {
+      console.log('✅ Cache dan yuklandi:', TID);
+      resp = cachedData;
+    } else {
+      console.log('🌐 Serverdan yuklanmoqda:', TID);
+      resp = await apiGet(`test/${TID}/full`);
+      if (!resp || resp.error) { showErr('Test topilmadi: ' + TID); return; }
+      // Cache ga saqlash
+      saveTestCache(TID, resp);
+    }
 
     // proxy.js qaytaradi: { testData:{...}, questions:[...] }
     meta = resp.testData || resp;
@@ -542,6 +595,30 @@ function updateHeader() {
   $('pctStat').textContent   = pct + '%';
 }
 
+// Rasm cache
+const _photoCache = {};
+
+async function loadPhotoUrl(fileId, imgEl) {
+  if(!fileId) return;
+  if(_photoCache[fileId]) { showImg(imgEl, _photoCache[fileId]); return; }
+  try {
+    const r = await fetch('/api/proxy?endpoint=photo/url', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ file_id: fileId })
+    });
+    const d = await r.json();
+    if(d?.url) { _photoCache[fileId] = d.url; showImg(imgEl, d.url); }
+  } catch {}
+}
+
+function showImg(el, src) {
+  el.innerHTML = `<img src="${src}"
+    style="width:100%;max-height:240px;object-fit:contain;border-radius:16px;
+           border:1.5px solid rgba(74,144,217,0.25);background:rgba(255,255,255,0.7);
+           box-shadow:0 4px 20px rgba(74,144,217,0.15);display:block;"
+    onerror="this.parentElement.innerHTML=''">`;
+}
+
 function renderQuestion() {
   if(!qs.length) return;
   const q = qs[cur];
@@ -556,19 +633,15 @@ function renderQuestion() {
     imgEl.style.cssText = 'width:100%;max-width:480px;margin:0 auto 14px;';
     $('qText').insertAdjacentElement('beforebegin', imgEl);
   }
-  const imgSrc = q.photo_url || (q.img && q.img.startsWith('data:') ? q.img : null);
-  if(imgSrc){
-    imgEl.innerHTML = `<img src="${imgSrc}"
-      style="width:100%;max-height:240px;object-fit:contain;
-             border-radius:16px;
-             border:1.5px solid rgba(74,144,217,0.25);
-             background:rgba(255,255,255,0.7);
-             box-shadow:0 4px 20px rgba(74,144,217,0.15);
-             display:block;"
-      onerror="this.parentElement.innerHTML=''"
-    >`;
-  } else {
-    imgEl.innerHTML = '';
+  // Rasm ko'rsatish
+  imgEl.innerHTML = '';
+  const base64Src = q.img && q.img.startsWith('data:') ? q.img : null;
+  if(base64Src) {
+    showImg(imgEl, base64Src);
+  } else if(q.photo) {
+    // TG file_id → lazy URL
+    imgEl.innerHTML = '<div style="height:4px"></div>';
+    loadPhotoUrl(q.photo, imgEl);
   }
 
   const wrap = $('optionsWrap');
