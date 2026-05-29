@@ -473,7 +473,7 @@ function norm(raw) {
         correct = idx>=0 ? idx : 0;
       }
     }
-    return { txt, opts, correct, expl:q.explanation||'', photo:q.photo||null, img:q.image||null };
+    return { txt, opts, correct, expl:q.explanation||'', photo:q.photo||null, img:q.image||null, photo_url:q.photo_url||null };
   }).filter(q => q.txt && q.opts.length >= 2);
 }
 
@@ -548,18 +548,25 @@ function renderQuestion() {
   $('qNumber').textContent = 'SAVOL ' + String(cur+1).padStart(2,'0');
   $('qText').textContent   = q.txt;
 
-  // Rasm — faqat base64 bo'lsa ko'rsatiladi (TG file_id saytda ko'rsatib bo'lmaydi)
+  // Rasm ko'rsatish
   let imgEl = document.getElementById('q-img-wrap');
   if(!imgEl){
     imgEl = document.createElement('div');
     imgEl.id = 'q-img-wrap';
-    imgEl.style.cssText = 'width:100%;max-width:440px;margin:0 auto 12px;';
+    imgEl.style.cssText = 'width:100%;max-width:480px;margin:0 auto 14px;';
     $('qText').insertAdjacentElement('beforebegin', imgEl);
   }
-  if(q.img && q.img.startsWith('data:')){
-    imgEl.innerHTML = '<img src="'+q.img+'" style="width:100%;max-height:200px;object-fit:contain;border-radius:14px;border:1.5px solid rgba(74,144,217,0.2);background:rgba(255,255,255,0.6);">';
-  } else if(q.photo) {
-    imgEl.innerHTML = '<div style="padding:8px 14px;background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.2);border-radius:10px;font-size:.75rem;color:rgba(44,74,122,0.6);text-align:center;">📷 Rasm bot orqali ko'rsatiladi</div>';
+  const imgSrc = q.photo_url || (q.img && q.img.startsWith('data:') ? q.img : null);
+  if(imgSrc){
+    imgEl.innerHTML = `<img src="${imgSrc}"
+      style="width:100%;max-height:240px;object-fit:contain;
+             border-radius:16px;
+             border:1.5px solid rgba(74,144,217,0.25);
+             background:rgba(255,255,255,0.7);
+             box-shadow:0 4px 20px rgba(74,144,217,0.15);
+             display:block;"
+      onerror="this.parentElement.innerHTML=''"
+    >`;
   } else {
     imgEl.innerHTML = '';
   }
