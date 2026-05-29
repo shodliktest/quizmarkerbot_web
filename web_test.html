@@ -303,36 +303,52 @@
   .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(74,144,217,0.5); }
 </style>
 <style>
-.screen-msg{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px;text-align:center;padding:2rem}
-.spin{width:46px;height:46px;border:3.5px solid rgba(80,120,200,.2);border-top-color:#4a90d9;border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* Qo'shimcha elementlar */
+.screen-msg{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;gap:16px;text-align:center;padding:2rem}
+.spin{width:46px;height:46px;border:3.5px solid rgba(80,120,200,.2);
+  border-top-color:#4a90d9;border-radius:50%;animation:_spin .7s linear infinite}
+@keyframes _spin{to{transform:rotate(360deg)}}
 .screen-txt{font-size:.9rem;color:rgba(44,74,122,.7)}
-.back-btn-err{padding:11px 28px;border-radius:14px;background:linear-gradient(135deg,#4a90d9,#6bb0f0);border:none;color:#fff;font-family:inherit;font-weight:600;font-size:.87rem;cursor:pointer;box-shadow:0 4px 16px rgba(74,144,217,.4)}
-
-.stat-chip{flex:1;text-align:center;background:rgba(255,255,255,.55);backdrop-filter:blur(10px);border:1px solid rgba(74,144,217,.2);border-radius:12px;padding:10px 6px}
-.chip-val{font-size:1.05rem;font-weight:800;color:#2c6db5;font-family:Inter,sans-serif}
-.chip-lbl{font-size:.55rem;color:rgba(44,74,122,.5);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
-.save-info{font-size:.76rem;padding:8px 14px;border-radius:8px;margin-top:10px;text-align:center;border:1px solid rgba(74,144,217,.2);color:rgba(44,74,122,.6);background:rgba(74,144,217,.05)}
-.save-info.ok{color:#1a7a40;border-color:rgba(80,200,120,.35);background:rgba(80,200,120,.08)}
-.save-info.err{color:#c0392b;border-color:rgba(220,80,50,.3);background:rgba(220,80,50,.06)}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);z-index:2000;align-items:center;justify-content:center;padding:16px}
+.back-btn-e{padding:11px 28px;border-radius:14px;
+  background:linear-gradient(135deg,#4a90d9,#6bb0f0);
+  border:none;color:#fff;font-family:inherit;font-weight:600;
+  font-size:.87rem;cursor:pointer;}
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+  backdrop-filter:blur(8px);z-index:2000;align-items:center;
+  justify-content:center;padding:16px;}
 .modal-bg.open{display:flex}
-.modal{background:#fff;border-radius:24px;padding:30px 24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.modal-icon{display:block;font-size:52px;margin-bottom:12px;animation:bounce 1.2s ease-in-out infinite}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.modal-title{font-size:1.15rem;font-weight:800;color:#1a3560;margin-bottom:18px}
-.modal-stats{display:flex;gap:8px;margin-bottom:14px}
-.mstat{flex:1;background:rgba(74,144,217,.07);border:1px solid rgba(74,144,217,.2);border-radius:12px;padding:14px 6px}
-.mstat-v{font-size:1.8rem;font-weight:900;color:#2c6db5;margin-bottom:4px}
+.modal{background:#fff;border-radius:24px;padding:30px 24px;
+  max-width:480px;width:100%;max-height:90vh;overflow-y:auto;
+  text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-icon{display:block;font-size:52px;margin-bottom:12px;
+  animation:_bounce 1.2s ease-in-out infinite}
+@keyframes _bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.modal-title{font-size:1.1rem;font-weight:800;color:#1a3560;margin-bottom:16px}
+.m-stats{display:flex;gap:8px;margin-bottom:14px}
+.mstat{flex:1;background:rgba(74,144,217,.07);border:1px solid rgba(74,144,217,.2);
+  border-radius:12px;padding:14px 6px}
+.mstat-v{font-size:1.7rem;font-weight:900;color:#2c6db5;margin-bottom:4px}
 .mstat-l{font-size:.58rem;color:rgba(44,74,122,.5);text-transform:uppercase;letter-spacing:.5px}
-.verdict{padding:12px 16px;border-radius:12px;font-weight:600;font-size:.88rem;margin-bottom:14px;background:rgba(74,144,217,.06);border:1px solid rgba(74,144,217,.2);color:#2c6db5}
-.verdict.pass{background:rgba(80,200,120,.08);border-color:rgba(80,200,120,.35);color:#1a7a40}
+.verdict{padding:12px 16px;border-radius:12px;font-weight:600;font-size:.88rem;
+  margin-bottom:14px;background:rgba(74,144,217,.06);
+  border:1px solid rgba(74,144,217,.2);color:#2c6db5}
+.verdict.pass{background:rgba(80,200,120,.08);border-color:rgba(80,200,120,.3);color:#1a7a40}
 .verdict.fail{background:rgba(220,80,50,.07);border-color:rgba(220,80,50,.25);color:#c0392b}
-.rv-item{background:rgba(74,144,217,.04);border:1px solid rgba(74,144,217,.12);border-radius:10px;padding:10px 13px;margin-bottom:7px;border-left:3px solid rgba(74,144,217,.2)}
+.save-info{font-size:.76rem;padding:8px 14px;border-radius:8px;margin-top:10px;
+  text-align:center;border:1px solid rgba(74,144,217,.2);
+  color:rgba(44,74,122,.6);background:rgba(74,144,217,.05)}
+.save-info.ok{color:#1a7a40;border-color:rgba(80,200,120,.3);background:rgba(80,200,120,.07)}
+.save-info.err{color:#c0392b;border-color:rgba(220,80,50,.25);background:rgba(220,80,50,.06)}
+.rv-item{background:rgba(74,144,217,.04);border:1px solid rgba(74,144,217,.12);
+  border-radius:10px;padding:10px 13px;margin-bottom:7px;
+  text-align:left;border-left:3px solid rgba(74,144,217,.2)}
 .rv-item.ok{border-left-color:#0fdb8c}
 .rv-item.bad{border-left-color:#ef4444}
 .rv-q{font-size:.8rem;color:rgba(44,74,122,.8);margin-bottom:5px;font-weight:600}
-.rv-a{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:700;margin-bottom:3px}
+.rv-a{display:inline-block;padding:2px 8px;border-radius:6px;
+  font-size:.72rem;font-weight:700;margin-bottom:3px}
 .rv-a.c{background:rgba(15,219,140,.12);color:#1a7a40}
 .rv-a.w{background:rgba(239,68,68,.1);color:#c0392b}
 .rv-a.r{background:rgba(74,144,217,.1);color:#2c6db5}
@@ -340,91 +356,107 @@
 </head>
 <body>
 
-<!-- TIMER -->
-<div class="timer-fixed" id="timer" style="display:none"></div>
+<!-- Timer -->
+<div class="timer" id="timer">00:00</div>
 
-<!-- PAGE -->
-<div id="page">
+<div class="page" id="page">
 
   <!-- Loading -->
-  <div class="screen-msg" id="scr-load">
+  <div class="screen" id="scr-load">
     <div class="spin"></div>
-    <div class="screen-txt">Yuklanmoqda...</div>
+    <div class="screen-txt">Sehrli dunyo yuklanmoqda...</div>
   </div>
 
   <!-- Error -->
-  <div class="screen-msg" id="scr-err" style="display:none">
-    <div style="font-size:2.5rem">⚠️</div>
+  <div class="screen" id="scr-err" style="display:none">
+    <div style="font-size:3rem;filter:drop-shadow(0 0 12px rgba(239,68,68,.6))">⚠️</div>
     <div class="screen-txt" id="err-msg"></div>
-    <button class="back-btn-err" onclick="history.back()">← Orqaga</button>
+    <button class="back-btn" onclick="history.back()">← Orqaga</button>
   </div>
 
-  <!-- TOP BAR -->
-  <div class="top-bar" id="scr-test" style="display:none">
-    <div class="prog-box">
-      <div class="prog-bar-track">
-        <div class="prog-bar-fill" id="prog" style="width:0%"></div>
+  <!-- Test -->
+  <div id="scr-test" style="display:none">
+
+    <!-- Header -->
+    <div class="hcard">
+      <div class="crystal-wrap">
+        <div class="crystal">
+          <div class="crystal-name" id="h-name">—</div>
+        </div>
       </div>
+      <div class="h-chips" id="h-chips"></div>
     </div>
-    <div class="stats-box">
-      <div class="stat-row">
-        <span class="stat-icon">👤</span>
-        <span>Savol</span>
-        <span class="stat-val" id="h-name-mini">—</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-icon">◔</span>
-        <span>Tugallangan</span>
-        <span class="stat-val" id="pctStat">0%</span>
-      </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat att"><div class="stat-v" id="st-att">0</div><div class="stat-l">Urinish</div></div>
+      <div class="stat cor"><div class="stat-v" id="st-cor">0</div><div class="stat-l">To'g'ri</div></div>
+      <div class="stat wrg"><div class="stat-v" id="st-wrg">0</div><div class="stat-l">Xato</div></div>
+      <div class="stat pct"><div class="stat-v" id="st-pct">0%</div><div class="stat-l">Foiz</div></div>
     </div>
+
+    <!-- Progress -->
+    <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+
+    <!-- Dots -->
+    <div class="dots" id="dots"></div>
+
+    <!-- Question card -->
+    <div class="qcard">
+      <div class="qcard-inner">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+          <div class="q-badge" id="q-num">1 / 1</div>
+          <div class="hint-badge">💡 Hints</div>
+        </div>
+        <img class="q-img" id="q-img"/>
+        <div class="q-text" id="q-txt"></div>
+        <div class="opts" id="opts"></div>
+        <div id="expl" style="display:none"></div>
+      </div>
+      <div class="qcard-border"></div>
+    </div>
+
   </div>
-
-  <!-- SUBJECT -->
-  <div class="subject-card" id="h-subject" style="display:none">
-    <div class="subject-title" id="h-name"></div>
-    <div id="h-chips" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px"></div>
-  </div>
-
-  <!-- DOTS -->
-  <div id="dots" style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 16px;max-width:680px;margin:0 auto"></div>
-
-  <!-- STATS -->
-  <div style="display:flex;gap:8px;padding:0 16px;max-width:680px;margin:0 auto 10px;" id="stats-row" style="display:none">
-    <div class="stat-chip"><div class="chip-val" id="st-att">0</div><div class="chip-lbl">Urinish</div></div>
-    <div class="stat-chip" style="border-color:rgba(15,219,140,.3)"><div class="chip-val" style="color:#0fdb8c" id="st-cor">0</div><div class="chip-lbl">To'g'ri</div></div>
-    <div class="stat-chip" style="border-color:rgba(239,68,68,.3)"><div class="chip-val" style="color:#ef4444" id="st-wrg">0</div><div class="chip-lbl">Xato</div></div>
-    <div class="stat-chip" style="border-color:rgba(124,58,237,.3)"><div class="chip-val" style="color:#7c3aed" id="st-pct">0%</div><div class="chip-lbl">Foiz</div></div>
-  </div>
-
-  <!-- QUESTION -->
-  <div class="question-card" id="q-card" style="display:none">
-    <div class="q-number" id="q-num">SAVOL 01</div>
-    <img id="q-img" style="display:none;width:100%;max-height:200px;object-fit:contain;border-radius:12px;margin-bottom:12px;border:1.5px solid rgba(74,144,217,.2)">
-    <div class="question-text" id="q-txt"></div>
-  </div>
-
-  <!-- OPTIONS -->
-  <div class="options-wrap" id="opts" style="display:none"></div>
-
-  <!-- EXPLANATION -->
-  <div id="expl" style="display:none;max-width:680px;margin:0 auto;padding:0 16px 10px"></div>
-
-  <!-- NAV -->
-  <div class="bottom-nav" id="nav-panel" style="display:none">
-    <button class="nav-btn" id="prev-btn" onclick="prev()">← Oldingi</button>
-    <button class="nav-btn finish" onclick="askFinish()">🏁 Tugatish</button>
-    <button class="nav-btn" id="next-btn" onclick="next()">Keyingi →</button>
-  </div>
-
 </div>
 
-<!-- MODAL -->
+<!-- Nav panel (fixed bottom) -->
+<div class="nav-panel" id="nav-panel" style="display:none">
+  <button class="btn-prev" id="prev-btn" onclick="prev()" disabled title="Orqaga">←</button>
+  <button class="btn-finish" onclick="askFinish()">🚩 Tugatish</button>
+  <button class="btn-next" id="next-btn" onclick="next()">✔ Keyingi →</button>
+</div>
+
+<!-- Result Modal -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <span class="m-icon" id="m-icon">🏆</span>
+    <div class="m-title" id="m-title">Natija</div>
+    <div class="m-stats">
+      <div class="mstat"><div class="mstat-v" id="m-cor">0</div><div class="mstat-l">To'g'ri</div></div>
+      <div class="mstat"><div class="mstat-v" id="m-wrg">0</div><div class="mstat-l">Xato</div></div>
+      <div class="mstat"><div class="mstat-v" id="m-pct">0%</div><div class="mstat-l">Foiz</div></div>
+      <div class="mstat"><div class="mstat-v" id="m-time">—</div><div class="mstat-l">Vaqt</div></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="save-info" id="save-info"></div>
+    <div class="m-btns">
+      <button class="m-btn m-btn-retry" onclick="retry()">🔄 Qayta</button>
+      <button class="m-btn m-btn-rev"   onclick="toggleRev()">📋 Tahlil</button>
+      <button class="m-btn m-btn-exit"  onclick="goBack()">🚪 Chiqish</button>
+    </div>
+    <div id="rev-wrap" style="display:none" class="rv-area">
+      <div class="rv-title">♦ Javoblar tahlili ♦</div>
+      <div id="rev-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal">
     <span class="modal-icon" id="m-icon">🏆</span>
-    <h2 class="modal-title" id="m-title">Natija</h2>
-    <div class="modal-stats">
+    <div class="modal-title" id="m-title">Natija</div>
+    <div class="m-stats">
       <div class="mstat"><div class="mstat-v" id="m-cor">0</div><div class="mstat-l">To'g'ri</div></div>
       <div class="mstat"><div class="mstat-v" id="m-wrg">0</div><div class="mstat-l">Xato</div></div>
       <div class="mstat"><div class="mstat-v" id="m-pct">0%</div><div class="mstat-l">Foiz</div></div>
@@ -434,8 +466,8 @@
     <div class="save-info" id="save-info" style="display:none"></div>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px">
       <button class="restart-btn" onclick="retryTest()">🔄 Qayta</button>
-      <button class="restart-btn" onclick="toggleRev()" style="background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4);color:#7c3aed">📋 Tahlil</button>
-      <button class="restart-btn" onclick="goBack()" style="background:rgba(74,144,217,.12);border-color:rgba(74,144,217,.3);color:#2c6db5">🏠 Chiqish</button>
+      <button class="restart-btn" onclick="toggleRev()" style="background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.3);color:#7c3aed">📋 Tahlil</button>
+      <button class="restart-btn" onclick="goBack()" style="background:rgba(74,144,217,.1);border-color:rgba(74,144,217,.25);color:#2c6db5">🏠 Chiqish</button>
     </div>
     <div id="rev-wrap" style="display:none;margin-top:14px;text-align:left">
       <div id="rev-list"></div>
@@ -445,41 +477,37 @@
 
 <script>
 
-const _photoCache={};
-async function loadPhotoUrl(fileId,imgEl){
-  if(!fileId)return;
-  if(_photoCache[fileId]){setImg(imgEl,_photoCache[fileId]);return;}
-  try{
-    const r=await fetch('/api/proxy?endpoint=photo/url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_id:fileId})});
-    const d=await r.json();
-    if(d?.url){_photoCache[fileId]=d.url;setImg(imgEl,d.url);}
-  }catch{}
+/* ── localStorage Cache ── */
+const CACHE_TTL=24*60*60*1000;
+function cacheKey(t){return'tp_test_'+t;}
+function saveCache(t,d){
+  try{localStorage.setItem(cacheKey(t),JSON.stringify({d,ts:Date.now()}));}
+  catch{try{Object.keys(localStorage).filter(k=>k.startsWith('tp_test_')).slice(0,3).forEach(k=>localStorage.removeItem(k));localStorage.setItem(cacheKey(t),JSON.stringify({d,ts:Date.now()}));}catch{}}
 }
-function setImg(el,src){
-  el.innerHTML=`<img src="${src}" style="width:100%;max-height:220px;object-fit:contain;border-radius:14px;border:1.5px solid rgba(74,144,217,0.2);background:rgba(255,255,255,0.7);display:block;margin-bottom:10px;" onerror="this.parentElement.innerHTML=''">`;
+function loadCache(t){
+  try{const r=localStorage.getItem(cacheKey(t));if(!r)return null;const{d,ts}=JSON.parse(r);if(Date.now()-ts<CACHE_TTL)return d;localStorage.removeItem(cacheKey(t));return null;}
+  catch{return null;}
 }
 
-/* ── Test Cache ── */
-const CACHE_TTL = 24*60*60*1000;
-function cacheKey(tid){return 'tp_test_'+tid;}
-function saveTestCache(tid,data){
-  try{localStorage.setItem(cacheKey(tid),JSON.stringify({data,ts:Date.now()}));}
-  catch(e){
-    try{
-      Object.keys(localStorage).filter(k=>k.startsWith('tp_test_')).slice(0,3).forEach(k=>localStorage.removeItem(k));
-      localStorage.setItem(cacheKey(tid),JSON.stringify({data,ts:Date.now()}));
-    }catch{}
-  }
-}
-function loadTestCache(tid){
+/* ── Photo lazy load ── */
+const _pc={};
+async function loadPhoto(fid,el){
+  if(!fid)return;
+  if(_pc[fid]){showPhoto(el,_pc[fid]);return;}
   try{
-    const raw=localStorage.getItem(cacheKey(tid));
-    if(!raw)return null;
-    const{data,ts}=JSON.parse(raw);
-    if(Date.now()-ts<CACHE_TTL)return data;
-    localStorage.removeItem(cacheKey(tid));return null;
-  }catch{return null;}
+    const r=await fetch('/api/proxy?endpoint=photo/url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_id:fid})});
+    const d=await r.json();
+    if(d?.url){_pc[fid]=d.url;showPhoto(el,d.url);}
+  }catch{}
 }
+function showPhoto(el,src){
+  const img=document.createElement('img');
+  img.src=src;
+  img.style='width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin-bottom:10px;border:1.5px solid rgba(74,144,217,.2);background:rgba(255,255,255,.7);display:block;';
+  img.onerror=()=>el.innerHTML='';
+  el.innerHTML='';el.appendChild(img);
+}
+
 const LBL=['A','B','C','D','E','F','G','H'];
 const API='/api/proxy';
 const P=new URLSearchParams(location.search);
@@ -522,19 +550,22 @@ function norm(raw){
 async function boot(){
   if(!TID){showErr("URL da test ID yo'q");return}
   try{
-    // Cache dan tekshirish
-    let resp=loadTestCache(TID);
-    if(resp){console.log('✅ Cache:',TID);}
+    let resp=loadCache(TID);
+    if(resp){console.log('cache:',TID);}
     else{
-      console.log('🌐 Server:',TID);
       resp=await apiGet(`test/${TID}/full`);
       if(!resp||resp.error){showErr(`Test topilmadi: ${TID}`);return}
-      saveTestCache(TID,resp);
+      saveCache(TID,resp);
     }
-    meta=resp;
-    let questions=norm(resp.questions||[]);
+    meta=resp.testData||resp;
+    const _qs=resp.questions||resp.testData?.questions||meta.questions||[];
+    // meta dan kerakli maydonlar
+    if(!meta.title&&resp.testData)meta.title=resp.testData.title;
+    if(!meta.time_limit&&resp.testData)meta.time_limit=resp.testData.time_limit;
+    if(!meta.passing_score&&resp.testData)meta.passing_score=resp.testData.passing_score;
+    let questions=norm(_qs);
     if(!questions.length){showErr("Bu testda savollar yo'q");return}
-    if(resp.shuffle_questions||resp.shuffleQuestions)questions.sort(()=>Math.random()-.5);
+    if(meta.shuffle_questions||meta.shuffleQuestions)questions.sort(()=>Math.random()-.5);
     questions=questions.map(q=>{
       const o=[...q.opts];const ct=o[q.correct];
       for(let i=o.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[o[i],o[j]]=[o[j],o[i]]}
@@ -543,19 +574,19 @@ async function boot(){
     if(DEMO&&questions.length>DEMO_MAX)questions=questions.slice(0,DEMO_MAX);
     qs=questions;
 
-    $('h-name').textContent=resp.title||TID;
-    const sub=resp.category||resp.subject||'';
+    $('h-name').textContent=meta.title||TID;
+    const sub=meta.category||meta.subject||'';
     const chips=[
       sub?`<span class="hchip purple">📁 ${esc(sub)}</span>`:'',
       `<span class="hchip gold">📝 ${qs.length} savol</span>`,
       resp.time_limit?`<span class="hchip gold">⏱ ${resp.time_limit} daq</span>`:'',
-      resp.passing_score?`<span class="hchip purple">🎯 ${resp.passing_score}%</span>`:'',
+      meta.passing_score?`<span class="hchip purple">🎯 ${meta.passing_score}%</span>`:'',
       DEMO?`<span class="hchip demo">🔍 DEMO</span>`:'',
     ].filter(Boolean).join('');
     $('h-chips').innerHTML=chips;
 
     t0=Date.now();
-    const timeSec=(resp.time_limit||0)*60;
+    const timeSec=(meta.time_limit||0)*60;
     if(timeSec>0){
       let rem=timeSec;
       $('timer').classList.add('on');
@@ -585,16 +616,11 @@ function renderQ(){
   $('q-num').textContent=`${cur+1} / ${tot}`;
 
   // Rasm
-  let imgWrap=document.getElementById('q-img-wrap');
-  if(!imgWrap){
-    imgWrap=document.createElement('div');
-    imgWrap.id='q-img-wrap';
-    const qcard=document.querySelector('.question-card');
-    if(qcard)qcard.insertBefore(imgWrap,qcard.firstChild);
-  }
-  imgWrap.innerHTML='';
-  if(q.img&&q.img.startsWith('data:')){setImg(imgWrap,q.img);}
-  else if(q.photo){loadPhotoUrl(q.photo,imgWrap);}
+  let _iw=document.getElementById('_qimgwrap');
+  if(!_iw){_iw=document.createElement('div');_iw.id='_qimgwrap';const _qc=document.querySelector('.question-card');if(_qc)_qc.insertBefore(_iw,_qc.firstChild);}
+  _iw.innerHTML='';
+  if(q.img&&q.img.startsWith('data:')){showPhoto(_iw,q.img);}
+  else if(q.photo){loadPhoto(q.photo,_iw);}
   $('q-txt').textContent=q.txt;
 
   $('prev-btn').disabled=cur===0;
@@ -713,6 +739,7 @@ function toggleRev(){
 function goBack(){if(document.referrer)history.back();else location.href='/dashboard.html'}
 
 boot();
+
 </script>
 </body>
 </html>
