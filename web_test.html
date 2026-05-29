@@ -312,6 +312,26 @@
 .spin{width:46px;height:46px;border:3.5px solid rgba(74,144,217,.2);border-top-color:#4a90d9;border-radius:50%;animation:_sp .7s linear infinite}
 @keyframes _sp{to{transform:rotate(360deg)}}
 .load-txt{font-size:.95rem;color:rgba(44,74,122,.7);font-weight:500}
+
+/* ── Qo'shimcha statistika stillari ── */
+#saveStatus {
+  transition: all .3s ease;
+}
+.restart-btn {
+  transition: all .2s ease;
+}
+.restart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(74,144,217,.25);
+}
+#reviewArea .rv-row:hover {
+  background: rgba(255,255,255,.9) !important;
+}
+/* Timer rang o'zgarishi */
+.timer-text {
+  transition: color .3s;
+  font-variant-numeric: tabular-nums;
+}
 </style>
 </head>
 <body>
@@ -386,7 +406,56 @@
       </div>
     </div>
     <div class="result-msg" id="resultMsg"></div>
-    <button class="restart-btn" onclick="restart()">🔄 Qayta boshlash</button>
+
+    <!-- Vaqt va qo'shimcha statistika -->
+    <div style="display:flex;gap:10px;margin:16px 0;flex-wrap:wrap;justify-content:center">
+      <div class="r-stat" style="min-width:80px">
+        <div class="r-stat-val" id="rTime" style="font-size:1.1rem">—</div>
+        <div class="r-stat-lbl">⏱ Vaqt</div>
+      </div>
+      <div class="r-stat" style="min-width:80px">
+        <div class="r-stat-val" id="rPass" style="font-size:1.1rem">60%</div>
+        <div class="r-stat-lbl">🎯 O'tish bali</div>
+      </div>
+      <div class="r-stat" style="min-width:80px">
+        <div class="r-stat-val" id="rStatus" style="font-size:1.3rem">—</div>
+        <div class="r-stat-lbl">Holat</div>
+      </div>
+    </div>
+
+    <!-- Saqlash holati -->
+    <div id="saveStatus" style="display:none;margin:10px 0;padding:10px 16px;
+      border-radius:12px;font-size:.8rem;font-weight:600;
+      background:rgba(74,144,217,.08);border:1px solid rgba(74,144,217,.2);
+      color:rgba(44,74,122,.7)"></div>
+
+    <!-- Tugmalar -->
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+      <button class="restart-btn" onclick="restart()" 
+        style="display:flex;align-items:center;gap:6px">
+        🔄 Qayta boshlash
+      </button>
+      <button class="restart-btn" onclick="toggleReview()"
+        style="background:rgba(124,58,237,.12);border:1.5px solid rgba(124,58,237,.3);
+               color:#7c3aed;display:flex;align-items:center;gap:6px"
+        id="reviewBtn">
+        📋 Tahlil ko'rish
+      </button>
+      <button class="restart-btn" onclick="goBack()"
+        style="background:rgba(74,144,217,.1);border:1.5px solid rgba(74,144,217,.25);
+               color:#2c6db5;display:flex;align-items:center;gap:6px">
+        🏠 Chiqish
+      </button>
+    </div>
+
+    <!-- Javoblar tahlili -->
+    <div id="reviewArea" style="display:none;margin-top:20px;text-align:left;width:100%">
+      <div style="font-size:.78rem;font-weight:700;color:rgba(44,74,122,.5);
+        text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">
+        ♦ Javoblar tahlili
+      </div>
+      <div id="reviewList"></div>
+    </div>
   </div>
 </div>
 
@@ -474,12 +543,26 @@ async function boot(){
 
     /* Timer */
     const timeSec=(meta.time_limit||0)*60;
+    const _tb=document.getElementById('timer-box');
+    if(_tb)_tb.style.display='flex';
     if(timeSec>0){
-      const _tb=document.getElementById('timer-box');if(_tb)_tb.style.display='flex';
+      // Countdown
       let rem=timeSec;
-      const upd=()=>{if($('timerText'))$('timerText').textContent=fmt(rem)};
+      const upd=()=>{
+        const tEl=$('timerText');
+        if(tEl){
+          tEl.textContent=fmt(rem);
+          tEl.style.color=rem<60?'#dc2626':'';
+        }
+      };
       upd();
       tmr=setInterval(()=>{rem--;upd();if(rem<=0){clearInterval(tmr);finish()}},1000);
+    } else {
+      // Countup — o'tgan vaqt
+      let elapsed=0;
+      const upd=()=>{const tEl=$('timerText');if(tEl)tEl.textContent=fmt(elapsed)};
+      upd();
+      tmr=setInterval(()=>{elapsed++;upd()},1000);
     }
 
     /* Show quiz */
@@ -577,14 +660,23 @@ async function finish(){
   $('rCorrect').textContent=correct;
   $('rWrong').textContent=tot-correct;
   $('rPct').textContent=pct+'%';
-  $('resultMsg').textContent=passed?`✅ O'tdingiz! ${pct}% ≥ ${passScore}%`:`❌ ${pct}% < ${passScore}% — Yana urinib ko'ring!`;
+  // Yangi IDlar
+  const rTime=document.getElementById('rTime');
+  if(rTime)rTime.textContent=fmt(elapsed);
+  const rPass=document.getElementById('rPass');
+  if(rPass)rPass.textContent=passScore+'%';
+  const rStatus=document.getElementById('rStatus');
+  if(rStatus)rStatus.textContent=passed?'✅':'❌';
+  $('resultMsg').textContent=passed
+    ?`🌟 Tabriklaymiz! ${pct}% — O'tdingiz!`
+    :`💪 ${pct}% — Yana urinib ko'ring!`;
 
   /* Save */
   if(UID&&!DEMO){
-    const si=document.createElement('div');
-    si.style='font-size:.78rem;margin-top:12px;padding:8px 16px;border-radius:8px;background:rgba(74,144,217,.08);border:1px solid rgba(74,144,217,.2);color:rgba(44,74,122,.7)';
+    const si=document.getElementById('saveStatus')||document.createElement('div');
+    si.id='saveStatus';si.style.display='block';
+    si.style.cssText='padding:10px 16px;border-radius:12px;font-size:.8rem;font-weight:600;background:rgba(74,144,217,.08);border:1px solid rgba(74,144,217,.2);color:rgba(44,74,122,.7);margin:10px 0';
     si.textContent='⏳ Natija saqlanmoqda...';
-    $('resultScreen').appendChild(si);
     try{
       const uA=qs.map((_,i)=>answers[i]!==null?answers[i]:-1);
       const res=await fetch(API+'?endpoint=result/save',{
@@ -592,16 +684,16 @@ async function finish(){
         body:JSON.stringify({testId:TID,testTitle:meta?.title||TID,subject:meta?.category||meta?.subject||'',userId:UID,user_id:UID,userName:UNAME,user_name:UNAME,userUsername:UUN,user_username:UUN,score:pct,correct,total:tot,percentage:pct,passing_score:passScore,passed,elapsed,detailed_results:uA,userAnswers:uA,completedAt:new Date().toISOString(),source:DEMO?'web_demo':'web_test'})
       }).then(r=>r.json());
       if(res?.ok){
-        si.style.color='#059669';si.style.borderColor='rgba(5,150,105,.3)';si.style.background='rgba(5,150,105,.07)';
-        si.textContent='✅ Natija saqlandi!';
+        si.style.color='#059669';si.style.background='rgba(5,150,105,.07)';si.style.borderColor='rgba(5,150,105,.3)';
+        si.textContent='✅ Natija saqlandi va statistikaga qo\'shildi!';
         try{const ls=JSON.parse(localStorage.getItem('tp_results')||'[]');ls.unshift({testId:TID,testTitle:meta?.title||TID,userId:UID,correct,total:tot,percentage:pct,score:pct,elapsed,passing_score:passScore,passed,completedAt:new Date().toISOString()});localStorage.setItem('tp_results',JSON.stringify(ls.slice(0,200)))}catch{}
       }else{si.style.color='#dc2626';si.textContent='⚠️ '+(res?.error||'Xato')}
     }catch{si.style.color='#dc2626';si.textContent='⚠️ Ulanish xatosi'}
   }else if(DEMO){
-    const si=document.createElement('div');
-    si.style='font-size:.77rem;margin-top:10px;color:rgba(44,74,122,.55)';
-    si.textContent='🔍 Demo rejim — natija saqlanmaydi';
-    $('resultScreen').appendChild(si);
+    const sd=document.getElementById('saveStatus')||document.createElement('div');
+    sd.id='saveStatus';sd.style.display='block';
+    sd.style.cssText='padding:8px 14px;border-radius:10px;font-size:.78rem;color:rgba(180,100,20,.8);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);margin:10px 0';
+    sd.textContent='🔍 Demo rejim — natija saqlanmaydi';
   }
 }
 
@@ -621,6 +713,34 @@ function retryTest(){
 
 /* HTML da prevBtn/nextBtn/finishBtn onclick ni override qilamiz */
 /* quiz_graduate original onclick lar uchun alias */
+let _revOpen=false;
+function toggleReview(){
+  _revOpen=!_revOpen;
+  const ra=document.getElementById('reviewArea');
+  if(ra)ra.style.display=_revOpen?'block':'none';
+  const rb=document.getElementById('reviewBtn');
+  if(rb)rb.textContent=_revOpen?'📋 Yopish':'📋 Tahlil ko\'rish';
+  if(_revOpen){
+    const LBL=['A','B','C','D','E','F','G','H'];
+    const rl=document.getElementById('reviewList');
+    if(!rl)return;
+    rl.innerHTML=qs.map((q,i)=>{
+      const ua=answers[i];const ok=ua===q.correct;
+      return`<div style="background:rgba(255,255,255,.7);border:1px solid rgba(74,144,217,.15);
+        border-radius:12px;padding:12px 14px;margin-bottom:8px;
+        border-left:3px solid ${ua!==undefined?(ok?'#059669':'#dc2626'):'rgba(74,144,217,.2)'}">
+        <div style="font-size:.82rem;font-weight:600;color:rgba(44,74,122,.85);margin-bottom:6px;line-height:1.4">${i+1}. ${esc(q.txt)}</div>
+        ${ua!==undefined
+          ?`<span style="display:inline-block;padding:2px 9px;border-radius:6px;font-size:.72rem;font-weight:700;background:${ok?'rgba(5,150,105,.12)':'rgba(220,38,38,.1)'};color:${ok?'#059669':'#dc2626'}">${ok?'✅':'❌'} ${LBL[ua]||ua}) ${esc(q.opts[ua]||'')}</span>`
+          :'<span style="display:inline-block;padding:2px 9px;border-radius:6px;font-size:.72rem;font-weight:700;background:rgba(220,38,38,.08);color:#dc2626">⏭ O\'tkazildi</span>'}
+        ${!ok&&ua!==undefined?`<br><span style="display:inline-block;margin-top:4px;padding:2px 9px;border-radius:6px;font-size:.72rem;font-weight:700;background:rgba(74,144,217,.1);color:#2c6db5">✅ ${LBL[q.correct]}) ${esc(q.opts[q.correct]||'')}</span>`:''}
+        ${q.expl?`<div style="font-size:.73rem;color:rgba(44,74,122,.5);margin-top:5px">💡 ${esc(q.expl)}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+}
+function goBack(){if(document.referrer)history.back();else location.href='/dashboard.html';}
+
 function finishQuiz(){ askFinish(); }
 function restart(){ retryTest(); }
 
