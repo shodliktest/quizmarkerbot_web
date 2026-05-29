@@ -386,20 +386,23 @@ export default async function handler(request) {
     t.test_id = t.test_id || tid;
     t.authorId= t.authorId|| String(t.creator_id || '');
     t.subject = t.subject || t.category || 'other';
-    // Har bir savolning rasm URL sini olish (parallel)
+    // Savollarni oddiy map - rasm URL lar alohida endpoint orqali olinadi
     const rawQsList = full.questions || [];
-    const webQs = await Promise.all(rawQsList.map(async (q, i) => {
-      const wq = botToWeb(q, i);
-      // photo file_id → URL
-      if (wq.photo && !wq.photo.startsWith('http') && !wq.photo.startsWith('data:')) {
-        try {
-          const url = await getPhotoUrl(wq.photo);
-          if (url) wq.photo_url = url;
-        } catch {}
-      }
-      return wq;
-    }));
+    const webQs = rawQsList.map((q, i) => botToWeb(q, i));
     return jsonResp({ testData: t, questions: webQs, total: webQs.length });
+  }
+
+  // ── photo/url — file_id dan URL ─────────────────────────────────
+  if (ep === 'photo/url' && request.method === 'POST') {
+    try {
+      const { file_id } = body || {};
+      if (!file_id) return jsonResp({ error: 'file_id kerak' }, 400);
+      const url = await getPhotoUrl(file_id);
+      if (!url) return jsonResp({ error: 'URL topilmadi' }, 404);
+      return jsonResp({ ok: true, url });
+    } catch(e) {
+      return jsonResp({ error: String(e) }, 500);
+    }
   }
 
   // ── test/{id}/meta ────────────────────────────────────────────
