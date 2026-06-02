@@ -316,18 +316,30 @@ export default async function handler(request) {
     const chat = await tgPost('getChat', { chat_id: CHANNEL_ID });
     const pin  = chat?.result?.pinned_message;
     const pinData = pin?.document ? await readFileId(pin.document.file_id) : null;
+    const _idx2 = await getIndex();
+    const _tid  = new URL(request.url).searchParams.get('tid');
+    let   _tidInfo = null;
+    if (_tid && _idx2) {
+      const _meta = (_idx2.tests_meta||[]).find(t=>t.test_id===_tid);
+      const _msgId = _idx2[`test_${_tid}`];
+      _tidInfo = {
+        meta_found:  !!_meta,
+        meta_title:  _meta?.title || null,
+        msgId_found: !!_msgId,
+        msgId:       _msgId || null,
+      };
+    }
     return jsonResp({
       bot_token_set:   !!BOT_TOKEN,
       channel_id:      CHANNEL_ID,
       chat_ok:         chat?.ok,
-      chat_error:      chat?.error_code,
-      chat_desc:       chat?.description,
       has_pin:         !!pin,
-      pin_has_doc:     !!pin?.document,
       pin_file:        pin?.document?.file_name || null,
       pin_format:      pinData?.index_chunks ? 'YANGI (chunked)' : pinData?.tests_meta ? 'ESKI (flat)' : 'NOMA\'LUM',
       chunks_count:    pinData?.index_chunks?.length || 0,
-      index_tests:     (await getIndex())?.tests_meta?.length || 0,
+      index_tests:     _idx2?.tests_meta?.length || 0,
+      tid_check:       _tidInfo,
+      index_keys_sample: _idx2 ? Object.keys(_idx2).filter(k=>k.startsWith('test_')).slice(0,5) : [],
     });
   }
 
