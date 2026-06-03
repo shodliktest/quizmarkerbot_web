@@ -375,14 +375,24 @@ export default async function handler(request) {
     const index = await getIndex();
     if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
 
-    const meta  = (index.tests_meta || []).find(t => t.test_id === tid);
-    if (!meta) return jsonResp({ error: 'Test topilmadi' }, 404);
+    // Meta — yangi testlarda yo'q bo'lishi mumkin
+    let meta = (index.tests_meta || []).find(t => t.test_id === tid) || null;
 
-    // Avval fid_* cache dan qidirish
-    const msgId = index[`test_${tid}`];
-    if (!msgId) return jsonResp({ error: 'Test fayli topilmadi' }, 404);
+    // msgId — index da "test_TID" kalit
+    let msgId = index[`test_${tid}`] || null;
 
-    // fid cache bor bo'lsa tezroq o'qish
+    // TID katta/kichik harf farqi
+    if (!msgId) {
+      const tidL = tid.toLowerCase();
+      const key  = Object.keys(index).find(
+        k => k.toLowerCase() === `test_${tidL}`
+      );
+      if (key) msgId = index[key];
+    }
+
+    if (!msgId) return jsonResp({ error: `Test topilmadi: ${tid}` }, 404);
+
+    // Savollarni yuklash
     const fidKey = `fid_${msgId}`;
     let full = null;
     if (index[fidKey]) {
@@ -392,6 +402,12 @@ export default async function handler(request) {
       full = await tgGetFull(msgId);
     }
     if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
+
+    // Meta: index dan, yoki to'liq fayl dan
+    if (!meta) {
+      meta = { ...full };
+      delete meta.questions;
+    }
 
     const t = normMeta({ ...meta, ...full });
     t.id      = t.id      || t.test_id || tid;
