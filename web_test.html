@@ -590,9 +590,9 @@ function norm(raw){
 /* Photo */
 const _PC={};
 async function _ph(fid,el){
-  if(!fid)return;
-  if(_PC[fid]){_si(el,_PC[fid]);return}
-  try{const r=await fetch(API+'?endpoint=photo/url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({file_id:fid})});const d=await r.json();if(d?.url){_PC[fid]=d.url;_si(el,d.url)}}catch{}
+  if(!fid||fid.startsWith('data:'))return;
+  const streamUrl='/api/proxy?endpoint=photo/stream&fid='+encodeURIComponent(fid);
+  _si(el,streamUrl);
 }
 function _si(el,src){el.innerHTML=`<img src="${src}" style="width:100%;max-height:200px;object-fit:contain;border-radius:14px;margin-bottom:10px;border:1px solid rgba(74,144,217,.2);display:block" onerror="this.parentElement.innerHTML=''">`}
 
