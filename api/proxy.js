@@ -108,15 +108,21 @@ function botToWeb(q, idx) {
 function normMeta(t) {
   const out = { ...t };
   delete out.questions;
-  out.id           = out.id       || out.test_id;
-  out.test_id      = out.test_id  || out.id;
-  out.authorId     = out.authorId || String(out.creator_id || '');
-  out.subject      = out.subject  || out.category || 'other';
-  out.category     = out.category || out.subject  || 'other';
-  out.creator_name = out.creator_name || out.authorName || '';
-  out.is_active    = out.is_active !== false;
-  out.is_paused    = out.is_paused || false;
-  out.question_count = out.question_count || out.questionCount || 0;
+  out.id              = out.id             || out.test_id;
+  out.test_id         = out.test_id        || out.id;
+  out.authorId        = out.authorId       || String(out.creator_id || '');
+  out.subject         = out.subject        || out.category  || 'other';
+  out.category        = out.category       || out.subject   || 'other';
+  out.creator_name    = out.creator_name   || out.authorName || '';
+  out.is_active       = out.is_active      !== false;
+  out.is_paused       = out.is_paused      || false;
+  out.question_count  = out.question_count || out.questionCount || 0;
+  out.passing_score   = parseInt(out.passing_score || out.passScore || 60);
+  out.time_limit      = parseInt(out.time_limit    || out.timeLimit  || 0);
+  out.max_attempts    = parseInt(out.max_attempts  || 0);
+  out.ref_required    = !!(out.ref_required || false);
+  out.ref_count       = parseInt(out.ref_count || 0);
+  out.shuffle_questions = !!(out.shuffle_questions || out.shuffleQuestions || false);
   return out;
 }
 
@@ -1206,5 +1212,3 @@ export default async function handler(request) {
 
   return jsonResp({ error: "Noma'lum endpoint" }, 404);
 }
-  result.ref_required   = !!(t.ref_required || false);
-  result.ref_count      = parseInt(t.ref_count || 0);
