@@ -185,7 +185,14 @@ async function readFileId(fileId) {
     const p = f?.result?.file_path;
     if (!p) return null;
     const raw = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${p}`);
-    return raw.json();
+    if (!raw.ok) return null;
+    const ct = raw.headers.get('content-type') || '';
+    if (!ct.includes('json') && !ct.includes('octet')) {
+      // TG server xatosi (HTML/text) - null qaytaramiz
+      return null;
+    }
+    const text = await raw.text();
+    try { return JSON.parse(text); } catch { return null; }
   } catch { return null; }
 }
 
@@ -240,9 +247,12 @@ async function getIndex() {
       }
 
       if (merged.tests_meta.length > 0) {
-        _idx = merged; _idxTs = Date.now();
+        _idx   = merged;
+        _idxTs = Date.now();
         return _idx;
       }
+      // Chunk yuklandi lekin bo'sh - eski _idx ni qaytaramiz
+      if (_idx) return _idx;
       return null;
     }
 
@@ -262,8 +272,20 @@ async function tgGetFull(msgId) {
     });
     const doc = fwd?.result?.document;
     if (!doc) return null;
-    tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: fwd.result.message_id });
-    return readFileId(doc.file_id);
+    // O'chirishni keyinroq qilish (async)
+    tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: fwd.result.message_id }).catch(()=>{});
+    const data = await readFileId(doc.file_id);
+    if (data) return data;
+    // file_id ishlamasa getFile bilan yangi URL
+    try {
+      const f = await tgPost('getFile', { file_id: doc.file_id });
+      const p = f?.result?.file_path;
+      if (!p) return null;
+      const raw = await fetch(`https://api.telegram.org/file/bot${BOT_TOKEN}/${p}`);
+      if (!raw.ok) return null;
+      const text = await raw.text();
+      try { return JSON.parse(text); } catch { return null; }
+    } catch { return null; }
   } catch { return null; }
 }
 
@@ -329,9 +351,19 @@ export default async function handler(request) {
         msgId:       _msgId || null,
       };
     }
+    // Streamlit test
+    let stStatus = 'not_checked';
+    if (STREAMLIT_URL) {
+      try {
+        const stR = await fetch(STREAMLIT_URL + '/?api=public_tests', { signal: AbortSignal.timeout(5000) });
+        stStatus = stR.ok ? 'ok_' + stR.status : 'error_' + stR.status;
+      } catch(e) { stStatus = 'timeout: ' + String(e).slice(0,30); }
+    }
     return jsonResp({
       bot_token_set:   !!BOT_TOKEN,
       channel_id:      CHANNEL_ID,
+      streamlit_url:   STREAMLIT_URL || 'not_set',
+      streamlit_status: stStatus,
       chat_ok:         chat?.ok,
       has_pin:         !!pin,
       pin_file:        pin?.document?.file_name || null,
@@ -339,7 +371,6 @@ export default async function handler(request) {
       chunks_count:    pinData?.index_chunks?.length || 0,
       index_tests:     _idx2?.tests_meta?.length || 0,
       tid_check:       _tidInfo,
-      index_keys_sample: _idx2 ? Object.keys(_idx2).filter(k=>k.startsWith('test_')).slice(0,5) : [],
     });
   }
 
@@ -371,53 +402,86 @@ export default async function handler(request) {
 
   // ── test/{id}/full ────────────────────────────────────────────
   if (ep.startsWith('test/') && ep.endsWith('/full')) {
-    const tid   = ep.split('/')[1];
-    const index = await getIndex();
-    if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
+    const tid = ep.split('/')[1];
+    let full  = null;
+    let meta  = null;
 
-    // Meta — yangi testlarda yo'q bo'lishi mumkin
-    let meta = (index.tests_meta || []).find(t => t.test_id === tid) || null;
-
-    // msgId — index da "test_TID" kalit
-    let msgId = index[`test_${tid}`] || null;
-
-    // TID katta/kichik harf farqi
-    if (!msgId) {
-      const tidL = tid.toLowerCase();
-      const key  = Object.keys(index).find(
-        k => k.toLowerCase() === `test_${tidL}`
-      );
-      if (key) msgId = index[key];
+    // 1. Streamlit bot orqali olish (RAM cache → TG, eng ishonchli)
+    if (STREAMLIT_URL) {
+      try {
+        const stUrl = STREAMLIT_URL.replace(/\/?$/, '') + '/?api=test&id=' + tid;
+        const stRes = await fetch(stUrl, { signal: AbortSignal.timeout(12000) });
+        if (stRes.ok) {
+          const stTxt = await stRes.text();
+          // JSON ni topish (<pre> yoki to'g'ridan)
+          let stData = null;
+          // Streamlit <pre> tegi ichidagi JSON
+          const preM = stTxt.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+          if (preM) {
+            const cleaned = preM[1]
+              .replace(/&amp;/g,'&').replace(/&lt;/g,'<')
+              .replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+              .replace(/&#39;/g,"'").trim();
+            try { stData = JSON.parse(cleaned); } catch {}
+          }
+          // Fallback: to'g'ridan JSON qidirish
+          if (!stData) {
+            const rawM = stTxt.match(/\{"ok"[\s\S]*?(?=<\/pre>|<script|$)/);
+            if (rawM) { try { stData = JSON.parse(rawM[0]); } catch {} }
+          }
+          if (stData?.ok && stData?.test?.questions?.length) {
+            full = stData.test;
+          } else if (stData?.ok && stData?.test) {
+            meta = stData.test; // meta_only holat
+          }
+        }
+      } catch (_se) { /* streamlit timeout - TG ga o'tamiz */ }
     }
 
-    if (!msgId) return jsonResp({ error: `Test topilmadi: ${tid}` }, 404);
-
-    // Savollarni yuklash
-    const fidKey = `fid_${msgId}`;
-    let full = null;
-    if (index[fidKey]) {
-      full = await readFileId(index[fidKey]);
-    }
+    // 2. TG Index orqali olish (fallback)
     if (!full?.questions?.length) {
-      full = await tgGetFull(msgId);
+      try {
+        const index = await getIndex();
+        if (index) {
+          meta = meta || (index.tests_meta || []).find(t => t.test_id === tid) || null;
+          let msgId = index[`test_${tid}`] || null;
+          if (!msgId) {
+            const tidL = tid.toLowerCase();
+            const key  = Object.keys(index).find(k => k.toLowerCase() === `test_${tidL}`);
+            if (key) msgId = index[key];
+          }
+          if (msgId) {
+            const fidKey = `fid_${msgId}`;
+            if (index[fidKey]) full = await readFileId(index[fidKey]);
+            if (!full?.questions?.length) full = await tgGetFull(msgId);
+          }
+        }
+      } catch (_ie) { /* ignore */ }
     }
-    if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
 
-    // Meta: index dan, yoki to'liq fayl dan
-    if (!meta) {
-      meta = { ...full };
-      delete meta.questions;
+    if (!full?.questions?.length) {
+      return jsonResp({ error: `Test topilmadi: ${tid}` }, 404);
     }
 
+    if (!meta) { meta = { ...full }; delete meta.questions; }
     const t = normMeta({ ...meta, ...full });
     t.id      = t.id      || t.test_id || tid;
     t.test_id = t.test_id || tid;
     t.authorId= t.authorId|| String(t.creator_id || '');
     t.subject = t.subject || t.category || 'other';
-    // Savollarni oddiy map - rasm URL lar alohida endpoint orqali olinadi
-    const rawQsList = full.questions || [];
-    const webQs = rawQsList.map((q, i) => botToWeb(q, i));
+    const webQs = (full.questions || []).map((q, i) => botToWeb(q, i));
     return jsonResp({ testData: t, questions: webQs, total: webQs.length });
+  }
+
+  // ── photo/stream — redirect (URL expiry yo'q) ─────────────────
+  if (ep === 'photo/stream') {
+    try {
+      const fid = new URL(request.url).searchParams.get('fid');
+      if (!fid) return new Response('fid kerak', { status: 400 });
+      const url = await getPhotoUrl(fid);
+      if (!url) return new Response('Topilmadi', { status: 404 });
+      return Response.redirect(url, 302);
+    } catch(e) { return new Response(String(e), { status: 500 }); }
   }
 
   // ── photo/url — file_id dan URL ─────────────────────────────────
@@ -433,11 +497,226 @@ export default async function handler(request) {
     }
   }
 
+
+  // ── test/{id}/questions — savollarni saqlash (POST) ──────────
+  if (ep.startsWith('test/') && ep.endsWith('/questions') && request.method === 'POST') {
+    try {
+      const tid   = ep.split('/')[1];
+      const index = await getIndex();
+      if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
+
+      const msgId = index[`test_${tid}`];
+      if (!msgId) return jsonResp({ error: 'Test topilmadi' }, 404);
+
+      // Eski testni yuklab olamiz
+      const fidKey = `fid_${msgId}`;
+      let old = null;
+      if (index[fidKey]) old = await readFileId(index[fidKey]);
+      if (!old) old = await tgGetFull(msgId);
+      if (!old) return jsonResp({ error: 'Test fayli topilmadi' }, 404);
+
+      // Yangi savollar
+      const questions = (body?.questions || []).map(q => webToBot(q));
+      const updated   = { ...old, questions, question_count: questions.length };
+      const oldQc     = (old.questions || []).length;
+
+      // Yangi fayl yuborish
+      const res = await sendDoc(
+        `test_${tid}.json`, updated,
+        `TEST | ${updated.title || tid} | ${questions.length} savol | ${tid}`
+      );
+
+      if (!res?.ok) return jsonResp({ error: 'Saqlash xatosi' }, 500);
+
+      const newMsgId = res.result.message_id;
+      const newFid   = res.result.document?.file_id;
+
+      // Index yangilash
+      index[`test_${tid}`]       = newMsgId;
+      if (newFid) index[`fid_${newMsgId}`] = newFid;
+      // Eski xabarni o'chirish
+      if (msgId !== newMsgId) {
+        tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: msgId }).catch(() => {});
+        delete index[`fid_${msgId}`];
+      }
+      // tests_meta yangilash
+      const metaArr = index.tests_meta || [];
+      const mIdx    = metaArr.findIndex(m => m.test_id === tid);
+      if (mIdx >= 0) {
+        metaArr[mIdx].question_count = questions.length;
+      }
+      await saveIndex(index);
+
+      return jsonResp({ ok: true, question_count: questions.length, old_count: oldQc });
+    } catch(e) {
+      return jsonResp({ error: String(e) }, 500);
+    }
+  }
+
+  // ── test/{id}/update — meta yangilash (POST) ─────────────────
+  if (ep.startsWith('test/') && ep.endsWith('/update') && request.method === 'POST') {
+    try {
+      const tid   = ep.split('/')[1];
+      const index = await getIndex();
+      if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
+
+      const allowed = ['title','category','difficulty','visibility','time_limit',
+                       'poll_time','passing_score','max_attempts',
+                       'is_active','shuffle_questions','show_result',
+                       'ref_required','ref_count'];
+      const updates = {};
+      for (const k of allowed) {
+        if (body && k in body) updates[k] = body[k];
+      }
+
+      // Meta yangilash
+      const metaArr = index.tests_meta || [];
+      const mIdx    = metaArr.findIndex(m => m.test_id === tid);
+      if (mIdx < 0) return jsonResp({ error: 'Test topilmadi' }, 404);
+      Object.assign(metaArr[mIdx], updates);
+
+      // Test faylidagi meta ham yangilash
+      const msgId = index[`test_${tid}`];
+      if (msgId) {
+        const fidKey = `fid_${msgId}`;
+        let old = null;
+        if (index[fidKey]) old = await readFileId(index[fidKey]);
+        if (!old) old = await tgGetFull(msgId);
+        if (old) {
+          Object.assign(old, updates);
+          const res = await sendDoc(
+            `test_${tid}.json`, old,
+            `TEST | ${old.title || tid} | ${(old.questions||[]).length} savol | ${tid}`
+          );
+          if (res?.ok) {
+            const nm = res.result.message_id;
+            const nf = res.result.document?.file_id;
+            index[`test_${tid}`] = nm;
+            if (nf) index[`fid_${nm}`] = nf;
+            if (msgId !== nm) {
+              tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: msgId }).catch(() => {});
+              delete index[`fid_${msgId}`];
+            }
+          }
+        }
+      }
+      await saveIndex(index);
+      return jsonResp({ ok: true, updates });
+    } catch(e) {
+      return jsonResp({ error: String(e) }, 500);
+    }
+  }
+
+  // ── test/{id}/delete — testni o'chirish (POST) ───────────────
+  if (ep.startsWith('test/') && ep.endsWith('/delete') && request.method === 'POST') {
+    try {
+      const tid   = ep.split('/')[1];
+      const index = await getIndex();
+      if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
+
+      // tests_meta dan olib tashlash
+      const before = (index.tests_meta || []).length;
+      index.tests_meta = (index.tests_meta || []).filter(m => m.test_id !== tid);
+
+      // Test xabarini o'chirish
+      const msgId = index[`test_${tid}`];
+      if (msgId) {
+        tgPost('deleteMessage', { chat_id: CHANNEL_ID, message_id: msgId }).catch(() => {});
+        delete index[`test_${tid}`];
+        const fidKey = `fid_${msgId}`;
+        if (index[fidKey]) delete index[fidKey];
+      }
+
+      if (before === (index.tests_meta || []).length && !msgId) {
+        return jsonResp({ error: 'Test topilmadi' }, 404);
+      }
+
+      await saveIndex(index);
+      return jsonResp({ ok: true, deleted: tid });
+    } catch(e) {
+      return jsonResp({ error: String(e) }, 500);
+    }
+  }
+
+  // ── test/{id}/split — testni bo'lish (POST) ──────────────────
+  if (ep.startsWith('test/') && ep.endsWith('/split') && request.method === 'POST') {
+    try {
+      const tid   = ep.split('/')[1];
+      const index = await getIndex();
+      if (!index) return jsonResp({ error: 'Index topilmadi' }, 500);
+
+      const msgId = index[`test_${tid}`];
+      if (!msgId) return jsonResp({ error: 'Test topilmadi' }, 404);
+
+      let full = null;
+      const fidKey = `fid_${msgId}`;
+      if (index[fidKey]) full = await readFileId(index[fidKey]);
+      if (!full) full = await tgGetFull(msgId);
+      if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
+
+      const splitAt = parseInt(body?.split_at || Math.ceil(full.questions.length / 2));
+      const q1 = full.questions.slice(0, splitAt);
+      const q2 = full.questions.slice(splitAt);
+
+      const saved = [];
+      for (const [i, qs] of [[1, q1], [2, q2]]) {
+        const newTid  = tid + '_P' + i;
+        const newTest = {
+          ...full, test_id: newTid,
+          title: `${full.title || tid} — ${i}-qism`,
+          questions: qs, question_count: qs.length,
+        };
+        const res = await sendDoc(
+          `test_${newTid}.json`, newTest,
+          `TEST | ${newTest.title} | ${qs.length} savol | ${newTid}`
+        );
+        if (!res?.ok) continue;
+        const nm = res.result.message_id;
+        const nf = res.result.document?.file_id;
+        index[`test_${newTid}`] = nm;
+        if (nf) index[`fid_${nm}`] = nf;
+        const meta = { ...full, test_id: newTid,
+          title: newTest.title, question_count: qs.length };
+        delete meta.questions;
+        (index.tests_meta = index.tests_meta || []).push(meta);
+        saved.push({ tid: newTid, count: qs.length });
+      }
+      await saveIndex(index);
+      return jsonResp({ ok: true, parts: saved });
+    } catch(e) {
+      return jsonResp({ error: String(e) }, 500);
+    }
+  }
+
   // ── test/{id}/meta ────────────────────────────────────────────
   if (ep.startsWith('test/') && ep.endsWith('/meta')) {
     const tid   = ep.split('/')[1];
+    // Index dan meta
     const index = await getIndex();
-    const meta  = (index?.tests_meta || []).find(t => t.test_id === tid);
+    let meta = (index?.tests_meta || []).find(t => t.test_id === tid) || null;
+    
+    // Streamlit dan ham tekshirish (meta_only)
+    if (!meta && STREAMLIT_URL) {
+      try {
+        const stUrl = STREAMLIT_URL.replace(/\/?$/, '') + '/?api=test&id=' + tid;
+        const stRes = await fetch(stUrl, { signal: AbortSignal.timeout(8000) });
+        if (stRes.ok) {
+          const txt = await stRes.text();
+          const preM2 = txt.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+          let d = null;
+          if (preM2) {
+            const c2 = preM2[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').trim();
+            try { d = JSON.parse(c2); } catch {}
+          }
+          if (!d) {
+            const rm2 = txt.match(/\{"ok"[\s\S]*?(?=<\/pre>|<script|$)/);
+            if (rm2) { try { d = JSON.parse(rm2[0]); } catch {} }
+          }
+          if (d?.ok && d?.test) meta = d.test;
+        }
+      } catch {}
+    }
+    
     if (!meta) return jsonResp({ error: 'Topilmadi' }, 404);
     return jsonResp(normMeta({ ...meta }));
   }
@@ -927,3 +1206,5 @@ export default async function handler(request) {
 
   return jsonResp({ error: "Noma'lum endpoint" }, 404);
 }
+  result.ref_required   = !!(t.ref_required || false);
+  result.ref_count      = parseInt(t.ref_count || 0);
