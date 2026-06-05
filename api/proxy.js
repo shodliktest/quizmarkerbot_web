@@ -206,7 +206,7 @@ async function readFileId(fileId) {
 let _idx = null, _idxTs = 0;
 
 async function getIndex() {
-  if (_idx && Date.now() - _idxTs < 60_000) return _idx;
+  if (_idx && Date.now() - _idxTs < 10_000) return _idx;  // 10s cache
   try {
     const chat = await tgPost('getChat', { chat_id: CHANNEL_ID });
     const pin  = chat?.result?.pinned_message;
