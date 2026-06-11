@@ -427,7 +427,7 @@ body{
 <script src="js/api.js"></script>
 <script>
 /* ── Fallbacks ── */
-if(typeof normalizeQ==='undefined'){window.normalizeQ=function(arr){return(arr||[]).map(q=>{const type=q.type==='multiple_choice'?'multiple':q.type==='true_false'?'truefalse':q.type||'multiple';const text=q.text||q.question||q.q||'';const options=(q.options||[]).map(o=>String(o));let correct=0;if(typeof q.correct==='number'){correct=q.correct;}else if(typeof q.correct==='string'){const m=q.correct.match(/^([A-H])\s*[).]/i);if(m){correct=m[1].toUpperCase().charCodeAt(0)-65;}else{const idx=options.findIndex(o=>o===q.correct||o.trim()===q.correct.trim()||o.replace(/^[A-H]\s*[).]\s*/i,'').trim()===q.correct.replace(/^[A-H]\s*[).]\s*/i,'').trim());correct=idx>=0?idx:0;}}return{...q,type,text,options,correct,explanation:q.explanation||'',photo:q.photo||null,image:q.image||null,points:q.points||1};});};}
+if(typeof normalizeQ==='undefined'){window.normalizeQ=function(arr){return(arr||[]).map(q=>{const type=q.type==='multiple_choice'?'multiple':q.type==='true_false'?'truefalse':q.type||'multiple';const text=q.text||q.question||q.q||'';const options=(q.options||[]).map(o=>String(o));let correct=0;if(typeof q.correct==='number'){correct=q.correct;}else if(typeof q.correct==='string'){const m=q.correct.match(/^([A-J])\s*[).]/i);if(m){correct=m[1].toUpperCase().charCodeAt(0)-65;}else{const idx=options.findIndex(o=>o===q.correct||o.trim()===q.correct.trim()||o.replace(/^[A-J]\s*[).]\s*/i,'').trim()===q.correct.replace(/^[A-J]\s*[).]\s*/i,'').trim());correct=idx>=0?idx:0;}}return{...q,type,text,options,correct,explanation:q.explanation||'',photo:q.photo||null,image:q.image||null,points:q.points||1};});};}
 if(typeof esc==='undefined'){window.esc=function(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;};}
 if(typeof fmtTime==='undefined'){window.fmtTime=function(s){s=s||0;return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};}
 if(typeof getSubject==='undefined'){const _S={english:{label:'English',emoji:'🇬🇧'},arabic:{label:'Arabcha',emoji:'🕌'},russian:{label:'Ruscha',emoji:'🇷🇺'},turkish:{label:'Turkcha',emoji:'🇹🇷'},uzbek:{label:"O'zbekcha",emoji:'🇺🇿'},math:{label:'Matematika',emoji:'🧮'},it:{label:'IT / CS',emoji:'💻'},science:{label:'Fanlar',emoji:'🔬'},religion:{label:'Din',emoji:'📖'},history:{label:'Tarix',emoji:'🏛️'},biology:{label:'Biologiya',emoji:'🧬'},chemistry:{label:'Kimyo',emoji:'⚗️'},physics:{label:'Fizika',emoji:'⚡'},literature:{label:'Adabiyot',emoji:'✍️'},sport:{label:'Sport',emoji:'⚽'},other:{label:'Boshqa',emoji:'📚'}};window.getSubject=function(k){if(!k)return _S.other;const low=k.toLowerCase().replace(/[\s\-_]/g,'');if(_S[low])return _S[low];const f=Object.entries(_S).find(([key])=>low.includes(key));return f?f[1]:{label:k,emoji:'📚'};};window.getIco=function(s){if(!s)return'📚';const k=(s||'').toLowerCase().replace(/[\s\-_]/g,'');const IC={english:'🇬🇧',arabic:'🕌',russian:'🇷🇺',turkish:'🇹🇷',uzbek:'🇺🇿',math:'🧮',it:'💻',science:'🔬',religion:'📖',history:'🏛️',biology:'🧬',chemistry:'⚗️',physics:'⚡',literature:'✍️',sport:'⚽',other:'📚'};return IC[k]||Object.entries(IC).find(([x])=>k.includes(x))?.[1]||'📚';};}
@@ -438,7 +438,7 @@ const TH={get(){return localStorage.getItem('tp_theme')||(matchMedia('(prefers-c
 TH.set(TH.get());document.getElementById('tbtn').onclick=()=>TH.toggle();
 window.addEventListener('storage',e=>{if(e.key==='tp_theme'&&e.newValue)TH.set(e.newValue);});
 
-const LBL=['A','B','C','D','E','F','G','H'];
+const LBL=['A','B','C','D','E','F','G','H','I','J'];
 
 /* ── State ── */
 let testData=null,questions=[],answers={},curIdx=0,startTime=Date.now(),timerInt=null;
@@ -552,7 +552,7 @@ function renderQ(){
     if(showFeedback&&q.explanation)body+=`<div class="expl">💡 ${esc(q.explanation)}</div>`;
   }else{
     body='<div class="opts">'+(q.options||[]).map((o,i)=>{
-      const rawTxt=String(o).replace(/^[A-H]\s*[).]\s*/i,'').trim();
+      const rawTxt=String(o).replace(/^[A-J]\s*[).]\s*/i,'').trim();
       let cls='opt',dis='';
       if(showFeedback){
         if(i===q.correct)cls+=' correct';
@@ -687,7 +687,7 @@ function toggleReview(){
           ${q.explanation?`<div class="expl">💡 ${esc(q.explanation)}</div>`:''}</div>`;
       }
       const ua=answers[i];const ok=ua===q.correct;
-      const rawOpts=(q.options||[]).map(o=>String(o).replace(/^[A-H]\s*[).]\s*/i,'').trim());
+      const rawOpts=(q.options||[]).map(o=>String(o).replace(/^[A-J]\s*[).]\s*/i,'').trim());
       return `<div class="rv-item ${ok?'rv-c':'rv-w'}">
         <div class="rv-q">${i+1}. ${esc(q.text||q.question||'')}</div>
         ${ua!==undefined

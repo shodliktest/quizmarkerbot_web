@@ -577,7 +577,7 @@ window.addEventListener('storage', e => {
 
 // ─── CONFIG ──────────────────────────────────────────────────
 const API_PROXY    = '/api/proxy';
-const LBL          = ['A','B','C','D','E','F','G','H'];
+const LBL          = ['A','B','C','D','E','F','G','H','I','J'];
 // Streamlit URL — Vercel environment variable orqali yoki js/api.js dan
 const STREAMLIT_URL = (typeof window._STREAMLIT_URL !== 'undefined')
   ? window._STREAMLIT_URL : '';
@@ -650,16 +650,16 @@ function initData(questions){
 }
 
 function normalizeOpts(opts){
-  return opts.map(o => String(o).replace(/^[A-H]\s*[).]\s*/i,'').trim() || String(o));
+  return opts.map(o => String(o).replace(/^[A-J]\s*[).]\s*/i,'').trim() || String(o));
 }
 
 function resolveCorrect(q){
   if(typeof q.correct==='number') return q.correct;
   if(typeof q.correct==='string'){
-    const m = q.correct.match(/^([A-H])\s*[).]/i);
+    const m = q.correct.match(/^([A-J])\s*[).]/i);
     if(m) return m[1].toUpperCase().charCodeAt(0)-65;
-    const opts = (q.options||[]).map(o=>String(o).replace(/^[A-H]\s*[).]\s*/i,'').trim());
-    const cc = q.correct.replace(/^[A-H]\s*[).]\s*/i,'').trim();
+    const opts = (q.options||[]).map(o=>String(o).replace(/^[A-J]\s*[).]\s*/i,'').trim());
+    const cc = q.correct.replace(/^[A-J]\s*[).]\s*/i,'').trim();
     const idx = opts.findIndex(o=>o===cc||o.includes(cc)||cc.includes(o));
     return idx>=0?idx:0;
   }

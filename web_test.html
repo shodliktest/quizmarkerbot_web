@@ -548,7 +548,7 @@
 /* ═══════════════════════════════════════════
    WEB TEST — quiz_graduate dizayni + Bot API
 ═══════════════════════════════════════════ */
-const LBL = ['A','B','C','D','E','F','G','H'];
+const LBL = ['A','B','C','D','E','F','G','H','I','J'];
 const API  = '/api/proxy';
 const P    = new URLSearchParams(location.search);
 const TID  = (P.get('id') || '').trim().toUpperCase();
@@ -575,13 +575,13 @@ function esc(s){const d=document.createElement('div');d.textContent=String(s||''
 function norm(raw){
   return(raw||[]).map(q=>{
     const txt=q.text||q.question||q.q||'';
-    const opts=(q.options||[]).map(o=>String(o).replace(/^[A-H]\s*[).]\s*/i,'').trim());
+    const opts=(q.options||[]).map(o=>String(o).replace(/^[A-J]\s*[).]\s*/i,'').trim());
     let correct=0;
     if(typeof q.correct==='number'){correct=q.correct}
     else if(typeof q.correct==='string'){
-      const m=q.correct.match(/^([A-H])\s*[).]/i);
+      const m=q.correct.match(/^([A-J])\s*[).]/i);
       if(m)correct=m[1].toUpperCase().charCodeAt(0)-65;
-      else{const c=q.correct.replace(/^[A-H]\s*[).]\s*/i,'').trim();const i=opts.findIndex(o=>o===c||o.includes(c)||c.includes(o));correct=i>=0?i:0}
+      else{const c=q.correct.replace(/^[A-J]\s*[).]\s*/i,'').trim();const i=opts.findIndex(o=>o===c||o.includes(c)||c.includes(o));correct=i>=0?i:0}
     }
     return{txt,opts,correct,expl:q.explanation||'',photo:q.photo||null,img:q.image||null};
   }).filter(q=>q.txt&&q.opts.length>=2);
@@ -814,7 +814,7 @@ function toggleReview(){
   const rb=document.getElementById('reviewBtn');
   if(rb)rb.textContent=_revOpen?'📋 Yopish':'📋 Tahlil ko\'rish';
   if(_revOpen){
-    const LBL=['A','B','C','D','E','F','G','H'];
+    const LBL=['A','B','C','D','E','F','G','H','I','J'];
     const rl=document.getElementById('reviewList');
     if(!rl)return;
     rl.innerHTML=qs.map((q,i)=>{
