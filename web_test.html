@@ -2,8 +2,11 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover"/>
 <title>TestPro — Web Test</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap" rel="stylesheet"/>
 <style>
   /* ════════════════════════════════════════════════
@@ -34,6 +37,24 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html{ scroll-behavior:smooth; }
+
+  /* ──────────────────────────────────────────────
+     PERFORMANCE MODE — Telegram Mini App / kuchsiz qurilmalar uchun.
+     JS body ga "perf" klassini qo'yadi (Telegram.WebApp aniqlanса
+     yoki qurilma sust bo'lsa). Bunda blur/animation o'chadi —
+     dizayn deyarli bir xil ko'rinadi, lekin GPU yuklamasi yo'qoladi.
+     ────────────────────────────────────────────── */
+  body.perf *{
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+    animation:none !important;
+  }
+  body.perf::before, body.perf::after{ display:none !important; }
+  body.perf .top-bar, body.perf .timer-box, body.perf .progress-wrap,
+  body.perf .subject-card, body.perf .question-card, body.perf .opt,
+  body.perf .result-screen, body.perf #bottom-stats{
+    background:rgba(255,255,255,0.94) !important;
+  }
 
   body {
     font-family: 'Inter', system-ui, sans-serif;
@@ -283,6 +304,33 @@
     flex-direction: column;
     gap: 11px;
   }
+
+  /* ── Izoh bloki — javob berilgandan keyin variantlar ostida ── */
+  .answer-explain{
+    width: calc(100% - 32px);
+    max-width: 480px;
+    margin: 4px 16px 0;
+    padding: 13px 16px;
+    border-radius: 14px;
+    background: rgba(91,140,245,0.10);
+    border: 1.4px solid rgba(91,140,245,0.28);
+    border-left: 4px solid var(--sapphire);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    animation: explFade .35s var(--ease) both;
+  }
+  @keyframes explFade{
+    from{opacity:0; transform:translateY(-6px)}
+    to{opacity:1; transform:translateY(0)}
+  }
+  .answer-explain-ic{ flex-shrink:0; font-size:16px; line-height:1.4; }
+  .answer-explain-tx{ flex:1; word-break:break-word; }
+  body.perf .answer-explain{ animation:none !important; }
+
   .option {
     background: var(--glass-2);
     backdrop-filter: blur(14px);
@@ -986,13 +1034,14 @@ function fxConfettiBurst(){
   const cv=document.getElementById('fxConfetti');
   if(!cv)return;
   if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  if(document.body.classList.contains('perf'))return; // sust qurilma/Telegram — effekt o'tkazib yuboriladi
   cv.style.display='block';
   const ctx=cv.getContext('2d');
-  const DPR=window.devicePixelRatio||1;
+  const DPR=Math.min(window.devicePixelRatio||1, 2); // juda yuqori DPR'da ham GPU yuklamasini cheklaymiz
   cv.width=innerWidth*DPR; cv.height=innerHeight*DPR;
   ctx.scale(DPR,DPR);
   const COL=['#0fa968','#3461d6','#7fb0ff','#d9a341','#e23b4e','#7c45e0','#ffffff'];
-  const N=130, parts=[];
+  const N=70, parts=[];
   const cx=innerWidth/2, cy=innerHeight*0.42;
   for(let k=0;k<N;k++){
     const ang=Math.random()*Math.PI*2;
@@ -1052,10 +1101,45 @@ let t0=0, tmr=null, att=0, cor=0, finished=false;
 
 const $= id => document.getElementById(id);
 
-/* Cache */
+/* ──────────────────────────────────────────────
+   TELEGRAM MINI APP — aniqlash va tezkor sozlash
+   ────────────────────────────────────────────── */
+const TG = window.Telegram && window.Telegram.WebApp;
+if(TG){
+  try{
+    TG.ready();
+    TG.expand();
+    document.body.classList.add('perf');           // og'ir effektlarni o'chiramiz
+    if(TG.setHeaderColor) TG.setHeaderColor('#eaf1fc');
+    if(TG.disableVerticalSwipes) TG.disableVerticalSwipes();
+  }catch{}
+}
+/* Sust qurilma/eski browser — backdrop-filter qo'llamasa ham perf yoqamiz */
+if(!CSS.supports('backdrop-filter','blur(1px)') && !CSS.supports('-webkit-backdrop-filter','blur(1px)')){
+  document.body.classList.add('perf');
+}
+
+/* Cache — localStorage Telegram WebView'da ishonchsiz,
+   shuning uchun tezkor xotira (Map) BIRINCHI darajali cache,
+   localStorage esa faqat ikkinchi (sahifa qayta ochilganda) ishlatiladi. */
+const _mem = new Map();
 function _ck(t){return'tp_test_'+t}
-function _cs(t,d){try{localStorage.setItem(_ck(t),JSON.stringify({d,ts:Date.now()}))}catch{}}
-function _cl(t){try{const r=localStorage.getItem(_ck(t));if(!r)return null;const{d,ts}=JSON.parse(r);if(Date.now()-ts<86400000)return d;localStorage.removeItem(_ck(t));return null}catch{return null}}
+function _cs(t,d){
+  _mem.set(t,{d,ts:Date.now()});
+  try{localStorage.setItem(_ck(t),JSON.stringify({d,ts:Date.now()}))}catch{}
+}
+function _cl(t){
+  const m=_mem.get(t);
+  if(m && Date.now()-m.ts<86400000) return m.d;
+  try{
+    const r=localStorage.getItem(_ck(t));
+    if(!r)return null;
+    const{d,ts}=JSON.parse(r);
+    if(Date.now()-ts<86400000){_mem.set(t,{d,ts});return d}
+    localStorage.removeItem(_ck(t));
+    return null;
+  }catch{return null}
+}
 
 function fmt(s){s=Math.max(0,s|0);const h=(s/3600)|0,m=((s%3600)/60)|0,sc=s%60;if(h>0)return[h,m,sc].map(v=>String(v).padStart(2,'0')).join(':');return[m,sc].map(v=>String(v).padStart(2,'0')).join(':')}
 
@@ -1090,7 +1174,19 @@ async function boot(){
   try{
     let resp=_cl(TID);
     if(!resp){
-      const r=await fetch(API+'?endpoint=test/'+TID+'/full');
+      const ctrl=new AbortController();
+      const tmo=setTimeout(()=>ctrl.abort(),12000);
+      let r;
+      try{
+        r=await fetch(API+'?endpoint=test/'+TID+'/full',{signal:ctrl.signal});
+      }catch(fe){
+        clearTimeout(tmo);
+        showErr(fe.name==='AbortError'
+          ?"Internet sekin — qayta urinib ko'ring"
+          :"Tarmoq xatosi — ulanishni tekshiring");
+        return;
+      }
+      clearTimeout(tmo);
       resp=await r.json();
       if(!resp||resp.error){showErr('Test topilmadi: '+TID);return}
       _cs(TID,resp);
@@ -1194,6 +1290,21 @@ function renderQ(){
       ${LBL[i]}) ${esc(o)}${_chk}
     </button>`;
   }).join('');
+
+  /* Izoh — javob berilgandan keyin variantlar ostida ko'rinadi */
+  let explW=$('_explw');
+  if(!explW){
+    explW=document.createElement('div');
+    explW.id='_explw';
+    $('optionsWrap').insertAdjacentElement('afterend', explW);
+  }
+  if(done && q.expl){
+    explW.className='answer-explain';
+    explW.innerHTML='<span class="answer-explain-ic">💡</span><span class="answer-explain-tx">'+esc(q.expl)+'</span>';
+  } else {
+    explW.innerHTML='';
+    explW.className='';
+  }
 
   updateHeader();
 
