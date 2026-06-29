@@ -47,10 +47,10 @@ async function tgPost(method, body) {
 // ══ FORMAT KONVERTATSIYA ═══════════════════════════════════════
 function webToBot(q) {
   const opts   = (q.options || []).map(String);
-  const labels = ['A','B','C','D','E','F','G','H','I','J'];
+  const labels = ['A','B','C','D','E','F','G','H'];
   const fmtOpts = opts.map((o, i) => {
     const lbl = labels[i] || String.fromCharCode(65 + i);
-    return /^[A-J]\s*[).]/.test(o) ? o : `${lbl}) ${o}`;
+    return /^[A-H]\s*[).]/.test(o) ? o : `${lbl}) ${o}`;
   });
   let correctStr = '';
   if (typeof q.correct === 'number') {
@@ -83,11 +83,11 @@ function botToWeb(q, idx) {
   if (typeof q.correct === 'number') {
     correctIdx = q.correct;
   } else if (typeof q.correct === 'string') {
-    const m = q.correct.match(/^([A-J])\s*[).]/i);
+    const m = q.correct.match(/^([A-H])\s*[).]/i);
     if (m) {
       correctIdx = m[1].toUpperCase().charCodeAt(0) - 65;
     } else {
-      const ci = opts.findIndex(o => o === q.correct || o.includes(q.correct) || q.correct.includes(o.replace(/^[A-J][).] */, '')));
+      const ci = opts.findIndex(o => o === q.correct || o.includes(q.correct) || q.correct.includes(o.replace(/^[A-H][).] */, '')));
       correctIdx = ci >= 0 ? ci : 0;
     }
   }
@@ -205,8 +205,28 @@ async function readFileId(fileId) {
 // ── Index cache (60 soniya) ────────────────────────────────────
 let _idx = null, _idxTs = 0;
 
+// ── Har bir test uchun alohida cache (5 daqiqa) ────────────────
+// Ko'p foydalanuvchi bir xil testni bir vaqtda ochganda, har biri
+// uchun alohida Telegram so'rovi yubormaslik uchun.
+const _testCache    = new Map();   // tid -> {data, ts}
+const _testInFlight = new Map();   // tid -> Promise (bir vaqtdagi so'rovlarni birlashtirish)
+const TEST_CACHE_TTL = 5 * 60_000;  // 5 daqiqa
+
+function getCachedTest(tid) {
+  const c = _testCache.get(tid);
+  if (c && Date.now() - c.ts < TEST_CACHE_TTL) return c.data;
+  return null;
+}
+function setCachedTest(tid, data) {
+  _testCache.set(tid, { data, ts: Date.now() });
+  if (_testCache.size > 300) {
+    const oldestKey = _testCache.keys().next().value;
+    _testCache.delete(oldestKey);
+  }
+}
+
 async function getIndex() {
-  if (_idx && Date.now() - _idxTs < 10_000) return _idx;  // 10s cache
+  if (_idx && Date.now() - _idxTs < 60_000) return _idx;  // 60s cache — ko'p foydalanuvchida Telegram'ni kamroq band qiladi
   try {
     const chat = await tgPost('getChat', { chat_id: CHANNEL_ID });
     const pin  = chat?.result?.pinned_message;
@@ -222,7 +242,6 @@ async function getIndex() {
     if (pinData.index_chunks || fname.includes('index_meta')) {
       const chunks = pinData.index_chunks || [];
       const merged = { tests_meta: [] };
-      let failed = 0;
 
       for (const ch of chunks) {
         let chData = null;
@@ -237,7 +256,7 @@ async function getIndex() {
           chData = await tgGetFull(ch.msg_id);
         }
 
-        if (!chData) { failed += 1; continue; }
+        if (!chData) continue;
 
         // Chunk ichidagi tests_meta ni birlashtirish
         for (const m of (chData.tests_meta || [])) {
@@ -252,10 +271,6 @@ async function getIndex() {
           }
         }
       }
-
-      // Birorta chunk o'qilmagan bo'lsa — index TO'LIQSIZ.
-      // Bunday indexni yozib bo'lmaydi (testlar yo'qolib qoladi).
-      if (failed > 0) merged.__incomplete = true;
 
       if (merged.tests_meta.length > 0) {
         _idx   = merged;
@@ -320,17 +335,10 @@ async function sendDoc(filename, data, caption) {
 }
 
 async function saveIndex(index) {
-  if (!index) return false;
-  // To'liqsiz o'qilgan indexni yozish testlarni yo'qotadi — bloklaymiz
-  if (index.__incomplete) {
-    console.error('saveIndex: index TO\'LIQSIZ — yozish bekor qilindi (testlar yo\'qolmasin)');
-    return false;
-  }
-  const { __incomplete, ...clean } = index;   // ichki bayroqni yozmaymiz
-  const d = await sendDoc('index.json', clean, '📋 INDEX | ' + new Date().toISOString().slice(0, 16));
+  const d = await sendDoc('index.json', index, '📋 INDEX | ' + new Date().toISOString().slice(0, 16));
   if (d?.ok) {
     await tgPost('pinChatMessage', { chat_id: CHANNEL_ID, message_id: d.result.message_id, disable_notification: true });
-    _idx = clean; _idxTs = Date.now();
+    _idx = index; _idxTs = Date.now();
   }
   return d?.ok || false;
 }
@@ -421,47 +429,32 @@ export default async function handler(request) {
   // ── test/{id}/full ────────────────────────────────────────────
   if (ep.startsWith('test/') && ep.endsWith('/full')) {
     const tid = ep.split('/')[1];
-    let full  = null;
-    let meta  = null;
 
-    // 1. Streamlit bot orqali olish (RAM cache → TG, eng ishonchli)
-    if (STREAMLIT_URL) {
+    // 1. Tezkor cache — so'nggi 5 daqiqada yuklangan bo'lsa,
+    //    Telegram/Streamlit'ga umuman murojaat qilmaymiz.
+    const cached = getCachedTest(tid);
+    if (cached) return jsonResp(cached);
+
+    // 2. Bir vaqtda bir nechta foydalanuvchi shu testni so'rasa —
+    //    faqat BITTA haqiqiy so'rov, qolganlari shu natijani kutadi.
+    if (_testInFlight.has(tid)) {
       try {
-        const stUrl = STREAMLIT_URL.replace(/\/?$/, '') + '/?api=test&id=' + tid;
-        const stRes = await fetch(stUrl, { signal: AbortSignal.timeout(12000) });
-        if (stRes.ok) {
-          const stTxt = await stRes.text();
-          // JSON ni topish (<pre> yoki to'g'ridan)
-          let stData = null;
-          // Streamlit <pre> tegi ichidagi JSON
-          const preM = stTxt.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
-          if (preM) {
-            const cleaned = preM[1]
-              .replace(/&amp;/g,'&').replace(/&lt;/g,'<')
-              .replace(/&gt;/g,'>').replace(/&quot;/g,'"')
-              .replace(/&#39;/g,"'").trim();
-            try { stData = JSON.parse(cleaned); } catch {}
-          }
-          // Fallback: to'g'ridan JSON qidirish
-          if (!stData) {
-            const rawM = stTxt.match(/\{"ok"[\s\S]*?(?=<\/pre>|<script|$)/);
-            if (rawM) { try { stData = JSON.parse(rawM[0]); } catch {} }
-          }
-          if (stData?.ok && stData?.test?.questions?.length) {
-            full = stData.test;
-          } else if (stData?.ok && stData?.test) {
-            meta = stData.test; // meta_only holat
-          }
-        }
-      } catch (_se) { /* streamlit timeout - TG ga o'tamiz */ }
+        const data = await _testInFlight.get(tid);
+        return jsonResp(data);
+      } catch (e) {
+        return jsonResp({ error: `Test topilmadi: ${tid}` }, 404);
+      }
     }
 
-    // 2. TG Index orqali olish (fallback)
-    if (!full?.questions?.length) {
+    const fetchPromise = (async () => {
+      let full = null;
+      let meta = null;
+
+      // ── A. TELEGRAM BIRINCHI (eng tez, har doim ishlaydi) ──
       try {
         const index = await getIndex();
         if (index) {
-          meta = meta || (index.tests_meta || []).find(t => t.test_id === tid) || null;
+          meta = (index.tests_meta || []).find(t => t.test_id === tid) || null;
           let msgId = index[`test_${tid}`] || null;
           if (!msgId) {
             const tidL = tid.toLowerCase();
@@ -470,25 +463,72 @@ export default async function handler(request) {
           }
           if (msgId) {
             const fidKey = `fid_${msgId}`;
-            if (index[fidKey]) full = await readFileId(index[fidKey]);
-            if (!full?.questions?.length) full = await tgGetFull(msgId);
+            if (index[fidKey]) {
+              full = await readFileId(index[fidKey]);
+            }
+            if (!full?.questions?.length) {
+              full = await tgGetFull(msgId);
+            }
           }
         }
-      } catch (_ie) { /* ignore */ }
-    }
+      } catch (_te) { /* Streamlit'ga o'tamiz */ }
 
-    if (!full?.questions?.length) {
+      // ── B. Streamlit fallback (faqat Telegram'da topilmasa) ──
+      if (!full?.questions?.length && STREAMLIT_URL) {
+        try {
+          const stUrl = STREAMLIT_URL.replace(/\/?$/, '') + '/?api=test&id=' + tid;
+          const stRes = await fetch(stUrl, { signal: AbortSignal.timeout(5000) });
+          if (stRes.ok) {
+            const stTxt = await stRes.text();
+            let stData = null;
+            const preM = stTxt.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+            if (preM) {
+              const cleaned = preM[1]
+                .replace(/&amp;/g,'&').replace(/&lt;/g,'<')
+                .replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+                .replace(/&#39;/g,"'").trim();
+              try { stData = JSON.parse(cleaned); } catch {}
+            }
+            if (!stData) {
+              const rawM = stTxt.match(/\{"ok"[\s\S]*?(?=<\/pre>|<script|$)/);
+              if (rawM) { try { stData = JSON.parse(rawM[0]); } catch {} }
+            }
+            if (stData?.ok && stData?.test?.questions?.length) {
+              full = stData.test;
+            } else if (stData?.ok && stData?.test && !meta) {
+              meta = stData.test;
+            }
+          }
+        } catch (_se) { /* ignore — quyida 404 qaytariladi */ }
+      }
+
+      if (!full?.questions?.length) {
+        throw new Error('not_found');
+      }
+
+      if (!meta) { meta = { ...full }; delete meta.questions; }
+      const t = normMeta({ ...meta, ...full });
+      t.id      = t.id      || t.test_id || tid;
+      t.test_id = t.test_id || tid;
+      t.authorId= t.authorId|| String(t.creator_id || '');
+      t.subject = t.subject || t.category || 'other';
+      const webQs = (full.questions || []).map((q, i) => botToWeb(q, i));
+      const result = { testData: t, questions: webQs, total: webQs.length };
+
+      setCachedTest(tid, result);
+      return result;
+    })();
+
+    _testInFlight.set(tid, fetchPromise);
+
+    try {
+      const result = await fetchPromise;
+      return jsonResp(result);
+    } catch (e) {
       return jsonResp({ error: `Test topilmadi: ${tid}` }, 404);
+    } finally {
+      _testInFlight.delete(tid);
     }
-
-    if (!meta) { meta = { ...full }; delete meta.questions; }
-    const t = normMeta({ ...meta, ...full });
-    t.id      = t.id      || t.test_id || tid;
-    t.test_id = t.test_id || tid;
-    t.authorId= t.authorId|| String(t.creator_id || '');
-    t.subject = t.subject || t.category || 'other';
-    const webQs = (full.questions || []).map((q, i) => botToWeb(q, i));
-    return jsonResp({ testData: t, questions: webQs, total: webQs.length });
   }
 
   // ── photo/stream — redirect (URL expiry yo'q) ─────────────────
@@ -672,59 +712,35 @@ export default async function handler(request) {
       if (!full) full = await tgGetFull(msgId);
       if (!full?.questions?.length) return jsonResp({ error: 'Savollar topilmadi' }, 404);
 
-      const total = full.questions.length;
+      const splitAt = parseInt(body?.split_at || Math.ceil(full.questions.length / 2));
+      const q1 = full.questions.slice(0, splitAt);
+      const q2 = full.questions.slice(splitAt);
 
-      // ── Qism chegaralarini aniqlash ──
-      // Web edit {parts:[{from,to,count}]} yuboradi (1-indeksli, inclusive).
-      // Eski mijozlar uchun {split_at} ham qo'llab-quvvatlanadi.
-      let ranges = [];
-      if (Array.isArray(body?.parts) && body.parts.length) {
-        ranges = body.parts
-          .map(p => ({ from: parseInt(p.from) || 1, to: parseInt(p.to) || total }))
-          .filter(r => r.from >= 1 && r.to <= total && r.from <= r.to);
-      }
-      if (!ranges.length) {
-        const splitAt = parseInt(body?.split_at || Math.ceil(total / 2));
-        ranges = [{ from: 1, to: splitAt }, { from: splitAt + 1, to: total }]
-          .filter(r => r.from <= r.to && r.to <= total);
-      }
-      if (!ranges.length) return jsonResp({ error: 'Qism chegarasi noto\'g\'ri' }, 400);
-
-      const created = [];
-      let i = 0;
-      for (const r of ranges) {
-        i += 1;
-        const qs      = full.questions.slice(r.from - 1, r.to);
-        if (!qs.length) continue;
+      const saved = [];
+      for (const [i, qs] of [[1, q1], [2, q2]]) {
         const newTid  = tid + '_P' + i;
-        const newTitle = `${full.title || tid} — ${i}-qism`;
         const newTest = {
-          ...full, test_id: newTid, title: newTitle,
+          ...full, test_id: newTid,
+          title: `${full.title || tid} — ${i}-qism`,
           questions: qs, question_count: qs.length,
-          source: 'web_split',
         };
         const res = await sendDoc(
           `test_${newTid}.json`, newTest,
-          `TEST | ${newTitle} | ${qs.length} savol | ${newTid}`
+          `TEST | ${newTest.title} | ${qs.length} savol | ${newTid}`
         );
         if (!res?.ok) continue;
         const nm = res.result.message_id;
         const nf = res.result.document?.file_id;
         index[`test_${newTid}`] = nm;
-        if (nf) index[`fid_${nm}`] = nf;          // fid ham saqlanadi
-        const meta = { ...full, test_id: newTid, title: newTitle,
-          question_count: qs.length, source: 'web_split' };
+        if (nf) index[`fid_${nm}`] = nf;
+        const meta = { ...full, test_id: newTid,
+          title: newTest.title, question_count: qs.length };
         delete meta.questions;
         (index.tests_meta = index.tests_meta || []).push(meta);
-        created.push({ tid: newTid, title: newTitle, count: qs.length });
+        saved.push({ tid: newTid, count: qs.length });
       }
-
-      if (!created.length) return jsonResp({ error: 'Bo\'linma yaratilmadi' }, 500);
-
-      const okS = await saveIndex(index);
-      if (!okS) return jsonResp({ error: 'Index saqlanmadi (to\'liqsiz o\'qilgan) — qayta urinib ko\'ring' }, 503);
-      // Web edit `created` ni kutadi; eski mijozlar `parts` ni — ikkalasi ham qaytadi
-      return jsonResp({ ok: true, created, parts: created });
+      await saveIndex(index);
+      return jsonResp({ ok: true, parts: saved });
     } catch(e) {
       return jsonResp({ error: String(e) }, 500);
     }
@@ -794,18 +810,12 @@ export default async function handler(request) {
     const tgData = await sendDoc(`test_${tid}.json`, testDoc, `📝 TEST | ${title} | ${tid}`);
     if (!tgData?.ok) return jsonResp({ error: 'Kanalga yuborishda xato' }, 500);
     const index = await getIndex();
-    if (!index) {
-      // Index o'qilmadi — testni indeksga qo'sha olmaymiz.
-      // "ok" deb yolg'on aytmaymiz, aks holda test hech qayerda chiqmaydi.
-      return jsonResp({ error: 'Index hozir o\'qilmadi — biroz kutib qayta urinib ko\'ring' }, 503);
+    if (index) {
+      const meta = { ...testDoc }; delete meta.questions;
+      (index.tests_meta = index.tests_meta || []).unshift(meta);
+      index[`test_${tid}`] = tgData.result.message_id;
+      await saveIndex(index);
     }
-    const meta = { ...testDoc }; delete meta.questions;
-    (index.tests_meta = index.tests_meta || []).unshift(meta);
-    index[`test_${tid}`] = tgData.result.message_id;
-    const cFid = tgData.result.document?.file_id;
-    if (cFid) index[`fid_${tgData.result.message_id}`] = cFid;   // tez o'qish uchun fid
-    const okSaved = await saveIndex(index);
-    if (!okSaved) return jsonResp({ error: 'Indeksga saqlashda xato — qayta urinib ko\'ring' }, 503);
     return jsonResp({ ok: true, id: tid, test_id: tid });
   }
 
