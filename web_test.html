@@ -1165,7 +1165,7 @@ async function boot(){
       const tmo=setTimeout(()=>ctrl.abort(),12000);
       let r;
       try{
-        r=await fetch(API+'?endpoint=test/'+TID+'/full',{signal:ctrl.signal});
+        r=await fetch(API+'?endpoint=test/'+TID+'/full',{signal:ctrl.signal,cache:'no-store'});
       }catch(fe){
         clearTimeout(tmo);
         showErr(fe.name==='AbortError'
@@ -1183,10 +1183,8 @@ async function boot(){
     let questions=norm(resp.questions||resp.testData?.questions||meta.questions||[]);
     if(!questions.length){showErr("Bu testda savollar yo'q");return}
 
-    // Savollar aralashtiriladi — faqat meta da shuffle_questions:false bo'lsa to'xtatiladi
-    if(meta.shuffle_questions!==false&&meta.shuffleQuestions!==false){
-      for(let i=questions.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[questions[i],questions[j]]=[questions[j],questions[i]]}
-    }
+    // Savollar HAR DOIM aralashtiriladi (meta flag e'tiborga olinmaydi)
+    for(let i=questions.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[questions[i],questions[j]]=[questions[j],questions[i]]}
     questions=questions.map(q=>{
       const o=[...q.opts];const ct=o[q.correct];
       for(let i=o.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[o[i],o[j]]=[o[j],o[i]]}
